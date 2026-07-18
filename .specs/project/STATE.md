@@ -53,6 +53,13 @@
 **Trade-off:** Framework de frontend fica indefinido no PROJECT.md por ora.
 **Impact:** M4 depende dessa spec; hospedagem já definida como S3 + CloudFront.
 
+### AD-006: Build da Lambda via `sam build --use-container` (Docker como ferramenta de build) (2026-07-18)
+
+**Decision:** Usar Docker apenas como ferramenta de build local (`sam build --use-container`) para gerar wheels Linux (manylinux) das dependências nativas. A entrega continua sendo ZIP.
+**Reason:** `pydantic-core` (dep do FastAPI) é nativo/compilado; build no Windows gera wheel incompatível com o Lambda (Linux). O container replica o ambiente do Lambda e resolve as wheels corretas. Python local é 3.14, sem 3.13 no PATH — o container também elimina esse requisito.
+**Trade-off:** Precisa do Docker Desktop rodando para buildar. Não fere a decisão original ("sem Docker" referia-se ao modelo de entrega — ZIP em vez de imagem container/Fargate).
+**Impact:** Fluxo de deploy: abrir Docker Desktop → `sam build --use-container` → `sam deploy`. Resolve o restante do B-002.
+
 ### AD-005: Manter DynamoDB com single-table design centrado no cliente (2026-07-18)
 
 **Decision:** Confirmado DynamoDB (não migrar para relacional). Modelo single-table onde tudo pende do cliente. Convenção de chaves compartilhada por todas as features:
@@ -76,13 +83,11 @@
 **Impact:** Bloqueava `sam build`/`sam deploy` da feature Infra Base.
 **Resolution:** SAM CLI 1.163.0 instalado (via winget). Deploy destravado. Pendente ainda: confirmar credenciais AWS (`aws sts get-caller-identity`) antes da T6.
 
-### B-002: Python local 3.14 vs runtime Lambda (2026-07-18) — PARCIALMENTE RESOLVIDO
+### B-002: Python local 3.14 vs runtime Lambda — ✅ RESOLVIDO (via AD-006)
 
 **Discovered:** 2026-07-18
-**Impact:** Python local é 3.14.4; Lambda não tem runtime 3.14. Build de dependências (ex: pydantic-core, wheel compilada) precisa mirar a plataforma do Lambda.
-**Update (T1):** Instalação local no Python 3.14 FUNCIONOU — havia wheels cp314 (pydantic-core 2.46.4, fastapi 0.139.2, moto 5.2.2). Testes locais desbloqueados.
-**Restante:** Confirmar que `sam build` resolve wheels para python3.13/x86_64 no deploy (T6). Sem Docker por decisão de projeto.
-**Resolution:** Validar no `sam build` (T6); se falhar, considerar Lambda layer ou `--use-container`.
+**Impact:** `sam build` local falhou: (1) sem python3.13 no PATH; (2) mesmo com ele, wheels Windows do pydantic-core não rodam no Lambda (Linux).
+**Resolution:** Decidido (AD-006) usar `sam build --use-container` — o container Linux gera as wheels manylinux corretas e dispensa python3.13 local. Pré-requisito: Docker Desktop rodando (instalado v29.3.1, precisa estar aberto).
 
 ---
 

@@ -14,7 +14,9 @@
       "PowerShell(sam validate --lint --region us-east-1; Write-Output \"--- sam validate exit: $LASTEXITCODE ---\")",
       "PowerShell($p = Get-ChildItem -Path \"C:\\\\Program Files\\\\Amazon\\\\AWSSAMCLI\\\\bin\\\\sam.cmd\",\"C:\\\\Program Files \\(x86\\)\\\\Amazon\\\\AWSSAMCLI\\\\bin\\\\sam.cmd\" -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName; if \\($p\\) { Write-Output \"FOUND: $p\" } else { Write-Output \"NOT in default paths; searching...\"; Get-ChildItem -Path \"C:\\\\Program Files\",\"C:\\\\Program Files \\(x86\\)\",\"$env:LOCALAPPDATA\" -Filter sam.cmd -Recurse -ErrorAction SilentlyContinue | Select-Object -First 3 -ExpandProperty FullName })",
       "PowerShell(& \"C:\\\\Program Files\\\\Amazon\\\\AWSSAMCLI\\\\bin\\\\sam.cmd\" validate --lint --region us-east-1; Write-Output \"--- sam validate exit: $LASTEXITCODE ---\")",
-      "PowerShell($env:SAM_CLI_TELEMETRY=0; & \"C:\\\\Program Files\\\\Amazon\\\\AWSSAMCLI\\\\bin\\\\sam.cmd\" validate --lint --region us-east-1; Write-Output \"--- sam validate exit: $LASTEXITCODE ---\")"
+      "PowerShell($env:SAM_CLI_TELEMETRY=0; & \"C:\\\\Program Files\\\\Amazon\\\\AWSSAMCLI\\\\bin\\\\sam.cmd\" validate --lint --region us-east-1; Write-Output \"--- sam validate exit: $LASTEXITCODE ---\")",
+      "PowerShell($env:SAM_CLI_TELEMETRY=0; & \"C:\\\\Program Files\\\\Amazon\\\\AWSSAMCLI\\\\bin\\\\sam.cmd\" build 2>&1 | Select-Object -Last 25; Write-Output \"--- sam build exit: $LASTEXITCODE ---\")",
+      "PowerShell(docker --version 2>&1; Write-Output \"--- docker exit: $LASTEXITCODE ---\"; docker info --format '{{.ServerVersion}}' 2>&1 | Select-Object -First 3)"
     ]
   }
 }
