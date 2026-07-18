@@ -1,7 +1,7 @@
 # State
 
 **Last Updated:** 2026-07-18
-**Current Work:** Feature `infra-base-sam` — execução em andamento. T1, T2, T3 ✅ concluídas (scaffold, app FastAPI + /health, handler Mangum; 3 testes verdes). PRÓXIMO PASSO: T4 (template.yaml — Lambda + API Gateway proxy + CORS). SAM CLI 1.163.0 instalado; T6 (deploy) destravado.
+**Current Work:** Feature `infra-base-sam` — T1–T5 ✅ concluídas (código Python testado + template.yaml validado com `sam validate --lint`). PRÓXIMO PASSO: T6 = deploy (`sam build` + `sam deploy --guided`). Pré-requisito: confirmar credenciais AWS (`aws sts get-caller-identity`).
 
 **Onde paramos (retomar aqui):**
 - ✅ Projeto inicializado (PROJECT/ROADMAP/STATE), commit `621b608`
@@ -13,12 +13,13 @@
 - ✅ **T1 scaffold done** (`6d3fc75`): src/app, tests/, requirements, pyproject, .gitignore; venv `.venv` criado, deps instaladas OK no Python 3.14
 - ✅ **T2 done**: `src/app/main.py` (FastAPI + GET /health) + `tests/test_health.py` (2 testes verdes)
 - ✅ **T3 done**: `src/app/handler.py` (Mangum) + `tests/test_handler.py` (smoke test v2, 200) — 3 testes no total
+- ✅ **T4+T5 done**: `template.yaml` (Lambda py3.13 + HTTP API proxy + CORS + DynamoDB PK/SK on-demand + IAM DynamoDBCrudPolicy + TABLE_NAME). Validado: `sam validate --lint` OK
 - ✅ SAM CLI 1.163.0 instalado → **B-001 resolvido**
-- ⏭️ FAZER A SEGUIR: **T4** (template.yaml — Lambda + API Gateway proxy + CORS), depois T5 (DynamoDB + IAM)
-- 🧊 T6 (deploy) pronto para rodar após T5 — confirmar credenciais AWS (`aws sts get-caller-identity`)
+- ⏭️ FAZER A SEGUIR: **T6** = `sam build` + `sam deploy --guided`; depois `curl <ApiBaseUrl>/health` → 200
 - 🧊 Depois da infra: implementar CRUD de `cadastro-pacientes`
 
-**Ambiente local:** venv em `.venv` (Python 3.14). Rodar comandos com `.\.venv\Scripts\python.exe`. Testes: `.\.venv\Scripts\python.exe -m pytest -q`.
+**Ambiente local:** venv em `.venv` (Python 3.14). Testes: `.\.venv\Scripts\python.exe -m pytest -q`.
+**SAM CLI:** não está no PATH da sessão automatizada; caminho completo = `C:\Program Files\Amazon\AWSSAMCLI\bin\sam.cmd` (no terminal do usuário, `sam` funciona direto).
 
 ---
 

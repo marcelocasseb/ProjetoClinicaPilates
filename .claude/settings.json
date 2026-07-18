@@ -10,7 +10,11 @@
       "PowerShell(.\\\\.venv\\\\Scripts\\\\python.exe -m pip install -r requirements-dev.txt 2>&1)",
       "PowerShell(.\\\\.venv\\\\Scripts\\\\python.exe -m compileall src; Write-Output \"--- compileall exit: $LASTEXITCODE ---\"; .\\\\.venv\\\\Scripts\\\\python.exe -m pytest --collect-only -q; Write-Output \"--- pytest collect exit: $LASTEXITCODE ---\")",
       "PowerShell(.\\\\.venv\\\\Scripts\\\\python.exe -m pytest -q; Write-Output \"--- pytest exit: $LASTEXITCODE ---\")",
-      "PowerShell(.\\\\.venv\\\\Scripts\\\\python.exe -m pytest -q 2>&1 | Select-Object -Last 8; Write-Output \"--- pytest exit: $LASTEXITCODE ---\")"
+      "PowerShell(.\\\\.venv\\\\Scripts\\\\python.exe -m pytest -q 2>&1 | Select-Object -Last 8; Write-Output \"--- pytest exit: $LASTEXITCODE ---\")",
+      "PowerShell(sam validate --lint --region us-east-1; Write-Output \"--- sam validate exit: $LASTEXITCODE ---\")",
+      "PowerShell($p = Get-ChildItem -Path \"C:\\\\Program Files\\\\Amazon\\\\AWSSAMCLI\\\\bin\\\\sam.cmd\",\"C:\\\\Program Files \\(x86\\)\\\\Amazon\\\\AWSSAMCLI\\\\bin\\\\sam.cmd\" -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName; if \\($p\\) { Write-Output \"FOUND: $p\" } else { Write-Output \"NOT in default paths; searching...\"; Get-ChildItem -Path \"C:\\\\Program Files\",\"C:\\\\Program Files \\(x86\\)\",\"$env:LOCALAPPDATA\" -Filter sam.cmd -Recurse -ErrorAction SilentlyContinue | Select-Object -First 3 -ExpandProperty FullName })",
+      "PowerShell(& \"C:\\\\Program Files\\\\Amazon\\\\AWSSAMCLI\\\\bin\\\\sam.cmd\" validate --lint --region us-east-1; Write-Output \"--- sam validate exit: $LASTEXITCODE ---\")",
+      "PowerShell($env:SAM_CLI_TELEMETRY=0; & \"C:\\\\Program Files\\\\Amazon\\\\AWSSAMCLI\\\\bin\\\\sam.cmd\" validate --lint --region us-east-1; Write-Output \"--- sam validate exit: $LASTEXITCODE ---\")"
     ]
   }
 }

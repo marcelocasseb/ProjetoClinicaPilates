@@ -2,7 +2,7 @@
 
 **Spec**: `.specs/features/infra-base-sam/spec.md`
 **Testing**: `.specs/codebase/TESTING.md`
-**Status**: In Progress (T1, T2, T3 ✅ done)
+**Status**: In Progress (T1–T5 ✅ done; T6 = deploy pendente)
 
 ---
 
@@ -109,7 +109,7 @@ Phase 3 (Deploy validation, Sequential — bloqueada por B-001):
 
 ---
 
-### T4: Template SAM — Lambda + API Gateway (proxy) + CORS
+### T4: Template SAM — Lambda + API Gateway (proxy) + CORS ✅ DONE
 
 **What**: Criar `template.yaml` provisionando a função Lambda (runtime python3.13, handler `app.handler.handler`) e API Gateway HTTP com integração proxy e CORS.
 **Where**: `template.yaml`
@@ -137,7 +137,7 @@ Phase 3 (Deploy validation, Sequential — bloqueada por B-001):
 
 ---
 
-### T5: Tabela DynamoDB + IAM menor privilégio + env var
+### T5: Tabela DynamoDB + IAM menor privilégio + env var ✅ DONE
 
 **What**: Adicionar ao template a tabela DynamoDB on-demand (PK/SK) e conceder à Lambda permissão apenas nessa tabela, injetando o nome via variável de ambiente.
 **Where**: `template.yaml` (modify)
