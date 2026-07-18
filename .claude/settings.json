@@ -9,7 +9,8 @@
       "PowerShell(.\\\\.venv\\\\Scripts\\\\python.exe -m pip install --upgrade pip --quiet)",
       "PowerShell(.\\\\.venv\\\\Scripts\\\\python.exe -m pip install -r requirements-dev.txt 2>&1)",
       "PowerShell(.\\\\.venv\\\\Scripts\\\\python.exe -m compileall src; Write-Output \"--- compileall exit: $LASTEXITCODE ---\"; .\\\\.venv\\\\Scripts\\\\python.exe -m pytest --collect-only -q; Write-Output \"--- pytest collect exit: $LASTEXITCODE ---\")",
-      "PowerShell(.\\\\.venv\\\\Scripts\\\\python.exe -m pytest -q; Write-Output \"--- pytest exit: $LASTEXITCODE ---\")"
+      "PowerShell(.\\\\.venv\\\\Scripts\\\\python.exe -m pytest -q; Write-Output \"--- pytest exit: $LASTEXITCODE ---\")",
+      "PowerShell(.\\\\.venv\\\\Scripts\\\\python.exe -m pytest -q 2>&1 | Select-Object -Last 8; Write-Output \"--- pytest exit: $LASTEXITCODE ---\")"
     ]
   }
 }

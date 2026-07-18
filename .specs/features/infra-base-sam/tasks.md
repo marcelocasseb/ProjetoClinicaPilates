@@ -2,7 +2,7 @@
 
 **Spec**: `.specs/features/infra-base-sam/spec.md`
 **Testing**: `.specs/codebase/TESTING.md`
-**Status**: In Progress (T1, T2 ✅ done)
+**Status**: In Progress (T1, T2, T3 ✅ done)
 
 ---
 
@@ -82,7 +82,7 @@ Phase 3 (Deploy validation, Sequential — bloqueada por B-001):
 
 ---
 
-### T3: Handler Mangum (entrypoint Lambda)
+### T3: Handler Mangum (entrypoint Lambda) ✅ DONE
 
 **What**: Adicionar o adaptador Mangum que expõe o app FastAPI como handler de Lambda, com smoke test de evento API Gateway.
 **Where**: `src/app/handler.py`, `tests/test_handler.py`

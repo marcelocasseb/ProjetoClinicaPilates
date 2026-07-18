@@ -1,7 +1,7 @@
 # State
 
 **Last Updated:** 2026-07-18
-**Current Work:** Feature `infra-base-sam` — execução em andamento. T1 (scaffold) e T2 (app FastAPI + /health, 2 testes) ✅ concluídas. PRÓXIMO PASSO: T3 (handler Mangum + smoke test). SAM CLI 1.163.0 instalado → B-001 resolvido; T6 (deploy) destravado.
+**Current Work:** Feature `infra-base-sam` — execução em andamento. T1, T2, T3 ✅ concluídas (scaffold, app FastAPI + /health, handler Mangum; 3 testes verdes). PRÓXIMO PASSO: T4 (template.yaml — Lambda + API Gateway proxy + CORS). SAM CLI 1.163.0 instalado; T6 (deploy) destravado.
 
 **Onde paramos (retomar aqui):**
 - ✅ Projeto inicializado (PROJECT/ROADMAP/STATE), commit `621b608`
@@ -12,8 +12,9 @@
 - ✅ Convenção de testes: pytest + moto, cobertura pragmática (TESTING.md)
 - ✅ **T1 scaffold done** (`6d3fc75`): src/app, tests/, requirements, pyproject, .gitignore; venv `.venv` criado, deps instaladas OK no Python 3.14
 - ✅ **T2 done**: `src/app/main.py` (FastAPI + GET /health) + `tests/test_health.py` (2 testes verdes)
+- ✅ **T3 done**: `src/app/handler.py` (Mangum) + `tests/test_handler.py` (smoke test v2, 200) — 3 testes no total
 - ✅ SAM CLI 1.163.0 instalado → **B-001 resolvido**
-- ⏭️ FAZER A SEGUIR: **T3** (handler Mangum + smoke test), depois T4→T5 (template SAM)
+- ⏭️ FAZER A SEGUIR: **T4** (template.yaml — Lambda + API Gateway proxy + CORS), depois T5 (DynamoDB + IAM)
 - 🧊 T6 (deploy) pronto para rodar após T5 — confirmar credenciais AWS (`aws sts get-caller-identity`)
 - 🧊 Depois da infra: implementar CRUD de `cadastro-pacientes`
 
