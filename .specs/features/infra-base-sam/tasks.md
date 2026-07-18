@@ -2,7 +2,7 @@
 
 **Spec**: `.specs/features/infra-base-sam/spec.md`
 **Testing**: `.specs/codebase/TESTING.md`
-**Status**: In Progress (T1–T5 ✅ done; T6 = deploy pendente)
+**Status**: Done (T1–T6 ✅ — stack no ar, /health OK)
 
 ---
 
@@ -164,10 +164,10 @@ Phase 3 (Deploy validation, Sequential — bloqueada por B-001):
 
 ---
 
-### T6: Validação de deploy (health end-to-end) — bloqueada por B-001
+### T6: Validação de deploy (health end-to-end) ✅ DONE
 
 **What**: Fazer `sam build` + `sam deploy` e confirmar `GET /health` respondendo pela URL do API Gateway.
-**Where**: — (execução; sem arquivo novo, exceto `samconfig.toml` gerado)
+**Where**: — (execução; `samconfig.toml` gerado)
 **Depends on**: T5
 **Reuses**: `template.yaml`
 **Requirement**: INFRA-01, INFRA-02
@@ -176,18 +176,16 @@ Phase 3 (Deploy validation, Sequential — bloqueada por B-001):
 - MCP: NONE
 - Skill: NONE
 
-**Blocked by**: B-001 (SAM CLI não instalado) — requer instalar SAM CLI + credenciais AWS (`aws sts get-caller-identity`).
-
 **Done when**:
-- [ ] `sam build` conclui resolvendo dependências para python3.13
-- [ ] `sam deploy --guided` provisiona a stack sem erro
-- [ ] `curl https://<api-url>/health` retorna `200 {"status":"ok"}`
-- [ ] `aws dynamodb describe-table` confirma PK/SK e PAY_PER_REQUEST
+- [x] `sam build --use-container` conclui resolvendo dependências para python3.13 (AD-006)
+- [x] `sam deploy --guided` provisiona a stack sem erro (stack `clinica-pilates`, us-east-1)
+- [x] `GET /health` retorna `200 {"status":"ok"}` (via https://8f1ffym997.execute-api.us-east-1.amazonaws.com/health)
+- [x] Tabela DynamoDB criada: `clinica-pilates-ClinicaTable-8YQAEIFAKZGE` (PK/SK, on-demand)
 
 **Tests**: none
 **Gate**: full
 
-**Verify**: `curl` do endpoint `/health` retorna 200; tabela existe na AWS.
+**Verify**: `/health` retornou `{"status":"ok"}`; stack `CREATE_COMPLETE`; tabela existe na AWS.
 
 **Commit**: `chore(infra): primeiro deploy da stack base (health OK)`
 

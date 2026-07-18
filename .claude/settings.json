@@ -16,7 +16,9 @@
       "PowerShell(& \"C:\\\\Program Files\\\\Amazon\\\\AWSSAMCLI\\\\bin\\\\sam.cmd\" validate --lint --region us-east-1; Write-Output \"--- sam validate exit: $LASTEXITCODE ---\")",
       "PowerShell($env:SAM_CLI_TELEMETRY=0; & \"C:\\\\Program Files\\\\Amazon\\\\AWSSAMCLI\\\\bin\\\\sam.cmd\" validate --lint --region us-east-1; Write-Output \"--- sam validate exit: $LASTEXITCODE ---\")",
       "PowerShell($env:SAM_CLI_TELEMETRY=0; & \"C:\\\\Program Files\\\\Amazon\\\\AWSSAMCLI\\\\bin\\\\sam.cmd\" build 2>&1 | Select-Object -Last 25; Write-Output \"--- sam build exit: $LASTEXITCODE ---\")",
-      "PowerShell(docker --version 2>&1; Write-Output \"--- docker exit: $LASTEXITCODE ---\"; docker info --format '{{.ServerVersion}}' 2>&1 | Select-Object -First 3)"
+      "PowerShell(docker --version 2>&1; Write-Output \"--- docker exit: $LASTEXITCODE ---\"; docker info --format '{{.ServerVersion}}' 2>&1 | Select-Object -First 3)",
+      "PowerShell($env:SAM_CLI_TELEMETRY=0; & \"C:\\\\Program Files\\\\Amazon\\\\AWSSAMCLI\\\\bin\\\\sam.cmd\" build --use-container 2>&1 | Select-Object -Last 30; Write-Output \"--- sam build exit: $LASTEXITCODE ---\")",
+      "PowerShell($out = aws cloudformation describe-stacks --stack-name clinica-pilates --region us-east-1 --query \"Stacks[0].Outputs\" --output json | ConvertFrom-Json; $out | ForEach-Object { Write-Output \"$\\($_.OutputKey\\) = $\\($_.OutputValue\\)\" }; $url = \\($out | Where-Object { $_.OutputKey -eq 'ApiBaseUrl' }\\).OutputValue; Write-Output \"--- testando health ---\"; try { \\(Invoke-WebRequest -Uri \"$url/health\" -UseBasicParsing\\).Content } catch { Write-Output \"ERRO: $_\" })"
     ]
   }
 }

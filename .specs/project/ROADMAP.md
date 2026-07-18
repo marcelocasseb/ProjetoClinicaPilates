@@ -1,7 +1,7 @@
 # Roadmap
 
 **Current Milestone:** M1 — Fundação + CRUD de Pacientes
-**Status:** Planning
+**Status:** In Progress
 
 ---
 
@@ -12,11 +12,12 @@
 
 ### Features
 
-**Infraestrutura base (SAM)** - PLANNED
+**Infraestrutura base (SAM)** - COMPLETE
 
 - Template SAM com Lambda, API Gateway (proxy) e tabela DynamoDB
-- Deploy via `sam deploy`
+- Deploy via `sam deploy` (stack `clinica-pilates` no ar, us-east-1)
 - Configuração de CORS
+- Verificado: `GET /health` → `{"status":"ok"}`
 
 **CRUD de Pacientes** - PLANNED
 

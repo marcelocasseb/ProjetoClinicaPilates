@@ -1,7 +1,13 @@
 # State
 
 **Last Updated:** 2026-07-18
-**Current Work:** Feature `infra-base-sam` — T1–T5 ✅ concluídas (código Python testado + template.yaml validado com `sam validate --lint`). PRÓXIMO PASSO: T6 = deploy (`sam build` + `sam deploy --guided`). Pré-requisito: confirmar credenciais AWS (`aws sts get-caller-identity`).
+**Current Work:** Feature `infra-base-sam` ✅ CONCLUÍDA (T1–T6, stack no ar, /health OK). PRÓXIMO PASSO: implementar a feature `cadastro-pacientes` (spec já escrita, PAC-01..09) — quebrar em tasks e executar sobre a infra já provisionada.
+
+**Recursos AWS provisionados (stack `clinica-pilates`, us-east-1):**
+- API base: https://8f1ffym997.execute-api.us-east-1.amazonaws.com
+- Tabela DynamoDB: `clinica-pilates-ClinicaTable-8YQAEIFAKZGE` (PK/SK, on-demand)
+- Lambda: `clinica-pilates-ClinicaApiFunction-3huxBJXkP1qi`
+- Redeploy: `sam build --use-container; sam deploy` (config em samconfig.toml)
 
 **Onde paramos (retomar aqui):**
 - ✅ Projeto inicializado (PROJECT/ROADMAP/STATE), commit `621b608`
@@ -14,9 +20,10 @@
 - ✅ **T2 done**: `src/app/main.py` (FastAPI + GET /health) + `tests/test_health.py` (2 testes verdes)
 - ✅ **T3 done**: `src/app/handler.py` (Mangum) + `tests/test_handler.py` (smoke test v2, 200) — 3 testes no total
 - ✅ **T4+T5 done**: `template.yaml` (Lambda py3.13 + HTTP API proxy + CORS + DynamoDB PK/SK on-demand + IAM DynamoDBCrudPolicy + TABLE_NAME). Validado: `sam validate --lint` OK
-- ✅ SAM CLI 1.163.0 instalado → **B-001 resolvido**
-- ⏭️ FAZER A SEGUIR: **T6** = `sam build` + `sam deploy --guided`; depois `curl <ApiBaseUrl>/health` → 200
-- 🧊 Depois da infra: implementar CRUD de `cadastro-pacientes`
+- ✅ **T6 done**: `sam build --use-container` + `sam deploy` → stack `clinica-pilates` no ar; `/health` → `{"status":"ok"}`
+- ✅ SAM CLI 1.163.0 instalado → **B-001 resolvido**; Docker build → **B-002 resolvido** (AD-006)
+- ✅ **Feature `infra-base-sam` COMPLETA**
+- ⏭️ FAZER A SEGUIR: **feature `cadastro-pacientes`** — quebrar em tasks e implementar (CRUD sobre a tabela já provisionada)
 
 **Ambiente local:** venv em `.venv` (Python 3.14). Testes: `.\.venv\Scripts\python.exe -m pytest -q`.
 **SAM CLI:** não está no PATH da sessão automatizada; caminho completo = `C:\Program Files\Amazon\AWSSAMCLI\bin\sam.cmd` (no terminal do usuário, `sam` funciona direto).
