@@ -2,7 +2,7 @@
 
 **Spec**: `.specs/features/infra-base-sam/spec.md`
 **Testing**: `.specs/codebase/TESTING.md`
-**Status**: In Progress (T1 ✅ done)
+**Status**: In Progress (T1, T2 ✅ done)
 
 ---
 
@@ -53,7 +53,7 @@ Phase 3 (Deploy validation, Sequential — bloqueada por B-001):
 
 ---
 
-### T2: App FastAPI com endpoint /health
+### T2: App FastAPI com endpoint /health ✅ DONE
 
 **What**: Criar a aplicação FastAPI com uma rota `GET /health` retornando `{"status":"ok"}`, com teste unitário.
 **Where**: `src/app/main.py`, `tests/test_health.py`

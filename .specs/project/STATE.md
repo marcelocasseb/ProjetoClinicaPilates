@@ -1,17 +1,23 @@
 # State
 
 **Last Updated:** 2026-07-18
-**Current Work:** Feature `infra-base-sam` — planejamento concluído (spec + tasks), execução ainda NÃO iniciada. PRÓXIMO PASSO: executar T1 (scaffold Python). Implementar T1→T5 offline; T6 (deploy) bloqueado por B-001 (SAM CLI).
+**Current Work:** Feature `infra-base-sam` — execução em andamento. T1 (scaffold) e T2 (app FastAPI + /health, 2 testes) ✅ concluídas. PRÓXIMO PASSO: T3 (handler Mangum + smoke test). SAM CLI 1.163.0 instalado → B-001 resolvido; T6 (deploy) destravado.
 
 **Onde paramos (retomar aqui):**
 - ✅ Projeto inicializado (PROJECT/ROADMAP/STATE), commit `621b608`
 - ✅ Planejamento da infra + TESTING.md commitados, commit `8e855b6`
 - ✅ Decisão de banco: DynamoDB single-table (AD-005)
 - ✅ Spec `cadastro-pacientes` escrita (PAC-01..09) — aguarda infra
-- ✅ Spec + tasks `infra-base-sam` escritas (INFRA-01..06, T1..T6) — nenhuma task executada ainda
+- ✅ Spec + tasks `infra-base-sam` (INFRA-01..06, T1..T6)
 - ✅ Convenção de testes: pytest + moto, cobertura pragmática (TESTING.md)
-- ⏭️ FAZER A SEGUIR: executar tasks da infra a partir de T1 (scaffold)
-- 🧊 Depois da infra: voltar para implementar o CRUD de `cadastro-pacientes`
+- ✅ **T1 scaffold done** (`6d3fc75`): src/app, tests/, requirements, pyproject, .gitignore; venv `.venv` criado, deps instaladas OK no Python 3.14
+- ✅ **T2 done**: `src/app/main.py` (FastAPI + GET /health) + `tests/test_health.py` (2 testes verdes)
+- ✅ SAM CLI 1.163.0 instalado → **B-001 resolvido**
+- ⏭️ FAZER A SEGUIR: **T3** (handler Mangum + smoke test), depois T4→T5 (template SAM)
+- 🧊 T6 (deploy) pronto para rodar após T5 — confirmar credenciais AWS (`aws sts get-caller-identity`)
+- 🧊 Depois da infra: implementar CRUD de `cadastro-pacientes`
+
+**Ambiente local:** venv em `.venv` (Python 3.14). Rodar comandos com `.\.venv\Scripts\python.exe`. Testes: `.\.venv\Scripts\python.exe -m pytest -q`.
 
 ---
 
@@ -62,19 +68,19 @@
 
 ## Active Blockers
 
-### B-001: SAM CLI não instalado (2026-07-18)
+### B-001: SAM CLI não instalado — ✅ RESOLVIDO (2026-07-18)
 
 **Discovered:** 2026-07-18
-**Impact:** Bloqueia `sam build`/`sam deploy` da feature Infra Base. AWS CLI (2.34.4) e credenciais não verificadas ainda. Não bloqueia escrever template.yaml nem o código.
-**Workaround:** Preparar todo o código/template offline; instalar SAM CLI antes do primeiro deploy.
-**Resolution:** Instalar AWS SAM CLI no Windows e confirmar credenciais AWS (`aws sts get-caller-identity`).
+**Impact:** Bloqueava `sam build`/`sam deploy` da feature Infra Base.
+**Resolution:** SAM CLI 1.163.0 instalado (via winget). Deploy destravado. Pendente ainda: confirmar credenciais AWS (`aws sts get-caller-identity`) antes da T6.
 
-### B-002: Python local 3.14 vs runtime Lambda (2026-07-18)
+### B-002: Python local 3.14 vs runtime Lambda (2026-07-18) — PARCIALMENTE RESOLVIDO
 
 **Discovered:** 2026-07-18
 **Impact:** Python local é 3.14.4; Lambda não tem runtime 3.14. Build de dependências (ex: pydantic-core, wheel compilada) precisa mirar a plataforma do Lambda.
-**Workaround:** Definir runtime `python3.13` no template; usar `sam build` (baixa wheels manylinux corretas). Sem Docker por decisão de projeto.
-**Resolution:** Confirmar que `sam build` resolve as wheels corretas para python3.13/x86_64; se não, considerar Lambda layer ou build direcionado.
+**Update (T1):** Instalação local no Python 3.14 FUNCIONOU — havia wheels cp314 (pydantic-core 2.46.4, fastapi 0.139.2, moto 5.2.2). Testes locais desbloqueados.
+**Restante:** Confirmar que `sam build` resolve wheels para python3.13/x86_64 no deploy (T6). Sem Docker por decisão de projeto.
+**Resolution:** Validar no `sam build` (T6); se falhar, considerar Lambda layer ou `--use-container`.
 
 ---
 
