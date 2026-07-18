@@ -1,15 +1,16 @@
 # State
 
 **Last Updated:** 2026-07-18
-**Current Work:** Feature `infra-base-sam` — tasks.md aprovado/em revisão. PRÓXIMO PASSO: executar T1 (scaffold Python). Implementar T1→T5 offline; T6 (deploy) bloqueado por B-001 (SAM CLI).
+**Current Work:** Feature `infra-base-sam` — planejamento concluído (spec + tasks), execução ainda NÃO iniciada. PRÓXIMO PASSO: executar T1 (scaffold Python). Implementar T1→T5 offline; T6 (deploy) bloqueado por B-001 (SAM CLI).
 
 **Onde paramos (retomar aqui):**
 - ✅ Projeto inicializado (PROJECT/ROADMAP/STATE), commit `621b608`
+- ✅ Planejamento da infra + TESTING.md commitados, commit `8e855b6`
 - ✅ Decisão de banco: DynamoDB single-table (AD-005)
 - ✅ Spec `cadastro-pacientes` escrita (PAC-01..09) — aguarda infra
-- ✅ Spec + tasks `infra-base-sam` escritas (INFRA-01..06, T1..T6)
+- ✅ Spec + tasks `infra-base-sam` escritas (INFRA-01..06, T1..T6) — nenhuma task executada ainda
 - ✅ Convenção de testes: pytest + moto, cobertura pragmática (TESTING.md)
-- ⏭️ FAZER A SEGUIR: executar tasks da infra a partir de T1
+- ⏭️ FAZER A SEGUIR: executar tasks da infra a partir de T1 (scaffold)
 - 🧊 Depois da infra: voltar para implementar o CRUD de `cadastro-pacientes`
 
 ---

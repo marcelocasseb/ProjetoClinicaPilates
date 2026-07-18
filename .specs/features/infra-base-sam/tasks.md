@@ -2,7 +2,7 @@
 
 **Spec**: `.specs/features/infra-base-sam/spec.md`
 **Testing**: `.specs/codebase/TESTING.md`
-**Status**: Draft
+**Status**: In Progress (T1 ✅ done)
 
 ---
 
@@ -25,7 +25,7 @@ Phase 3 (Deploy validation, Sequential — bloqueada por B-001):
 
 ## Task Breakdown
 
-### T1: Scaffold do projeto Python
+### T1: Scaffold do projeto Python ✅ DONE
 
 **What**: Criar a estrutura base do projeto backend (pacote `app`, dependências, config de testes, .gitignore).
 **Where**: `src/app/__init__.py`, `requirements.txt`, `pyproject.toml`, `tests/__init__.py`, `.gitignore`

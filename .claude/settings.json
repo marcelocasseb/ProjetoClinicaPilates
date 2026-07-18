@@ -4,7 +4,11 @@
       "Bash(git config *)",
       "Bash(git add *)",
       "Bash(sam --version)",
-      "Bash(aws --version)"
+      "Bash(aws --version)",
+      "PowerShell(python -m venv .venv)",
+      "PowerShell(.\\\\.venv\\\\Scripts\\\\python.exe -m pip install --upgrade pip --quiet)",
+      "PowerShell(.\\\\.venv\\\\Scripts\\\\python.exe -m pip install -r requirements-dev.txt 2>&1)",
+      "PowerShell(.\\\\.venv\\\\Scripts\\\\python.exe -m compileall src; Write-Output \"--- compileall exit: $LASTEXITCODE ---\"; .\\\\.venv\\\\Scripts\\\\python.exe -m pytest --collect-only -q; Write-Output \"--- pytest collect exit: $LASTEXITCODE ---\")"
     ]
   }
 }

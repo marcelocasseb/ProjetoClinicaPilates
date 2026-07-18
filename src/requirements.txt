@@ -1,0 +1,4 @@
+# Dependências de runtime da Lambda (empacotadas pelo `sam build`).
+# boto3 já vem no runtime do Lambda, por isso não é fixado aqui (reduz o tamanho do ZIP).
+fastapi
+mangum

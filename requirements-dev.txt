@@ -1,0 +1,6 @@
+# Dependências de desenvolvimento/teste (NÃO empacotadas na Lambda).
+-r src/requirements.txt
+pytest
+moto[dynamodb]
+boto3
+httpx
