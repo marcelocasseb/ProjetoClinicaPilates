@@ -4,7 +4,11 @@ Uma única app com roteamento interno, exposta ao Lambda via Mangum (ver handler
 """
 from fastapi import FastAPI
 
+from app.routers import pacientes
+
 app = FastAPI(title="Clínica de Pilates API")
+
+app.include_router(pacientes.router)
 
 
 @app.get("/health")
