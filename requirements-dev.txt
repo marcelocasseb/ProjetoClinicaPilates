@@ -4,3 +4,4 @@ pytest
 moto[dynamodb]
 boto3
 httpx
+uvicorn  # servidor local para rodar o app e testar via Postman/navegador

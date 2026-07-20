@@ -58,11 +58,16 @@ def editar_paciente(
     return atualizado
 
 
-@router.delete("/{paciente_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{paciente_id}")
 def remover_paciente(
     paciente_id: str,
     repo: PacienteRepository = Depends(get_repository),
-) -> None:
-    """Remove logicamente o paciente (PAC-08, soft delete); `404` se não existe/já removido."""
+) -> dict:
+    """Remove logicamente o paciente (PAC-08, soft delete).
+
+    Retorna `200` com mensagem de sucesso; `404` com "Paciente não encontrado"
+    se o id não existe ou já foi removido.
+    """
     if not repo.soft_delete(paciente_id):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Paciente não encontrado")
+    return {"detail": "Paciente removido com sucesso"}

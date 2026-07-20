@@ -19,19 +19,22 @@ def test_criar_paciente_retorna_201(dynamo_table):
     assert body["criadoEm"]
 
 
-def test_criar_sem_nome_retorna_422(dynamo_table):
+def test_criar_sem_nome_retorna_400_com_mensagem(dynamo_table):
     resp = client.post("/pacientes", json={"telefone": "119999"})
-    assert resp.status_code == 422
+    assert resp.status_code == 400
+    assert resp.json()["detail"] == "nome é obrigatório"
 
 
-def test_criar_nome_vazio_retorna_422(dynamo_table):
+def test_criar_nome_vazio_retorna_400_com_mensagem(dynamo_table):
     resp = client.post("/pacientes", json={"nome": "   "})
-    assert resp.status_code == 422
+    assert resp.status_code == 400
+    assert resp.json()["detail"] == "nome é obrigatório"
 
 
-def test_criar_email_invalido_retorna_422(dynamo_table):
+def test_criar_email_invalido_retorna_400(dynamo_table):
     resp = client.post("/pacientes", json={"nome": "Ana", "email": "invalido"})
-    assert resp.status_code == 422
+    assert resp.status_code == 400
+    assert resp.json()["detail"] == "email inválido"
 
 
 def test_obter_existente_retorna_200(dynamo_table):
@@ -81,10 +84,11 @@ def test_editar_retorna_200_e_atualiza(dynamo_table):
     assert client.get(f"/pacientes/{criado['id']}").json()["telefone"] == "222"
 
 
-def test_editar_nome_vazio_retorna_422(dynamo_table):
+def test_editar_nome_vazio_retorna_400(dynamo_table):
     criado = client.post("/pacientes", json={"nome": "Ana"}).json()
     resp = client.put(f"/pacientes/{criado['id']}", json={"nome": ""})
-    assert resp.status_code == 422
+    assert resp.status_code == 400
+    assert resp.json()["detail"] == "nome é obrigatório"
 
 
 def test_editar_inexistente_retorna_404(dynamo_table):
@@ -92,10 +96,11 @@ def test_editar_inexistente_retorna_404(dynamo_table):
     assert resp.status_code == 404
 
 
-def test_remover_retorna_204_e_some_do_get(dynamo_table):
+def test_remover_retorna_200_com_mensagem_e_some_do_get(dynamo_table):
     criado = client.post("/pacientes", json={"nome": "Ana"}).json()
     resp = client.delete(f"/pacientes/{criado['id']}")
-    assert resp.status_code == 204
+    assert resp.status_code == 200
+    assert resp.json()["detail"] == "Paciente removido com sucesso"
     assert client.get(f"/pacientes/{criado['id']}").status_code == 404
 
 
@@ -107,8 +112,10 @@ def test_removido_some_da_listagem(dynamo_table):
     assert nomes == ["B"]
 
 
-def test_remover_inexistente_retorna_404(dynamo_table):
-    assert client.delete("/pacientes/nao-existe").status_code == 404
+def test_remover_inexistente_retorna_404_com_mensagem(dynamo_table):
+    resp = client.delete("/pacientes/nao-existe")
+    assert resp.status_code == 404
+    assert resp.json()["detail"] == "Paciente não encontrado"
 
 
 def test_editar_removido_retorna_404(dynamo_table):

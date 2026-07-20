@@ -99,12 +99,12 @@ A clínica de Pilates não tem um registro organizado dos seus pacientes. Antes 
 
 **Acceptance Criteria**:
 
-1. WHEN a equipe solicita `DELETE /pacientes/{id}` THEN o sistema SHALL marcar o paciente como inativo (soft delete) e retornar `204`.
+1. WHEN a equipe solicita `DELETE /pacientes/{id}` THEN o sistema SHALL marcar o paciente como inativo (soft delete) e retornar `200` com `{"detail": "Paciente removido com sucesso"}`.
 2. WHEN um paciente é removido logicamente THEN o sistema SHALL preservar o item no DynamoDB (dado não é apagado fisicamente).
 3. WHEN se tenta remover um `id` inexistente ou já removido THEN o sistema SHALL retornar `404`.
 4. WHEN um paciente está removido THEN ele SHALL ser omitido da listagem e do `GET` por id padrão.
 
-**Independent Test**: `DELETE /pacientes/{id}` retorna `204`; `GET /pacientes/{id}` passa a retornar `404`; o item continua na tabela com flag de inativo.
+**Independent Test**: `DELETE /pacientes/{id}` retorna `200` com mensagem de sucesso; `GET /pacientes/{id}` passa a retornar `404`; o item continua na tabela com flag de inativo.
 
 ---
 

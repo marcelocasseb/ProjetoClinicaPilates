@@ -12,7 +12,7 @@ import re
 from datetime import date
 from typing import Optional
 
-from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic import BaseModel, ConfigDict, field_validator, model_validator
 
 _EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 _DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
@@ -29,22 +29,33 @@ class PacienteBase(BaseModel):
     telefone: Optional[str] = None
     email: Optional[str] = None
 
-    @field_validator("nome", "dataNascimento", "endereco", "telefone", "email", mode="before")
+    @model_validator(mode="before")
     @classmethod
-    def _strip_e_vazio_para_none(cls, v):
-        """Normaliza: strings viram trimmed; vazio/só-espaços vira None."""
+    def _exige_nome(cls, data):
+        """`nome` é obrigatório: ausente, nulo, vazio ou só-espaços → rejeita com msg clara.
+
+        Roda antes da validação de tipo, então captura todos os casos (inclusive
+        campo ausente) com uma única mensagem em vez do erro técnico do Pydantic.
+        """
+        if isinstance(data, dict):
+            nome = data.get("nome")
+            if not isinstance(nome, str) or not nome.strip():
+                raise ValueError("nome é obrigatório")
+        return data
+
+    @field_validator("nome")
+    @classmethod
+    def _trim_nome(cls, v):
+        return v.strip()
+
+    @field_validator("dataNascimento", "endereco", "telefone", "email", mode="before")
+    @classmethod
+    def _vazio_para_none(cls, v):
+        """Opcionais: strings viram trimmed; vazio/só-espaços vira None."""
         if not isinstance(v, str):
             return v
         v = v.strip()
         return v or None
-
-    @field_validator("nome")
-    @classmethod
-    def _nome_obrigatorio(cls, v):
-        # Após a normalização acima, vazio/só-espaços chega como None.
-        if not v:
-            raise ValueError("nome é obrigatório")
-        return v
 
     @field_validator("dataNascimento")
     @classmethod
