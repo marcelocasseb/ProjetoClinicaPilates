@@ -122,21 +122,21 @@ A clínica de Pilates não tem um registro organizado dos seus pacientes. Antes 
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| PAC-01 | P1: Cadastrar paciente | - | Pending |
-| PAC-02 | P1: Cadastrar — persistência PK/SK (AD-005) | - | Pending |
-| PAC-03 | P1: Cadastrar — validação de nome obrigatório | - | Pending |
-| PAC-04 | P1: Cadastrar — validação de email | - | Pending |
-| PAC-05 | P1: Listar pacientes ativos | - | Pending |
-| PAC-06 | P1: Obter paciente por id | - | Pending |
-| PAC-07 | P1: Editar paciente | - | Pending |
-| PAC-08 | P2: Remover paciente (soft delete) | - | Pending |
-| PAC-09 | Edge cases de validação de entrada | - | Pending |
+| PAC-01 | P1: Cadastrar paciente | T3 | Verified |
+| PAC-02 | P1: Cadastrar — persistência PK/SK (AD-005) | T2 | Verified |
+| PAC-03 | P1: Cadastrar — validação de nome obrigatório | T1 | Verified |
+| PAC-04 | P1: Cadastrar — validação de email | T1 | Verified |
+| PAC-05 | P1: Listar pacientes ativos | T2, T4 | Verified |
+| PAC-06 | P1: Obter paciente por id | T2, T3 | Verified |
+| PAC-07 | P1: Editar paciente | T1, T4 | Verified |
+| PAC-08 | P2: Remover paciente (soft delete) | T2, T4 | Verified |
+| PAC-09 | Edge cases de validação de entrada | T1 | Verified |
 
 **ID format:** `PAC-[NUMBER]`
 
 **Status values:** Pending → In Design → In Tasks → Implementing → Verified
 
-**Coverage:** 9 total, 0 mapped to tasks, 9 unmapped ⚠️
+**Coverage:** 9 total, 9 mapped to tasks, 0 unmapped ✅ — todos cobertos por teste (45 tests verdes).
 
 ---
 

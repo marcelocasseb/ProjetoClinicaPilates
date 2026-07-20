@@ -1,7 +1,7 @@
 # State
 
-**Last Updated:** 2026-07-18
-**Current Work:** Feature `infra-base-sam` ✅ CONCLUÍDA (T1–T6, stack no ar, /health OK). PRÓXIMO PASSO: implementar a feature `cadastro-pacientes` (spec já escrita, PAC-01..09) — quebrar em tasks e executar sobre a infra já provisionada.
+**Last Updated:** 2026-07-20
+**Current Work:** Feature `cadastro-pacientes` ✅ CONCLUÍDA no código (T1–T4, 45 tests verdes, PAC-01..09 Verified). CRUD completo: schemas Pydantic + repositório DynamoDB (moto) + router FastAPI fiado no app. PRÓXIMO PASSO: **`sam build --use-container` + `sam deploy`** para publicar os novos endpoints `/pacientes` na stack `clinica-pilates`, e smoke-test end-to-end contra a URL do API Gateway. Depois: milestone M2 (registro de sessões/aparelhos).
 
 **Recursos AWS provisionados (stack `clinica-pilates`, us-east-1):**
 - API base: https://8f1ffym997.execute-api.us-east-1.amazonaws.com
@@ -23,7 +23,13 @@
 - ✅ **T6 done**: `sam build --use-container` + `sam deploy` → stack `clinica-pilates` no ar; `/health` → `{"status":"ok"}`
 - ✅ SAM CLI 1.163.0 instalado → **B-001 resolvido**; Docker build → **B-002 resolvido** (AD-006)
 - ✅ **Feature `infra-base-sam` COMPLETA**
-- ⏭️ FAZER A SEGUIR: **feature `cadastro-pacientes`** — quebrar em tasks e implementar (CRUD sobre a tabela já provisionada)
+- ✅ **Feature `cadastro-pacientes` COMPLETA no código** (tasks.md T1–T4):
+  - T1: `src/app/schemas.py` (Pydantic — nome obrigatório, email regex, dataNascimento YYYY-MM-DD, vazios→None, extra ignorado)
+  - T2: `src/app/repository.py` (`PacienteRepository` — create/get/list_ativos/update/soft_delete; PK=CLIENT#id, SK=PROFILE; testes moto)
+  - T3: `src/app/routers/pacientes.py` (POST /pacientes, GET /pacientes/{id}) fiado em `main.py` via `include_router`
+  - T4: mesmo router — GET /pacientes (listar ativos), PUT /pacientes/{id}, DELETE /pacientes/{id} (soft delete, 204)
+  - Suíte: 45 tests verdes (`.\.venv\Scripts\python.exe -m pytest -q`)
+- ⏭️ FAZER A SEGUIR: **`sam build --use-container` + `sam deploy`** (Docker Desktop aberto) para publicar `/pacientes` na stack; depois smoke-test via `POST`/`GET` na URL do API Gateway. Em seguida, M2 (sessões/aparelhos).
 
 **Ambiente local:** venv em `.venv` (Python 3.14). Testes: `.\.venv\Scripts\python.exe -m pytest -q`.
 **SAM CLI:** não está no PATH da sessão automatizada; caminho completo = `C:\Program Files\Amazon\AWSSAMCLI\bin\sam.cmd` (no terminal do usuário, `sam` funciona direto).

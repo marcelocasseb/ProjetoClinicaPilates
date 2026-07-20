@@ -19,12 +19,14 @@
 - Configuração de CORS
 - Verificado: `GET /health` → `{"status":"ok"}`
 
-**CRUD de Pacientes** - PLANNED
+**CRUD de Pacientes** - COMPLETE
 
-- Modelagem da entidade Paciente no DynamoDB
-- Endpoints: criar, listar, obter, editar, remover paciente
+- Modelagem da entidade Paciente no DynamoDB (single-table, `SK=PROFILE`)
+- Endpoints: criar, listar, obter, editar, remover (soft delete) paciente
 - Backend FastAPI + Mangum com roteamento interno em uma Lambda
 - Validação via Pydantic
+- 45 testes verdes (schemas + repositório com moto + endpoints); PAC-01..09 Verified
+- ⏳ Pendente: `sam build` + `sam deploy` para publicar os novos endpoints na stack
 
 ---
 
