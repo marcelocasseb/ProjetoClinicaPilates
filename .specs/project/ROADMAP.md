@@ -32,16 +32,25 @@
 
 ---
 
-## M2 — Registro de Sessões e Aparelhos
+## M2 — Aparelhos e Registro de Sessões
 
 **Goal:** Registrar, por paciente, os aparelhos utilizados em cada sessão (core do produto).
+Cada clínica mantém seu próprio catálogo de aparelhos (multi-tenant, AD-007).
 
 ### Features
 
-**Registro de Sessões** - PLANNED
+**1. Cadastro de Aparelhos (por clínica)** - PLANNED  ← fazer primeiro (fundação)
 
-- Modelagem sessão (partition key = paciente, sort key = data/sessão)
-- Endpoints para registrar e consultar sessões e aparelhos por paciente
+- Catálogo de aparelhos próprio de cada clínica (A pode ter o que B não tem)
+- Modelagem: `PK=CLINIC#<clinicId>`, `SK=APARELHO#<id>` (nível clínica, não paciente)
+- Listagem por Query direto na PK da clínica (sem GSI necessário)
+- CRUD (criar, listar, editar, remover — soft delete para preservar histórico)
+
+**2. Registro de Sessões** - PLANNED  ← depende do catálogo de aparelhos
+
+- Modelagem sessão sob o paciente: `PK=CLINIC#<clinicId>#CLIENT#<clientId>`, `SK=SESSION#<data>`
+- Sessão referencia aparelhos do catálogo, guardando snapshot (id + nome) — histórico imune a edição/remoção do aparelho
+- Endpoints para registrar e consultar sessões por paciente ("última sessão", "evolução" = 1 Query por PK)
 
 ---
 
