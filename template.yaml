@@ -55,6 +55,9 @@ Resources:
             Method: ANY
 
   # --- Tabela DynamoDB single-table on-demand (T5 / AD-005) ---
+  # Multi-tenant (AD-007): PK = CLINIC#<clinicId>#CLIENT#<clientId>, SK = PROFILE.
+  # GSI1 lista os pacientes de uma clínica (GSI1PK = CLINIC#<clinicId>), índice
+  # esparso — só itens de perfil têm GSI1PK/GSI1SK.
   ClinicaTable:
     Type: AWS::DynamoDB::Table
     Properties:
@@ -64,11 +67,24 @@ Resources:
           AttributeType: S
         - AttributeName: SK
           AttributeType: S
+        - AttributeName: GSI1PK
+          AttributeType: S
+        - AttributeName: GSI1SK
+          AttributeType: S
       KeySchema:
         - AttributeName: PK
           KeyType: HASH
         - AttributeName: SK
           KeyType: RANGE
+      GlobalSecondaryIndexes:
+        - IndexName: GSI1
+          KeySchema:
+            - AttributeName: GSI1PK
+              KeyType: HASH
+            - AttributeName: GSI1SK
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
 
 Outputs:
   ApiBaseUrl:

@@ -123,3 +123,48 @@ def test_editar_removido_retorna_404(dynamo_table):
     client.delete(f"/pacientes/{criado['id']}")
     resp = client.put(f"/pacientes/{criado['id']}", json={"nome": "Ana Maria"})
     assert resp.status_code == 404
+
+
+# --- CPF + endereço via API (AD-008, AD-009) ---
+
+
+def test_criar_com_cpf_e_endereco_via_api(dynamo_table):
+    payload = {
+        "nome": "Maria",
+        "cpf": "529.982.247-25",
+        "endereco": {
+            "cep": "01310-100",
+            "logradouro": "Av. Paulista",
+            "numero": "1000",
+            "bairro": "Bela Vista",
+            "cidade": "São Paulo",
+            "uf": "SP",
+        },
+    }
+    criado = client.post("/pacientes", json=payload).json()
+    assert criado["cpf"] == "52998224725"
+    assert criado["endereco"]["cep"] == "01310100"
+    obtido = client.get(f"/pacientes/{criado['id']}").json()
+    assert obtido["endereco"]["cidade"] == "São Paulo"
+
+
+def test_criar_cpf_invalido_retorna_400(dynamo_table):
+    resp = client.post("/pacientes", json={"nome": "Ana", "cpf": "12345678900"})
+    assert resp.status_code == 400
+    assert resp.json()["detail"] == "CPF inválido"
+
+
+# --- Isolamento multi-tenant por header X-Clinic-Id (AD-007) ---
+
+
+def test_isolamento_entre_clinicas_via_header(dynamo_table):
+    a = {"X-Clinic-Id": "clinica-a"}
+    b = {"X-Clinic-Id": "clinica-b"}
+    criado_a = client.post("/pacientes", json={"nome": "Paciente A"}, headers=a).json()
+    client.post("/pacientes", json={"nome": "Paciente B"}, headers=b)
+    # cada clínica só lista o seu
+    assert [p["nome"] for p in client.get("/pacientes", headers=a).json()] == ["Paciente A"]
+    assert [p["nome"] for p in client.get("/pacientes", headers=b).json()] == ["Paciente B"]
+    # clínica B não acessa o paciente da A por id
+    assert client.get(f"/pacientes/{criado_a['id']}", headers=b).status_code == 404
+    assert client.get(f"/pacientes/{criado_a['id']}", headers=a).status_code == 200
