@@ -120,21 +120,26 @@ Cada clínica de Pilates tem seu próprio conjunto de aparelhos — e o que exis
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| APR-01 | P1: Cadastrar aparelho | - | Pending |
-| APR-02 | P1: Cadastrar — persistência PK/SK (nível clínica) | - | Pending |
-| APR-03 | P1: Cadastrar — validação de nome obrigatório | - | Pending |
-| APR-04 | P1: Listar aparelhos ativos da clínica | - | Pending |
-| APR-05 | P1: Obter aparelho por id | - | Pending |
-| APR-06 | P1: Editar aparelho | - | Pending |
-| APR-07 | P2: Remover aparelho (soft delete) | - | Pending |
-| APR-08 | Isolamento multi-tenant (não vazar entre clínicas) | - | Pending |
-| APR-09 | Edge cases de validação de entrada | - | Pending |
+| APR-01 | P1: Cadastrar aparelho | A3 | Verified |
+| APR-02 | P1: Cadastrar — persistência PK/SK (nível clínica) | A2 | Verified |
+| APR-03 | P1: Cadastrar — validação de nome obrigatório | A1 | Verified |
+| APR-04 | P1: Listar aparelhos ativos da clínica | A2, A3 | Verified |
+| APR-05 | P1: Obter aparelho por id | A2, A3 | Verified |
+| APR-06 | P1: Editar aparelho | A1, A2, A3 | Verified |
+| APR-07 | P2: Remover aparelho (soft delete) | A2, A3 | Verified |
+| APR-08 | Isolamento multi-tenant (não vazar entre clínicas) | A2, A3 | Verified |
+| APR-09 | Edge cases de validação de entrada | A1 | Verified |
 
 **ID format:** `APR-[NUMBER]`
 
 **Status values:** Pending → In Design → In Tasks → Implementing → Verified
 
-**Coverage:** 9 total, 0 mapped to tasks, 9 unmapped ⚠️
+**Coverage:** 9 total, 9 mapped, 0 unmapped ✅ — implementado em 3 tasks (A1 schemas, A2 repositório, A3 endpoints); 96 tests verdes na suíte.
+
+**Implementação (A1–A3):**
+- A1 — `src/app/schemas_aparelho.py` + testes (commit schemas)
+- A2 — `src/app/repository_aparelho.py` + testes (nível clínica, Query sem GSI, isolamento)
+- A3 — `src/app/routers/aparelhos.py` + `src/app/deps.py` (get_clinic_id compartilhado) + fiação no `main.py` + testes de endpoint
 
 ---
 
