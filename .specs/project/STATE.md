@@ -32,7 +32,8 @@
   - Ajuste pós-review: validação retorna 400 com msg legível (`nome é obrigatório`, `email inválido`); DELETE retorna 200 `{"detail":"Paciente removido com sucesso"}` / 404 `{"detail":"Paciente não encontrado"}`
   - ✅ **DEPLOYADO** (`sam build --use-container` + `sam deploy`): `/pacientes` no ar; smoke-test público OK
 - ✅ **Milestone M1 CONCLUÍDO**
-- ⏭️ FAZER A SEGUIR: **M2 — Registro de Sessões e Aparelhos**. Escrever a spec da feature (endpoints de sessão por paciente, `SK=SESSION#<data>` com lista denormalizada de aparelhos/exercícios). Rodar app local: `TABLE_NAME=clinica-pilates-ClinicaTable-8YQAEIFAKZGE .venv\Scripts\python -m uvicorn app.main:app --app-dir src --reload`. Deploy: `sam build --use-container; sam deploy` (Docker aberto).
+- ⚠️ **ANTES DO M2, LER B-003 + AD-007 (multi-tenancy):** o `clinicId` precisa entrar na PK antes de construir novas features, senão haverá migração de dados depois.
+- ⏭️ FAZER A SEGUIR: **M2 — Registro de Sessões e Aparelhos**. Escrever a spec da feature (endpoints de sessão por paciente, `SK=SESSION#<data>` com lista denormalizada de aparelhos/exercícios) — **já com a chave multi-tenant** (AD-007). Rodar app local: `TABLE_NAME=clinica-pilates-ClinicaTable-8YQAEIFAKZGE .venv\Scripts\python -m uvicorn app.main:app --app-dir src --reload`. Deploy: `sam build --use-container; sam deploy` (Docker aberto).
 
 **Ambiente local:** venv em `.venv` (Python 3.14). Testes: `.\.venv\Scripts\python.exe -m pytest -q`.
 **SAM CLI:** não está no PATH da sessão automatizada; caminho completo = `C:\Program Files\Amazon\AWSSAMCLI\bin\sam.cmd` (no terminal do usuário, `sam` funciona direto).
@@ -40,6 +41,19 @@
 ---
 
 ## Recent Decisions (Last 60 days)
+
+### AD-007: Multi-tenancy modelo pool — `clinicId` na PK (planejado, aplicar antes do M2) (2026-07-20)
+
+**Decision:** O sistema servirá **várias clínicas** (multi-tenant) na mesma tabela/stack, modelo **pool** (compartilhado, isolamento lógico). Cada registro carrega o `clinicId` no início da partition key:
+- Perfil: `PK=CLINIC#<clinicId>#CLIENT#<clientId>`, `SK=PROFILE`
+- Demais itens do cliente: mesma PK, `SK=SESSION#<data>` / `MEASURE#<data>` / etc.
+- Listar pacientes de uma clínica: via **GSI** (`GSI1PK=CLINIC#<clinicId>`) — substitui o `Scan` atual por `Query` escopado.
+
+**Isolamento (o ponto crítico de segurança):** toda query filtra pelo `clinicId` **derivado do token do login** (custom claim do Cognito, M3) — **NUNCA** do corpo/params da requisição. Assim, usuário da clínica 1 pedindo id da clínica 2 → busca só dentro de `CLINIC#1` → 404. É o token + filtro server-side que garantem o isolamento, não a URL.
+
+**Reason:** Habilita vender pra 1, 10 ou 500 clínicas sem re-arquitetura (DynamoDB e Lambda escalam sozinhos; chave por paciente já espalha a carga). Custo continua por uso. Padrão de mercado para SaaS serverless.
+**Trade-off:** Isolamento lógico (não físico) — exige disciplina de sempre filtrar por tenant. Cresce a necessidade de features de produto (onboarding de clínica, billing por clínica, super-admin), que são módulos por cima, não re-arquitetura.
+**Impact:** Revisa a convenção de chaves do AD-005 (prefixa `CLINIC#<clinicId>#`). Deve ser aplicado **antes** do M2 para evitar migração de dados (ver B-003). Até o Cognito (M3), usar um `clinicId` "default" fixo já deixa o modelo pronto.
 
 ### AD-001: Backend em FastAPI + Mangum (2026-07-18)
 
@@ -92,6 +106,12 @@
 ---
 
 ## Active Blockers
+
+### B-003: Ajustar convenção de chaves para multi-tenant ANTES do M2 — 🔴 ABERTO (2026-07-20)
+
+**Discovered:** 2026-07-20 (dúvida do usuário sobre vender para várias clínicas)
+**Impact:** O `clinicId` faz parte da partition key (AD-007). Se o M2 (sessões/aparelhos) for construído com a chave antiga (`PK=CLIENT#<id>`), será necessário **migrar todos os itens** da tabela depois para reescrever as PKs. Também afeta a listagem (passar de `Scan` para `Query` via GSI).
+**Next step:** No início do M2, decidir e aplicar o formato de chave multi-tenant (`PK=CLINIC#<clinicId>#CLIENT#<clientId>`), atualizar a convenção do AD-005, o `repository.py` e criar o GSI de listagem por clínica. Usar um `clinicId` "default" enquanto o Cognito (M3) não existe.
 
 ### B-001: SAM CLI não instalado — ✅ RESOLVIDO (2026-07-18)
 
