@@ -145,19 +145,26 @@ A clínica de Pilates não tem um registro organizado dos seus pacientes. Antes 
 Item de perfil do paciente na tabela única:
 
 ```
-PK = CLIENT#<id>
+PK = CLIENT#<id>            (⚠️ mudará para CLINIC#<clinicId>#CLIENT#<id> — ver AD-007/B-003)
 SK = PROFILE
 Atributos:
   id            (uuid)
   nome          (string, obrigatório)
+  cpf           (string, opcional, validado 11 díg + dígitos verificadores, normalizado só números — AD-008)
   dataNascimento(string YYYY-MM-DD, opcional)
-  endereco      (string, opcional)
+  endereco      (MAP opcional, preenchido via CEP no front — AD-009):
+                  { cep, logradouro, numero, complemento, bairro, cidade, uf }
   telefone      (string, opcional)
   email         (string, opcional, validado)
   ativo         (bool, default true; false = soft delete)
   criadoEm      (ISO timestamp)
   atualizadoEm  (ISO timestamp)
 ```
+
+> **Nota (2026-07-21):** `cpf` (AD-008) e `endereco` como MAP (AD-009) foram decididos após o
+> deploy inicial. Serão aplicados no refactor do paciente que também introduz o multi-tenant
+> (`clinicId` na chave, AD-007/B-003) — os três mexem em `schemas.py`/`repository.py` e serão
+> feitos numa única passada antes do M2. A `endereco` deixa de ser string e passa a objeto.
 
 ---
 

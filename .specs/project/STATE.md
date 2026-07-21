@@ -42,6 +42,24 @@
 
 ## Recent Decisions (Last 60 days)
 
+### AD-009: Endereço do paciente como MAP (objeto aninhado), preenchido via CEP no front (2026-07-21)
+
+**Decision:** O endereço do paciente será um **MAP** (objeto aninhado) no item DynamoDB, não um campo string único nem vários atributos soltos. Submodelo Pydantic `Endereco`:
+```
+endereco: { cep, logradouro, numero, complemento, bairro, cidade, uf }
+```
+Campo **opcional**. A consulta ao CEP (ViaCEP) é feita **no front-end** — o back apenas recebe e armazena o objeto já montado (não chama ViaCEP).
+**Reason:** Casa 1-para-1 com o retorno do ViaCEP (`logradouro`, `bairro`, `localidade`, `uf`) e com o formulário do front; mantém o endereço coeso e fácil de exibir/editar; DynamoDB suporta Map nativo. Campo único perde estrutura; atributos soltos poluem o item.
+**Trade-off:** Front assume a responsabilidade da consulta de CEP (aceito — evita chamada externa na Lambda).
+**Impact:** `schemas.py` ganha submodelo `Endereco` (troca `endereco: Optional[str]` por `Optional[Endereco]`). Aplicar junto com o refactor multi-tenant (B-003).
+
+### AD-008: CPF do paciente — opcional e validado (2026-07-21)
+
+**Decision:** Adicionar `cpf` ao paciente. Campo **opcional**, mas **validado** quando informado (11 dígitos + dígitos verificadores, não só tamanho). Armazenado **normalizado** (só números); o front formata na exibição.
+**Reason:** Mantém a regra de cadastro rápido (só `nome` obrigatório) sem abrir mão da integridade do dado quando o CPF é preenchido.
+**Trade-off:** Não impede duplicidade por ora.
+**Impact:** `schemas.py` ganha campo `cpf` + validador de dígitos verificadores. **Futuro:** CPF é bom candidato a **único por clínica** (impedir cadastro duplicado) — avaliar quando o multi-tenant existir. Aplicar junto com o refactor multi-tenant (B-003).
+
 ### AD-007: Multi-tenancy modelo pool — `clinicId` na PK (planejado, aplicar antes do M2) (2026-07-20)
 
 **Decision:** O sistema servirá **várias clínicas** (multi-tenant) na mesma tabela/stack, modelo **pool** (compartilhado, isolamento lógico). Cada registro carrega o `clinicId` no início da partition key:
@@ -112,6 +130,8 @@
 **Discovered:** 2026-07-20 (dúvida do usuário sobre vender para várias clínicas)
 **Impact:** O `clinicId` faz parte da partition key (AD-007). Se o M2 (sessões/aparelhos) for construído com a chave antiga (`PK=CLIENT#<id>`), será necessário **migrar todos os itens** da tabela depois para reescrever as PKs. Também afeta a listagem (passar de `Scan` para `Query` via GSI).
 **Next step:** No início do M2, decidir e aplicar o formato de chave multi-tenant (`PK=CLINIC#<clinicId>#CLIENT#<clientId>`), atualizar a convenção do AD-005, o `repository.py` e criar o GSI de listagem por clínica. Usar um `clinicId` "default" enquanto o Cognito (M3) não existe.
+**Agrupar no mesmo refactor do paciente** (mesmos arquivos `schemas.py`/`repository.py`): AD-008 (campo `cpf` opcional validado) e AD-009 (`endereco` como MAP aninhado). Fazer os três de uma vez antes do M2.
+**Decisão pendente:** estratégia de listagem — clínica-na-PK (sem GSI, mais simples, recomendada p/ porte pequeno/médio) **vs** cliente-na-PK + GSI (escala máxima, exige alterar `template.yaml`). Não decidido ainda.
 
 ### B-001: SAM CLI não instalado — ✅ RESOLVIDO (2026-07-18)
 
