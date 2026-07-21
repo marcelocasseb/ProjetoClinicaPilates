@@ -1,7 +1,7 @@
 # State
 
 **Last Updated:** 2026-07-20
-**Current Work:** Feature `cadastro-pacientes` ✅ CONCLUÍDA no código (T1–T4, 45 tests verdes, PAC-01..09 Verified). CRUD completo: schemas Pydantic + repositório DynamoDB (moto) + router FastAPI fiado no app. PRÓXIMO PASSO: **`sam build --use-container` + `sam deploy`** para publicar os novos endpoints `/pacientes` na stack `clinica-pilates`, e smoke-test end-to-end contra a URL do API Gateway. Depois: milestone M2 (registro de sessões/aparelhos).
+**Current Work:** Feature `cadastro-pacientes` ✅ CONCLUÍDA E DEPLOYADA. CRUD `/pacientes` no ar na stack `clinica-pilates` (deploy 2026-07-20), smoke-test público OK (POST/GET/PUT/DELETE + validação 400). **Milestone M1 CONCLUÍDO** (infra base + CRUD de pacientes). PRÓXIMO PASSO: iniciar **Milestone M2 — Registro de Sessões e Aparelhos** (spec ainda não escrita; usar single-table `SK=SESSION#<data>` pendurada no `CLIENT#<id>`, ver AD-005).
 
 **Recursos AWS provisionados (stack `clinica-pilates`, us-east-1):**
 - API base: https://8f1ffym997.execute-api.us-east-1.amazonaws.com
@@ -29,7 +29,10 @@
   - T3: `src/app/routers/pacientes.py` (POST /pacientes, GET /pacientes/{id}) fiado em `main.py` via `include_router`
   - T4: mesmo router — GET /pacientes (listar ativos), PUT /pacientes/{id}, DELETE /pacientes/{id} (soft delete, 204)
   - Suíte: 45 tests verdes (`.\.venv\Scripts\python.exe -m pytest -q`)
-- ⏭️ FAZER A SEGUIR: **`sam build --use-container` + `sam deploy`** (Docker Desktop aberto) para publicar `/pacientes` na stack; depois smoke-test via `POST`/`GET` na URL do API Gateway. Em seguida, M2 (sessões/aparelhos).
+  - Ajuste pós-review: validação retorna 400 com msg legível (`nome é obrigatório`, `email inválido`); DELETE retorna 200 `{"detail":"Paciente removido com sucesso"}` / 404 `{"detail":"Paciente não encontrado"}`
+  - ✅ **DEPLOYADO** (`sam build --use-container` + `sam deploy`): `/pacientes` no ar; smoke-test público OK
+- ✅ **Milestone M1 CONCLUÍDO**
+- ⏭️ FAZER A SEGUIR: **M2 — Registro de Sessões e Aparelhos**. Escrever a spec da feature (endpoints de sessão por paciente, `SK=SESSION#<data>` com lista denormalizada de aparelhos/exercícios). Rodar app local: `TABLE_NAME=clinica-pilates-ClinicaTable-8YQAEIFAKZGE .venv\Scripts\python -m uvicorn app.main:app --app-dir src --reload`. Deploy: `sam build --use-container; sam deploy` (Docker aberto).
 
 **Ambiente local:** venv em `.venv` (Python 3.14). Testes: `.\.venv\Scripts\python.exe -m pytest -q`.
 **SAM CLI:** não está no PATH da sessão automatizada; caminho completo = `C:\Program Files\Amazon\AWSSAMCLI\bin\sam.cmd` (no terminal do usuário, `sam` funciona direto).

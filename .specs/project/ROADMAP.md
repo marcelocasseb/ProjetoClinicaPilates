@@ -1,7 +1,7 @@
 # Roadmap
 
-**Current Milestone:** M1 — Fundação + CRUD de Pacientes
-**Status:** In Progress
+**Current Milestone:** M2 — Registro de Sessões e Aparelhos (próximo)
+**Status:** M1 concluído ✅ — iniciar M2
 
 ---
 
@@ -26,7 +26,9 @@
 - Backend FastAPI + Mangum com roteamento interno em uma Lambda
 - Validação via Pydantic
 - 45 testes verdes (schemas + repositório com moto + endpoints); PAC-01..09 Verified
-- ⏳ Pendente: `sam build` + `sam deploy` para publicar os novos endpoints na stack
+- ✅ Deployado na stack `clinica-pilates` (2026-07-20); smoke-test público OK
+
+**Milestone M1 CONCLUÍDO** ✅
 
 ---
 
