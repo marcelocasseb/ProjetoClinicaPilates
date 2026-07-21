@@ -169,12 +169,15 @@ _Nenhuma ainda._
 
 - [ ] Upload de fotos/laudos/anexos por paciente (S3) — Captured during: inicialização
 - [ ] Relatórios de uso de aparelhos — Captured during: inicialização
+- [ ] **Papéis/permissões dentro da clínica (roles via Cognito groups)** — ex.: recepcionista vê pacientes mas não edita; fisioterapeuta vê tudo. Camada ADICIONAL à do `clinicId` (que já isola entre clínicas). Refinamento pós-M3. — Captured during: discussão multi-tenant (2026-07-21)
+- [ ] **Onboarding de nova clínica** (self-service) — tela que cria o `clinicId` + primeiro usuário admin da clínica. Necessário para virar SaaS de fato. — Captured during: discussão multi-tenant (2026-07-21)
 
 ---
 
 ## Todos
 
 - [ ] Especificar frontend via spec "impecable" (M4)
+- [ ] **M3 (login/Cognito) — trocar a fonte do `clinicId`:** hoje `get_clinic_id()` (em `src/app/routers/pacientes.py`) lê o header temporário `X-Clinic-Id` (andaime inseguro). No M3, passar a extrair o `clinicId` do **token** do usuário logado (custom claim do Cognito, gravado na conta na criação). **Só essa função muda** — endpoints e repositório continuam iguais. Autenticação (validar assinatura/expiração do token) fica no API Gateway + Cognito, antes da Lambda. Duas camadas: autenticação ("quem é você" = Cognito) + autorização/isolamento ("só a sua clínica" = filtro pelo `clinicId` do token, já pronto).
 
 ---
 
