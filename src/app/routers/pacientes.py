@@ -2,26 +2,15 @@
 
 Usa os schemas de validação (`app.schemas`) e o repositório DynamoDB
 (`app.repository`). O repositório é injetado via `Depends` e é **escopado por
-clínica** (multi-tenant, AD-007): o `clinicId` vem de `get_clinic_id`.
+clínica** (multi-tenant, AD-007): o `clinicId` vem de `get_clinic_id` (deps.py).
 """
-from typing import Optional
+from fastapi import APIRouter, Depends, HTTPException, status
 
-from fastapi import APIRouter, Depends, Header, HTTPException, status
-
+from app.deps import get_clinic_id
 from app.repository import PacienteRepository
 from app.schemas import PacienteCreate, PacienteOut, PacienteUpdate
 
 router = APIRouter(prefix="/pacientes", tags=["pacientes"])
-
-# Enquanto o login (Cognito, M3) não existe, o clinicId vem de um header opcional
-# (`X-Clinic-Id`, útil para testes e multi-clínica local) ou cai no default.
-# Quando o login existir, `get_clinic_id` passará a extrair o clinicId do token —
-# e SÓ este ponto muda; o resto do código continua igual.
-DEFAULT_CLINIC_ID = "default"
-
-
-def get_clinic_id(x_clinic_id: Optional[str] = Header(default=None)) -> str:
-    return x_clinic_id or DEFAULT_CLINIC_ID
 
 
 def get_repository(clinic_id: str = Depends(get_clinic_id)) -> PacienteRepository:
