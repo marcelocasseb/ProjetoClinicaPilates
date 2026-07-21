@@ -12,8 +12,8 @@ validar a ideia e destravar venda antes de o sistema estar 100%.
 
 **Sequência priorizada:**
 
-1. **Cadastro de Aparelhos** — em andamento (spec pronta, APR-01..09) ← estamos aqui
-2. **Login simples** — tela de login que só escolhe a clínica (troca o header `X-Clinic-Id`).
+1. ✅ **Cadastro de Aparelhos** — CONCLUÍDO e deployado (APR-01..09, 96 tests)
+2. **Login simples** — tela de login que só escolhe a clínica (troca o header `X-Clinic-Id`). ← PRÓXIMO
    NÃO é o Cognito ainda — o `get_clinic_id()` no back já está isolado, então trocar
    simples → Cognito depois é mexer num ponto só.
 3. **Front leve (demo)** — stack decidida + telas + fluxo principal. SEM a spec "impecable"
@@ -61,12 +61,13 @@ Cada clínica mantém seu próprio catálogo de aparelhos (multi-tenant, AD-007)
 
 ### Features
 
-**1. Cadastro de Aparelhos (por clínica)** - PLANNED  ← fazer primeiro (fundação)
+**1. Cadastro de Aparelhos (por clínica)** - COMPLETE ✅ (deployado 2026-07-21)
 
 - Catálogo de aparelhos próprio de cada clínica (A pode ter o que B não tem)
 - Modelagem: `PK=CLINIC#<clinicId>`, `SK=APARELHO#<id>` (nível clínica, não paciente)
 - Listagem por Query direto na PK da clínica (sem GSI necessário)
-- CRUD (criar, listar, editar, remover — soft delete para preservar histórico)
+- CRUD (criar, listar, editar, remover — soft delete). APR-01..09 Verified, 96 tests
+- ✅ Deployado; smoke-test público OK (CRUD + isolamento entre clínicas)
 
 **2. Registro de Sessões** - DEFERIDO (pós-demo)  ← depende do catálogo de aparelhos
 
