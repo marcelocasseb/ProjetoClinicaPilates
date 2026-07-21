@@ -1,7 +1,7 @@
 # State
 
-**Last Updated:** 2026-07-20
-**Current Work:** Feature `cadastro-pacientes` ✅ CONCLUÍDA E DEPLOYADA. CRUD `/pacientes` no ar na stack `clinica-pilates` (deploy 2026-07-20), smoke-test público OK (POST/GET/PUT/DELETE + validação 400). **Milestone M1 CONCLUÍDO** (infra base + CRUD de pacientes). PRÓXIMO PASSO: iniciar **Milestone M2 — Registro de Sessões e Aparelhos** (spec ainda não escrita; usar single-table `SK=SESSION#<data>` pendurada no `CLIENT#<id>`, ver AD-005).
+**Last Updated:** 2026-07-21
+**Current Work:** Feature `cadastro-pacientes` ✅ CONCLUÍDA, DEPLOYADA e **refatorada para multi-tenant**. Refactor R1–R4 (2026-07-21) aplicou: `cpf` validado (AD-008), `endereco` como MAP (AD-009) e **multi-tenancy por clínica** (AD-007) — chave `PK=CLINIC#<clinicId>#CLIENT#<clientId>` + GSI1 de listagem. 61 tests verdes; deploy OK (GSI adicionado à tabela); smoke-test público confirmou cpf/endereço e **isolamento entre clínicas**. **Decisão da listagem: cliente-na-PK + GSI** (preserva o padrão AD-005 de "ficha do paciente = 1 Query"). **B-003 RESOLVIDO.** PRÓXIMO PASSO: iniciar **Milestone M2 — Registro de Sessões e Aparelhos** — spec ainda não escrita; usar `SK=SESSION#<data>` sob a mesma PK multi-tenant do paciente.
 
 **Recursos AWS provisionados (stack `clinica-pilates`, us-east-1):**
 - API base: https://8f1ffym997.execute-api.us-east-1.amazonaws.com
@@ -32,8 +32,11 @@
   - Ajuste pós-review: validação retorna 400 com msg legível (`nome é obrigatório`, `email inválido`); DELETE retorna 200 `{"detail":"Paciente removido com sucesso"}` / 404 `{"detail":"Paciente não encontrado"}`
   - ✅ **DEPLOYADO** (`sam build --use-container` + `sam deploy`): `/pacientes` no ar; smoke-test público OK
 - ✅ **Milestone M1 CONCLUÍDO**
-- ⚠️ **ANTES DO M2, LER B-003 + AD-007 (multi-tenancy):** o `clinicId` precisa entrar na PK antes de construir novas features, senão haverá migração de dados depois.
-- ⏭️ FAZER A SEGUIR: **M2 — Registro de Sessões e Aparelhos**. Escrever a spec da feature (endpoints de sessão por paciente, `SK=SESSION#<data>` com lista denormalizada de aparelhos/exercícios) — **já com a chave multi-tenant** (AD-007). Rodar app local: `TABLE_NAME=clinica-pilates-ClinicaTable-8YQAEIFAKZGE .venv\Scripts\python -m uvicorn app.main:app --app-dir src --reload`. Deploy: `sam build --use-container; sam deploy` (Docker aberto).
+- ✅ **Refactor multi-tenant + cpf + endereço CONCLUÍDO e DEPLOYADO** (2026-07-21, R1–R4):
+  - R1: `schemas.py` — `cpf` validado (AD-008) + submodelo `Endereco` (AD-009) — commit `2137b16`... (ver git)
+  - R2/R3/R4: chave `CLINIC#<clinicId>#CLIENT#<id>`, GSI1 (`template.yaml` + `conftest.py`), `get_clinic_id` (header `X-Clinic-Id` / default; token no M3), isolamento testado
+  - Chave multi-tenant escolhida: **cliente-na-PK + GSI** (não clínica-na-PK) — preserva "ficha do paciente = 1 Query por PK" (AD-005). B-003 resolvido.
+- ⏭️ FAZER A SEGUIR: **M2 — Registro de Sessões e Aparelhos**. Escrever a spec (endpoints de sessão por paciente, `SK=SESSION#<data>` com lista denormalizada de aparelhos/exercícios), **sob a mesma PK multi-tenant** (`CLINIC#<clinicId>#CLIENT#<clientId>`). Rodar app local: `TABLE_NAME=clinica-pilates-ClinicaTable-8YQAEIFAKZGE .venv\Scripts\python -m uvicorn app.main:app --app-dir src --reload` (header `X-Clinic-Id` opcional). Deploy: `sam build --use-container; sam deploy` (Docker aberto).
 
 **Ambiente local:** venv em `.venv` (Python 3.14). Testes: `.\.venv\Scripts\python.exe -m pytest -q`.
 **SAM CLI:** não está no PATH da sessão automatizada; caminho completo = `C:\Program Files\Amazon\AWSSAMCLI\bin\sam.cmd` (no terminal do usuário, `sam` funciona direto).
@@ -116,6 +119,10 @@ Campo **opcional**. A consulta ao CEP (ViaCEP) é feita **no front-end** — o b
 - Pressão arterial: `PK=CLIENT#<id>`, `SK=BP#<ISO-date>`
 - Aula/sessão: `PK=CLIENT#<id>`, `SK=SESSION#<ISO-date>` (com lista denormalizada de exercícios/procedimentos)
 - Consulta: `PK=CLIENT#<id>`, `SK=CONSULT#<ISO-date>`
+
+> ⚠️ **ATUALIZADO por AD-007 (multi-tenant, 2026-07-21):** a PK agora carrega o prefixo da clínica —
+> `PK=CLINIC#<clinicId>#CLIENT#<clientId>`. Os SKs acima permanecem iguais. Toda feature nova (M2+)
+> deve usar essa PK. Listagem de pacientes de uma clínica via GSI1 (`GSI1PK=CLINIC#<clinicId>`).
 - Catálogo de exercícios: `PK=EXERCISE`, `SK=EX#<id>`
 **Reason:** Os dados são centrados no cliente e em série temporal (medidas, pressão, aulas, consultas). "Última aula" e "evolução do paciente" são queries nativas do DynamoDB (Query por PK + range no SK). Schema-less facilita adicionar novos tipos (ex: consultas) sem migração. Mantém meta de custo $0–5/mês.
 **Trade-off:** Relatórios cruzados entre pacientes (agregações da clínica inteira) exigem GSI ou exportação — aceito por ora; o sistema é uma ficha por paciente.
@@ -125,13 +132,11 @@ Campo **opcional**. A consulta ao CEP (ViaCEP) é feita **no front-end** — o b
 
 ## Active Blockers
 
-### B-003: Ajustar convenção de chaves para multi-tenant ANTES do M2 — 🔴 ABERTO (2026-07-20)
+### B-003: Ajustar convenção de chaves para multi-tenant ANTES do M2 — ✅ RESOLVIDO (2026-07-21)
 
 **Discovered:** 2026-07-20 (dúvida do usuário sobre vender para várias clínicas)
-**Impact:** O `clinicId` faz parte da partition key (AD-007). Se o M2 (sessões/aparelhos) for construído com a chave antiga (`PK=CLIENT#<id>`), será necessário **migrar todos os itens** da tabela depois para reescrever as PKs. Também afeta a listagem (passar de `Scan` para `Query` via GSI).
-**Next step:** No início do M2, decidir e aplicar o formato de chave multi-tenant (`PK=CLINIC#<clinicId>#CLIENT#<clientId>`), atualizar a convenção do AD-005, o `repository.py` e criar o GSI de listagem por clínica. Usar um `clinicId` "default" enquanto o Cognito (M3) não existe.
-**Agrupar no mesmo refactor do paciente** (mesmos arquivos `schemas.py`/`repository.py`): AD-008 (campo `cpf` opcional validado) e AD-009 (`endereco` como MAP aninhado). Fazer os três de uma vez antes do M2.
-**Decisão pendente:** estratégia de listagem — clínica-na-PK (sem GSI, mais simples, recomendada p/ porte pequeno/médio) **vs** cliente-na-PK + GSI (escala máxima, exige alterar `template.yaml`). Não decidido ainda.
+**Impact:** O `clinicId` faz parte da partition key (AD-007). Sem isso antes do M2, haveria migração de dados depois.
+**Resolution:** Refactor R1–R4 aplicado e deployado em 2026-07-21. Chave `PK=CLINIC#<clinicId>#CLIENT#<clientId>` + GSI1 de listagem por clínica. Estratégia escolhida: **cliente-na-PK + GSI** (preserva "ficha do paciente = 1 Query por PK", AD-005) — descartado o clínica-na-PK. `clinicId` vem de `get_clinic_id` (header `X-Clinic-Id` / default hoje; token Cognito no M3). Junto foram aplicados AD-008 (cpf) e AD-009 (endereço MAP). 61 tests + smoke-test público de isolamento OK. M2 pode ser construído já multi-tenant.
 
 ### B-001: SAM CLI não instalado — ✅ RESOLVIDO (2026-07-18)
 
