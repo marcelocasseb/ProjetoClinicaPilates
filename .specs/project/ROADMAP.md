@@ -1,7 +1,29 @@
 # Roadmap
 
-**Current Milestone:** M2 — Registro de Sessões e Aparelhos (próximo)
-**Status:** M1 concluído ✅ — iniciar M2
+**Current Milestone:** Rota do Demo — Aparelhos (em andamento)
+**Status:** M1 concluído ✅ — priorizando um MVP demonstrável pro cliente
+
+---
+
+## 🎯 Rota do Demo (prioridade atual)
+
+**Objetivo:** ter algo visual e convincente pra mostrar pro cliente o quanto antes,
+validar a ideia e destravar venda antes de o sistema estar 100%.
+
+**Sequência priorizada:**
+
+1. **Cadastro de Aparelhos** — em andamento (spec pronta, APR-01..09) ← estamos aqui
+2. **Login simples** — tela de login que só escolhe a clínica (troca o header `X-Clinic-Id`).
+   NÃO é o Cognito ainda — o `get_clinic_id()` no back já está isolado, então trocar
+   simples → Cognito depois é mexer num ponto só.
+3. **Front leve (demo)** — stack decidida + telas + fluxo principal. SEM a spec "impecable"
+   ainda (evita caprichar em suposições que o cliente vai mudar).
+4. **📣 DEMO pro cliente**
+5. **Depois do demo:** spec "impecable" (front definitivo, com feedback do cliente) →
+   Cognito de verdade → Registro de Sessões.
+
+**Fora do demo (deferido):** Registro de Sessões, relatórios. Um demo com paciente +
+aparelho + multi-clínica + telinha bonita já é convincente — não gold-platear antes de mostrar.
 
 ---
 
@@ -46,11 +68,12 @@ Cada clínica mantém seu próprio catálogo de aparelhos (multi-tenant, AD-007)
 - Listagem por Query direto na PK da clínica (sem GSI necessário)
 - CRUD (criar, listar, editar, remover — soft delete para preservar histórico)
 
-**2. Registro de Sessões** - PLANNED  ← depende do catálogo de aparelhos
+**2. Registro de Sessões** - DEFERIDO (pós-demo)  ← depende do catálogo de aparelhos
 
 - Modelagem sessão sob o paciente: `PK=CLINIC#<clinicId>#CLIENT#<clientId>`, `SK=SESSION#<data>`
 - Sessão referencia aparelhos do catálogo, guardando snapshot (id + nome) — histórico imune a edição/remoção do aparelho
 - Endpoints para registrar e consultar sessões por paciente ("última sessão", "evolução" = 1 Query por PK)
+- **Sai da frente pela Rota do Demo** — entra depois de mostrar o MVP pro cliente
 
 ---
 
@@ -60,24 +83,34 @@ Cada clínica mantém seu próprio catálogo de aparelhos (multi-tenant, AD-007)
 
 ### Features
 
-**Login com Cognito** - PLANNED
+**Login simples (pré-demo)** - PLANNED  ← faz parte da Rota do Demo
+
+- Tela de login que seleciona a clínica (substitui o header `X-Clinic-Id`)
+- Sem Cognito ainda; suficiente pra contar a história multi-tenant no demo
+
+**Login com Cognito (pós-demo)** - PLANNED
 
 - User pool para a equipe
 - Integração de autenticação no API Gateway
-- Fluxo de login no frontend
+- `get_clinic_id()` passa a ler o `clinicId` do token (troca só esse ponto)
 
 ---
 
-## M4 — Frontend definitivo + Domínio
+## M4 — Frontend + Domínio
 
-**Goal:** Interface web finalizada e publicada em domínio próprio.
+**Goal:** Interface web publicada em domínio próprio.
 
 ### Features
 
-**Frontend (spec "impecable")** - PLANNED
+**Front leve (demo)** - PLANNED  ← faz parte da Rota do Demo
 
-- Especificação e implementação da SPA
-- Deploy em S3 + CloudFront
+- Stack decidida + telas + fluxo principal (paciente, aparelho, login simples)
+- Objetivo: mostrar pro cliente rápido, iterar no visual
+
+**Frontend definitivo (spec "impecable")** - PLANNED (pós-demo)
+
+- Especificação "impecable" escrita **com o feedback do cliente**
+- Implementação da SPA + deploy em S3 + CloudFront
 
 **Domínio + SSL** - PLANNED
 
@@ -90,3 +123,6 @@ Cada clínica mantém seu próprio catálogo de aparelhos (multi-tenant, AD-007)
 - Upload de fotos, laudos e anexos por paciente (S3)
 - Relatórios/estatísticas de uso de aparelhos
 - Exportação de dados dos pacientes
+- **Mobile** (mesma API): via PWA (front web responsivo/instalável) ou app nativo (React Native/Flutter). Backend já serve — não precisa refazer.
+- Papéis/permissões dentro da clínica (roles via Cognito groups) — pós-Cognito
+- Onboarding self-service de nova clínica (cria clinicId + admin)
