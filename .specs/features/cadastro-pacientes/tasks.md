@@ -2,7 +2,7 @@
 
 **Spec**: `.specs/features/cadastro-pacientes/spec.md`
 **Testing**: `.specs/codebase/TESTING.md`
-**Status**: Done (T1–T4 ✅ — 45 tests verdes; PAC-01..09 Verified)
+**Status**: Done ✅ — T1–T4 concluídas, 45 tests verdes, PAC-01..09 Verified, **deployado** na stack `clinica-pilates` (2026-07-20) com smoke-test público OK
 
 CRUD de pacientes sobre a tabela DynamoDB já provisionada (single-table, `PK=CLIENT#<id>`, `SK=PROFILE`, ver AD-005). Três camadas: schemas Pydantic (validação), repositório (acesso DynamoDB via boto3/moto) e router FastAPI (endpoints), fiado no app existente em `src/app/main.py`.
 
@@ -25,7 +25,7 @@ T1 e T2 são independentes (arquivos distintos, sem dependência de código) e s
 
 ## Task Breakdown
 
-### T1: Schemas Pydantic de Paciente [P]
+### T1: Schemas Pydantic de Paciente [P] ✅ DONE
 
 **What**: Definir os modelos de entrada/saída de paciente com validações (nome obrigatório, email formato, dataNascimento formato, ignorar campos desconhecidos, vazios → None).
 **Where**: `src/app/schemas.py`, `tests/test_schemas.py`
@@ -38,30 +38,30 @@ T1 e T2 são independentes (arquivos distintos, sem dependência de código) e s
 - Skill: NONE
 
 **Done when**:
-- [ ] `PacienteCreate` (nome obrigatório; dataNascimento/endereco/telefone/email opcionais)
-- [ ] `PacienteUpdate` (mesmos campos; nome obrigatório na edição — PAC-07 AC2)
-- [ ] `PacienteOut` (id, nome, dataNascimento, endereco, telefone, email, ativo, criadoEm, atualizadoEm)
-- [ ] Validador: `nome` só-espaços/vazio → `400` (rejeitado) — PAC-03
-- [ ] Validador: `email` inválido → rejeitado (regex simples, sem `email-validator`) — PAC-04
-- [ ] Validador: `dataNascimento` fora de `YYYY-MM-DD` → rejeitado — PAC-09
-- [ ] `model_config` com `extra="ignore"` (campos desconhecidos não persistem) — PAC-09
-- [ ] `telefone`/`email` vazios (`""`/espaços) tratados como não informados (`None`) — PAC-09
-- [ ] Gate check passes: `pytest -q`
-- [ ] Test count: ≥8 tests pass (no silent deletions)
+- [x] `PacienteCreate` (nome obrigatório; dataNascimento/endereco/telefone/email opcionais)
+- [x] `PacienteUpdate` (mesmos campos; nome obrigatório na edição — PAC-07 AC2)
+- [x] `PacienteOut` (id, nome, dataNascimento, endereco, telefone, email, ativo, criadoEm, atualizadoEm)
+- [x] Validador: `nome` só-espaços/vazio → rejeitado (`model_validator`, msg "nome é obrigatório") — PAC-03
+- [x] Validador: `email` inválido → rejeitado (regex simples, sem `email-validator`) — PAC-04
+- [x] Validador: `dataNascimento` fora de `YYYY-MM-DD` → rejeitado — PAC-09
+- [x] `model_config` com `extra="ignore"` (campos desconhecidos não persistem) — PAC-09
+- [x] `telefone`/`email` vazios (`""`/espaços) tratados como não informados (`None`) — PAC-09
+- [x] Gate check passes: `pytest -q`
+- [x] Test count: 14 tests pass (no silent deletions)
 
 **Tests**: unit
 **Gate**: quick
 
 **Verify**: `pytest -q tests/test_schemas.py` → todos verdes.
 
-**Commit**: `feat(pacientes): schemas Pydantic com validação de entrada`
+**Commit**: `feat(pacientes): schemas Pydantic com validação de entrada` → `8ba7af6`
 
 ---
 
-### T2: Repositório DynamoDB de Paciente [P]
+### T2: Repositório DynamoDB de Paciente [P] ✅ DONE
 
 **What**: Camada de acesso a dados para o item de perfil do paciente na tabela única, com create/get/list/update/soft-delete, testada com moto.
-**Where**: `src/app/repository.py`, `tests/test_repository.py`
+**Where**: `src/app/repository.py`, `tests/test_repository.py`, `tests/conftest.py`
 **Depends on**: None
 **Reuses**: convenção de chaves AD-005; `TABLE_NAME` via env (injetada pelo template SAM)
 **Requirement**: PAC-02, PAC-05, PAC-06, PAC-08
@@ -71,26 +71,26 @@ T1 e T2 são independentes (arquivos distintos, sem dependência de código) e s
 - Skill: NONE
 
 **Done when**:
-- [ ] `PacienteRepository` lê a tabela de `os.environ["TABLE_NAME"]` (boto3 resource, lazy)
-- [ ] `create(data)` → gera `id` (uuid), grava `PK=CLIENT#<id>`, `SK=PROFILE`, `ativo=True`, `criadoEm`/`atualizadoEm` ISO — PAC-02
-- [ ] `get(id)` → item se existe **e ativo**, senão `None` — PAC-06
-- [ ] `list_ativos()` → apenas itens `SK=PROFILE` com `ativo=True` — PAC-05
-- [ ] `update(id, data)` → atualiza campos + `atualizadoEm`; `None` se inexistente/removido — PAC-07 (data layer)
-- [ ] `soft_delete(id)` → seta `ativo=False`; `False` se inexistente/já removido; item permanece na tabela — PAC-08
-- [ ] Fixture moto (`@mock_aws`) cria a tabela PK/SK on-demand antes dos testes
-- [ ] Gate check passes: `pytest -q`
-- [ ] Test count: ≥7 tests pass (no silent deletions)
+- [x] `PacienteRepository` lê a tabela de `os.environ["TABLE_NAME"]` (boto3 resource, lazy)
+- [x] `create(data)` → gera `id` (uuid), grava `PK=CLIENT#<id>`, `SK=PROFILE`, `ativo=True`, `criadoEm`/`atualizadoEm` ISO — PAC-02
+- [x] `get(id)` → item se existe **e ativo**, senão `None` — PAC-06
+- [x] `list_ativos()` → apenas itens `SK=PROFILE` com `ativo=True` — PAC-05
+- [x] `update(id, data)` → atualiza campos + `atualizadoEm`; `None` se inexistente/removido — PAC-07 (data layer)
+- [x] `soft_delete(id)` → seta `ativo=False`; `False` se inexistente/já removido; item permanece na tabela — PAC-08
+- [x] Fixture moto (`@mock_aws`) cria a tabela PK/SK on-demand antes dos testes (`tests/conftest.py`, `dynamo_table`)
+- [x] Gate check passes: `pytest -q`
+- [x] Test count: 12 tests pass (no silent deletions)
 
 **Tests**: unit
 **Gate**: quick
 
 **Verify**: `pytest -q tests/test_repository.py` → todos verdes.
 
-**Commit**: `feat(pacientes): repositório DynamoDB single-table (create/get/list/update/soft-delete)`
+**Commit**: `feat(pacientes): repositório DynamoDB single-table (create/get/list/update/soft-delete)` → `df29255`
 
 ---
 
-### T3: Router — cadastrar e obter paciente
+### T3: Router — cadastrar e obter paciente ✅ DONE
 
 **What**: Criar o router FastAPI de pacientes com `POST /pacientes` e `GET /pacientes/{id}`, fiado no app principal.
 **Where**: `src/app/routers/__init__.py`, `src/app/routers/pacientes.py`, `src/app/main.py` (modify), `tests/test_pacientes.py`
@@ -103,27 +103,27 @@ T1 e T2 são independentes (arquivos distintos, sem dependência de código) e s
 - Skill: NONE
 
 **Done when**:
-- [ ] `POST /pacientes` com `nome` válido → `201` com paciente criado (id, criadoEm) — PAC-01 AC1
-- [ ] `POST /pacientes` sem `nome`/vazio → `422`/`400` — PAC-01 AC4
-- [ ] `POST /pacientes` com `email` inválido → `422`/`400` — PAC-01 AC5
-- [ ] `GET /pacientes/{id}` existente/ativo → `200` — PAC-06 AC1
-- [ ] `GET /pacientes/{id}` inexistente → `404` — PAC-06 AC2
-- [ ] Router incluído em `main.py` via `app.include_router(...)`
-- [ ] Dependência do repositório via `Depends` (testável com moto + `TABLE_NAME`)
-- [ ] Fluxo ponta-a-ponta: `POST` depois `GET` retorna o mesmo paciente — Independent Test P1
-- [ ] Gate check passes: `pytest -q`
-- [ ] Test count: ≥5 novos tests pass (no silent deletions)
+- [x] `POST /pacientes` com `nome` válido → `201` com paciente criado (id, criadoEm) — PAC-01 AC1
+- [x] `POST /pacientes` sem `nome`/vazio → `400` com msg (ajuste pós-review) — PAC-01 AC4
+- [x] `POST /pacientes` com `email` inválido → `400` — PAC-01 AC5
+- [x] `GET /pacientes/{id}` existente/ativo → `200` — PAC-06 AC1
+- [x] `GET /pacientes/{id}` inexistente → `404` — PAC-06 AC2
+- [x] Router incluído em `main.py` via `app.include_router(...)`
+- [x] Dependência do repositório via `Depends` (testável com moto + `TABLE_NAME`)
+- [x] Fluxo ponta-a-ponta: `POST` depois `GET` retorna o mesmo paciente — Independent Test P1
+- [x] Gate check passes: `pytest -q`
+- [x] Test count: 7 tests em test_pacientes (no silent deletions)
 
 **Tests**: unit
 **Gate**: quick
 
 **Verify**: `pytest -q tests/test_pacientes.py` → verdes; `/health` continua 200 (sem regressão).
 
-**Commit**: `feat(pacientes): endpoints criar e obter paciente`
+**Commit**: `feat(pacientes): endpoints criar e obter paciente` → `68ce2a3`
 
 ---
 
-### T4: Router — listar, editar e remover paciente
+### T4: Router — listar, editar e remover paciente ✅ DONE
 
 **What**: Adicionar ao router `GET /pacientes`, `PUT /pacientes/{id}` e `DELETE /pacientes/{id}` (soft delete).
 **Where**: `src/app/routers/pacientes.py` (modify), `tests/test_pacientes.py` (modify)
@@ -136,21 +136,21 @@ T1 e T2 são independentes (arquivos distintos, sem dependência de código) e s
 - Skill: NONE
 
 **Done when**:
-- [ ] `GET /pacientes` → `200` com lista de ativos; lista vazia quando não há; omite removidos — PAC-05
-- [ ] `PUT /pacientes/{id}` válido → `200` com atualizado + `atualizadoEm` — PAC-07 AC1/AC4
-- [ ] `PUT /pacientes/{id}` com `nome` vazio → `422`/`400` — PAC-07 AC2
-- [ ] `PUT /pacientes/{id}` inexistente/removido → `404` — PAC-07 AC3
-- [ ] `DELETE /pacientes/{id}` → `204`; `GET` posterior → `404`; item permanece na tabela — PAC-08 AC1/AC2/AC4
-- [ ] `DELETE /pacientes/{id}` inexistente/já removido → `404` — PAC-08 AC3
-- [ ] Gate check passes: `pytest -q`
-- [ ] Test count: ≥6 novos tests pass (no silent deletions)
+- [x] `GET /pacientes` → `200` com lista de ativos; lista vazia quando não há; omite removidos — PAC-05
+- [x] `PUT /pacientes/{id}` válido → `200` com atualizado + `atualizadoEm` — PAC-07 AC1/AC4
+- [x] `PUT /pacientes/{id}` com `nome` vazio → `400` com msg (ajuste pós-review) — PAC-07 AC2
+- [x] `PUT /pacientes/{id}` inexistente/removido → `404` — PAC-07 AC3
+- [x] `DELETE /pacientes/{id}` → `200` com `{"detail":"Paciente removido com sucesso"}` (ajuste pós-review, era 204); `GET` posterior → `404`; item permanece na tabela — PAC-08 AC1/AC2/AC4
+- [x] `DELETE /pacientes/{id}` inexistente/já removido → `404` com `{"detail":"Paciente não encontrado"}` — PAC-08 AC3
+- [x] Gate check passes: `pytest -q`
+- [x] Test count: suíte inteira 45 tests pass (no silent deletions)
 
 **Tests**: unit
 **Gate**: quick
 
 **Verify**: `pytest -q` → suíte inteira verde (health + handler + schemas + repository + pacientes).
 
-**Commit**: `feat(pacientes): endpoints listar, editar e remover (soft delete)`
+**Commit**: `feat(pacientes): endpoints listar, editar e remover (soft delete)` → `fc3155a`
 
 ---
 
@@ -219,3 +219,22 @@ Todos os checks ✅.
 | PAC-09 | T1 |
 
 Cobertura: 9/9 requisitos mapeados para tasks. ✅
+
+---
+
+## Execution Log
+
+| Task | Status | Commit | Testes |
+| ---- | ------ | ------ | ------ |
+| T1 — Schemas Pydantic | ✅ Done | `8ba7af6` | 14 |
+| T2 — Repositório DynamoDB | ✅ Done | `df29255` | 12 |
+| T3 — Router criar/obter | ✅ Done | `68ce2a3` | (7 em test_pacientes) |
+| T4 — Router listar/editar/remover | ✅ Done | `fc3155a` | suíte 45 |
+| Ajuste pós-review (400 + msg no DELETE) | ✅ Done | `7a02437` | 45 |
+| Deploy + estado (M1 concluído) | ✅ Done | `217e559` | smoke-test público |
+
+**Ajustes pós-review (commit `7a02437`):**
+- Validação de entrada retorna `400` com `detail` legível (`nome é obrigatório`, `email inválido`) em vez do `422` técnico do Pydantic.
+- `DELETE` passou a retornar `200 {"detail":"Paciente removido com sucesso"}` (era `204`) e `404 {"detail":"Paciente não encontrado"}`. Spec atualizada (PAC-08 AC1).
+
+**Deploy (2026-07-20):** `sam build --use-container` + `sam deploy` → endpoints `/pacientes` no ar em `https://8f1ffym997.execute-api.us-east-1.amazonaws.com`. Smoke-test público confirmou POST/GET/PUT/DELETE e validação `400`. **Milestone M1 concluído.**
