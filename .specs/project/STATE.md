@@ -7,7 +7,19 @@
 - API base: https://8f1ffym997.execute-api.us-east-1.amazonaws.com
 - Tabela DynamoDB: `clinica-pilates-ClinicaTable-8YQAEIFAKZGE` (PK/SK, on-demand)
 - Lambda: `clinica-pilates-ClinicaApiFunction-3huxBJXkP1qi`
-- Redeploy: `sam build --use-container; sam deploy` (config em samconfig.toml)
+- Redeploy backend: `sam build --use-container; sam deploy` (config em samconfig.toml)
+
+**Frontend hospedado (stack SEPARADO `clinica-pilates-frontend`, us-east-1):**
+- 🔗 Site (demo): https://d1th2j57vyxahs.cloudfront.net
+- Bucket S3 (privado): `clinica-pilates-frontend-sitebucket-n6oomystbesc`
+- CloudFront DistributionId: `EGYNGZONKGVLT` (OAC, HTTPS, PriceClass_All)
+- Template: `frontend-infra.yaml` (CloudFormation puro, sem Docker/SAM)
+- **Publicar/atualizar o site** (sem Docker):
+  1. `cd frontend; npm run build`
+  2. `aws s3 sync frontend/dist s3://clinica-pilates-frontend-sitebucket-n6oomystbesc --delete`
+  3. `aws cloudfront create-invalidation --distribution-id EGYNGZONKGVLT --paths "/*"` (limpa o cache do CDN)
+- Custo: dentro do free tier (~$0). Budget de $5/mês criado (alerta e-mail em 80%/100%).
+- ⚠️ Link ABERTO (sem login ainda) — dados de demo Zen/Corpo semeados. Autenticação real = M3 (Cognito).
 
 **Onde paramos (retomar aqui):**
 - ✅ Projeto inicializado (PROJECT/ROADMAP/STATE), commit `621b608`
