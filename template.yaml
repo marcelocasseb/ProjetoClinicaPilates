@@ -11,21 +11,12 @@ Globals:
     Runtime: python3.13
 
 Resources:
-  # --- API Gateway HTTP com CORS (T4) ---
+  # --- API Gateway HTTP (T4) ---
+  # CORS é tratado pelo app FastAPI (CORSMiddleware), não aqui: como a Lambda
+  # captura ANY, o preflight OPTIONS precisa chegar ao app. Ter CORS nos dois
+  # lugares duplicaria os headers Access-Control-* e quebraria o navegador.
   ClinicaHttpApi:
     Type: AWS::Serverless::HttpApi
-    Properties:
-      CorsConfiguration:
-        AllowOrigins:
-          - '*'
-        AllowHeaders:
-          - '*'
-        AllowMethods:
-          - GET
-          - POST
-          - PUT
-          - DELETE
-          - OPTIONS
 
   # --- Função Lambda única com roteamento interno (T4) ---
   ClinicaApiFunction:
