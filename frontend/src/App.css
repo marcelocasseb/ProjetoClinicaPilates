@@ -1,0 +1,294 @@
+/* ---------- Marca ---------- */
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  color: var(--text);
+}
+.brand-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  box-shadow: 0 0 0 4px rgba(109, 94, 252, 0.15);
+}
+
+/* ---------- Login ---------- */
+.login-wrap {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+.login-card {
+  width: 100%;
+  max-width: 420px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+  padding: 32px;
+}
+.login-card h1 {
+  font-size: 28px;
+  margin: 20px 0 4px;
+}
+.clinic-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 24px 0 16px;
+}
+.clinic-btn {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--panel);
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+}
+.clinic-btn:hover {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow);
+}
+.clinic-btn > span:nth-child(2) {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+.clinic-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+}
+.chevron {
+  color: var(--muted);
+  font-size: 18px;
+}
+.login-note {
+  font-size: 13px;
+  margin-top: 8px;
+}
+
+/* ---------- Layout app ---------- */
+.app {
+  min-height: 100vh;
+}
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 24px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.clinic-tag {
+  font-weight: 600;
+  font-size: 14px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: rgba(109, 94, 252, 0.12);
+  color: var(--accent);
+}
+.tabs {
+  display: flex;
+  gap: 4px;
+  padding: 12px 24px 0;
+  max-width: 1080px;
+  margin: 0 auto;
+}
+.tab {
+  padding: 10px 18px;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+}
+.tab.on {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+.content {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 20px 24px 48px;
+}
+
+/* ---------- Grid / Cards ---------- */
+.grid {
+  display: grid;
+  grid-template-columns: 380px 1fr;
+  gap: 20px;
+  align-items: start;
+}
+@media (max-width: 860px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+.card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 20px;
+}
+.card h2 {
+  font-size: 18px;
+  margin-bottom: 16px;
+}
+
+/* ---------- Formulário ---------- */
+.form label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  margin: 12px 0 6px;
+}
+.form input,
+.form textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+}
+.form input:focus,
+.form textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(109, 94, 252, 0.15);
+}
+.row {
+  display: flex;
+  gap: 10px;
+}
+.row > div {
+  flex: 1;
+}
+.sep {
+  margin: 18px 0 4px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--muted);
+  border-top: 1px dashed var(--border);
+  padding-top: 14px;
+}
+.actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+/* ---------- Botões ---------- */
+.btn {
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
+  font: inherit;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+}
+.btn:hover {
+  border-color: var(--accent);
+}
+.btn.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.btn.primary:hover {
+  background: var(--accent-2);
+}
+.btn.primary:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.btn.ghost {
+  background: transparent;
+}
+
+/* ---------- Tabela ---------- */
+.tbl {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.tbl th {
+  text-align: left;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--muted);
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+}
+.tbl td {
+  padding: 10px;
+  border-bottom: 1px solid var(--border);
+}
+.td-desc {
+  color: var(--muted);
+  max-width: 260px;
+}
+.td-actions {
+  text-align: right;
+  white-space: nowrap;
+}
+.link {
+  background: none;
+  border: none;
+  color: var(--accent);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 2px 6px;
+}
+.link.danger {
+  color: var(--danger);
+}
+
+/* ---------- Utilidades ---------- */
+.muted {
+  color: var(--muted);
+}
+.erro {
+  background: rgba(224, 86, 86, 0.1);
+  border: 1px solid rgba(224, 86, 86, 0.35);
+  color: var(--danger);
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  margin-bottom: 8px;
+}
