@@ -185,6 +185,18 @@
   border-color: var(--accent);
   box-shadow: 0 0 0 3px rgba(109, 94, 252, 0.15);
 }
+.form input.input-erro {
+  border-color: var(--danger);
+}
+.form input.input-erro:focus {
+  box-shadow: 0 0 0 3px rgba(224, 86, 86, 0.15);
+}
+.campo-erro {
+  display: block;
+  color: var(--danger);
+  font-size: 12px;
+  margin-top: 4px;
+}
 .row {
   display: flex;
   gap: 10px;

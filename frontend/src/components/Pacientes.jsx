@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { pacientesApi, buscarCep } from "../api";
+import { maskCpf, maskTelefone, maskCep, isValidCpf, onlyDigits } from "../utils/format";
 
 const VAZIO = {
   nome: "",
@@ -38,30 +39,39 @@ export default function Pacientes({ clinic }) {
     setForm((f) => ({ ...f, endereco: { ...f.endereco, [campo]: valor } }));
   }
 
-  async function onCepBlur() {
-    const achado = await buscarCep(form.endereco.cep);
-    if (achado) {
-      setForm((f) => ({
-        ...f,
-        endereco: { ...f.endereco, ...achado, numero: f.endereco.numero },
-      }));
+  // CEP: mascara e, ao completar 8 dígitos, busca e preenche o endereço.
+  async function onCepChange(valor) {
+    const mascarado = maskCep(valor);
+    setEndereco("cep", mascarado);
+    if (onlyDigits(mascarado).length === 8) {
+      const achado = await buscarCep(mascarado);
+      if (achado) {
+        setForm((f) => ({
+          ...f,
+          endereco: { ...f.endereco, ...achado, cep: maskCep(achado.cep), numero: f.endereco.numero },
+        }));
+      }
     }
   }
+
+  const cpfDigits = onlyDigits(form.cpf);
+  const cpfInvalido = cpfDigits.length === 11 && !isValidCpf(cpfDigits);
 
   function montarPayload() {
     const end = form.endereco;
     const temEndereco = Object.values(end).some((v) => v && v.trim());
     return {
       nome: form.nome,
-      cpf: form.cpf || null,
+      cpf: cpfDigits || null,
       telefone: form.telefone || null,
       email: form.email || null,
-      endereco: temEndereco ? end : null,
+      endereco: temEndereco ? { ...end, cep: onlyDigits(end.cep) || null } : null,
     };
   }
 
   async function salvar(e) {
     e.preventDefault();
+    if (cpfInvalido) return;
     setErro("");
     setLoading(true);
     try {
@@ -82,11 +92,11 @@ export default function Pacientes({ clinic }) {
     setEditId(p.id);
     setForm({
       nome: p.nome || "",
-      cpf: p.cpf || "",
-      telefone: p.telefone || "",
+      cpf: maskCpf(p.cpf || ""),
+      telefone: maskTelefone(p.telefone || ""),
       email: p.email || "",
       endereco: {
-        cep: p.endereco?.cep || "",
+        cep: maskCep(p.endereco?.cep || ""),
         logradouro: p.endereco?.logradouro || "",
         numero: p.endereco?.numero || "",
         bairro: p.endereco?.bairro || "",
@@ -125,11 +135,23 @@ export default function Pacientes({ clinic }) {
         <div className="row">
           <div>
             <label>CPF</label>
-            <input value={form.cpf} onChange={(e) => setCampo("cpf", e.target.value)} placeholder="000.000.000-00" />
+            <input
+              className={cpfInvalido ? "input-erro" : ""}
+              value={form.cpf}
+              onChange={(e) => setCampo("cpf", maskCpf(e.target.value))}
+              placeholder="000.000.000-00"
+              inputMode="numeric"
+            />
+            {cpfInvalido && <small className="campo-erro">CPF inválido</small>}
           </div>
           <div>
             <label>Telefone</label>
-            <input value={form.telefone} onChange={(e) => setCampo("telefone", e.target.value)} placeholder="(11) 90000-0000" />
+            <input
+              value={form.telefone}
+              onChange={(e) => setCampo("telefone", maskTelefone(e.target.value))}
+              placeholder="(11) 90000-0000"
+              inputMode="numeric"
+            />
           </div>
         </div>
 
@@ -140,7 +162,12 @@ export default function Pacientes({ clinic }) {
         <div className="row">
           <div>
             <label>CEP</label>
-            <input value={form.endereco.cep} onChange={(e) => setEndereco("cep", e.target.value)} onBlur={onCepBlur} placeholder="00000-000" />
+            <input
+              value={form.endereco.cep}
+              onChange={(e) => onCepChange(e.target.value)}
+              placeholder="00000-000"
+              inputMode="numeric"
+            />
           </div>
           <div>
             <label>Número</label>
@@ -165,7 +192,7 @@ export default function Pacientes({ clinic }) {
         </div>
 
         <div className="actions">
-          <button type="submit" className="btn primary" disabled={loading}>
+          <button type="submit" className="btn primary" disabled={loading || cpfInvalido}>
             {loading ? "Salvando..." : editId ? "Salvar" : "Cadastrar"}
           </button>
           {editId && (
@@ -195,7 +222,7 @@ export default function Pacientes({ clinic }) {
               {lista.map((p) => (
                 <tr key={p.id}>
                   <td>{p.nome}</td>
-                  <td>{p.cpf || "—"}</td>
+                  <td>{p.cpf ? maskCpf(p.cpf) : "—"}</td>
                   <td>{p.telefone || "—"}</td>
                   <td>{p.endereco?.cidade || "—"}</td>
                   <td className="td-actions">
