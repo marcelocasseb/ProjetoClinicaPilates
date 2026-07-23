@@ -233,7 +233,7 @@ export default function Avaliacoes({ clinic, paciente, onVoltar }) {
 
           <div className="actions">
             <button type="submit" className="btn primary" disabled={loading}>
-              {loading ? "Salvando..." : editId ? "Salvar" : "Registrar avaliação"}
+              {loading ? "Salvando..." : editId ? "Salvar" : "Salvar avaliação"}
             </button>
             {editId && (
               <button type="button" className="btn" onClick={cancelar}>Cancelar</button>
