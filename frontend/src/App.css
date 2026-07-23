@@ -197,6 +197,11 @@
   font-size: 12px;
   margin-top: 4px;
 }
+.opt {
+  color: var(--muted);
+  font-weight: 400;
+  font-size: 11px;
+}
 .row {
   display: flex;
   gap: 10px;

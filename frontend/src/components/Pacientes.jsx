@@ -134,7 +134,7 @@ export default function Pacientes({ clinic }) {
 
         <div className="row">
           <div>
-            <label>CPF</label>
+            <label>CPF <span className="opt">(opcional)</span></label>
             <input
               className={cpfInvalido ? "input-erro" : ""}
               value={form.cpf}
@@ -142,10 +142,10 @@ export default function Pacientes({ clinic }) {
               placeholder="000.000.000-00"
               inputMode="numeric"
             />
-            {cpfInvalido && <small className="campo-erro">CPF inválido</small>}
+            {cpfInvalido && <small className="campo-erro">CPF inválido — confira os dígitos (ou deixe em branco)</small>}
           </div>
           <div>
-            <label>Telefone</label>
+            <label>Telefone <span className="opt">(opcional)</span></label>
             <input
               value={form.telefone}
               onChange={(e) => setCampo("telefone", maskTelefone(e.target.value))}
@@ -155,7 +155,7 @@ export default function Pacientes({ clinic }) {
           </div>
         </div>
 
-        <label>E-mail</label>
+        <label>E-mail <span className="opt">(opcional)</span></label>
         <input value={form.email} onChange={(e) => setCampo("email", e.target.value)} placeholder="email@exemplo.com" />
 
         <div className="sep">Endereço</div>
