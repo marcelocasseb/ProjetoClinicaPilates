@@ -1,7 +1,12 @@
 # State
 
-**Last Updated:** 2026-07-21
-**Current Work:** Feature `cadastro-pacientes` ✅ CONCLUÍDA, DEPLOYADA e **refatorada para multi-tenant**. Refactor R1–R4 (2026-07-21) aplicou: `cpf` validado (AD-008), `endereco` como MAP (AD-009) e **multi-tenancy por clínica** (AD-007) — chave `PK=CLINIC#<clinicId>#CLIENT#<clientId>` + GSI1 de listagem. 61 tests verdes; deploy OK (GSI adicionado à tabela); smoke-test público confirmou cpf/endereço e **isolamento entre clínicas**. **Decisão da listagem: cliente-na-PK + GSI** (preserva o padrão AD-005 de "ficha do paciente = 1 Query"). **B-003 RESOLVIDO.** PRÓXIMO PASSO: **Milestone M2**, dividido em 2 features na ordem: (1) **Cadastro de Aparelhos** por clínica (`PK=CLINIC#<clinicId>`, `SK=APARELHO#<id>` — nível clínica, listagem por Query direto sem GSI), depois (2) **Registro de Sessões** (`SK=SESSION#<data>` sob o paciente, referenciando aparelhos do catálogo com snapshot id+nome). ✅ **Feature `cadastro-aparelhos` CONCLUÍDA no código** (A1 schemas, A2 repositório, A3 endpoints) — APR-01..09 Verified, 96 tests verdes. CRUD `/aparelhos` por clínica (`PK=CLINIC#<clinicId>`, `SK=APARELHO#<id>`, listagem por Query sem GSI, isolamento testado). `get_clinic_id` extraído p/ `src/app/deps.py` (compartilhado com pacientes). ✅ **Aparelhos DEPLOYADO** (2026-07-21). ✅ **FRONT DE DEMO criado** (2026-07-22, React+Vite em `frontend/`): login simples (seletor de clínica → `X-Clinic-Id`), telas de Pacientes (com autofill de CEP/ViaCEP) e Aparelhos, CRUD completo consumindo a API pública. Roda com `cd frontend; npm run dev` → http://localhost:5173. Stack escolhida: **React + Vite** (caminho pra PWA/mobile; deploy futuro em S3+CloudFront). ⏭️ PRÓXIMO: rodar o demo local, ajustar visual conforme feedback, e (pós-demo) escrever a spec "impecable" do front definitivo + Cognito. Sessões seguem pós-demo.
+**Last Updated:** 2026-07-22
+**Current Work:** 🎯 **DEMO NO AR** — https://d1th2j57vyxahs.cloudfront.net (HTTPS). Estado atual do produto:
+- **Backend** (stack `clinica-pilates`): CRUD de **Pacientes** e **Aparelhos**, multi-tenant por clínica (AD-007), 97 tests verdes, deployado. CORS tratado no FastAPI (CORSMiddleware).
+- **Frontend** (React+Vite em `frontend/`, stack `clinica-pilates-frontend`): login simples (seletor de clínica → `X-Clinic-Id`), Pacientes (máscaras CPF/telefone/CEP + autofill ViaCEP + validação de CPF) e Aparelhos, CRUD completo. Hospedado em S3+CloudFront. Dados de demo semeados (Zen/Corpo).
+- Local: `cd frontend; npm run dev` → http://localhost:5173.
+
+⏭️ **PRÓXIMO (pós-feedback do cliente):** spec "impecable" do front definitivo → **Cognito** (login real, troca só o `get_clinic_id`) → **Registro de Sessões** (M2 parte 2). Ver Rota do Demo no ROADMAP.
 
 **Recursos AWS provisionados (stack `clinica-pilates`, us-east-1):**
 - API base: https://8f1ffym997.execute-api.us-east-1.amazonaws.com

@@ -1,7 +1,7 @@
 # Roadmap
 
-**Current Milestone:** Rota do Demo — Aparelhos (em andamento)
-**Status:** M1 concluído ✅ — priorizando um MVP demonstrável pro cliente
+**Current Milestone:** Rota do Demo — ✅ DEMO NO AR (https://d1th2j57vyxahs.cloudfront.net)
+**Status:** MVP demonstrável publicado; aguardando feedback do cliente para o front definitivo
 
 ---
 
@@ -13,12 +13,12 @@ validar a ideia e destravar venda antes de o sistema estar 100%.
 **Sequência priorizada:**
 
 1. ✅ **Cadastro de Aparelhos** — CONCLUÍDO e deployado (APR-01..09, 96 tests)
-2. **Login simples** — tela de login que só escolhe a clínica (troca o header `X-Clinic-Id`). ← PRÓXIMO
+2. ✅ **Login simples** — seletor de clínica (envia `X-Clinic-Id`); feito no front
    NÃO é o Cognito ainda — o `get_clinic_id()` no back já está isolado, então trocar
    simples → Cognito depois é mexer num ponto só.
-3. **Front leve (demo)** — stack decidida + telas + fluxo principal. SEM a spec "impecable"
-   ainda (evita caprichar em suposições que o cliente vai mudar).
-4. **📣 DEMO pro cliente**
+3. ✅ **Front leve (demo)** — React+Vite, Pacientes + Aparelhos, máscaras/CEP/validação.
+   **NO AR (HTTPS):** https://d1th2j57vyxahs.cloudfront.net (S3+CloudFront, stack separado).
+4. **📣 DEMO pro cliente** ← ESTAMOS AQUI (pronto pra mostrar; aguardando feedback)
 5. **Depois do demo:** spec "impecable" (front definitivo, com feedback do cliente) →
    Cognito de verdade → Registro de Sessões.
 
