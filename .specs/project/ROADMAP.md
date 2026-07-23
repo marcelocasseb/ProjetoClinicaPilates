@@ -69,7 +69,14 @@ Cada clínica mantém seu próprio catálogo de aparelhos (multi-tenant, AD-007)
 - CRUD (criar, listar, editar, remover — soft delete). APR-01..09 Verified, 96 tests
 - ✅ Deployado; smoke-test público OK (CRUD + isolamento entre clínicas)
 
-**2. Registro de Sessões** - DEFERIDO (pós-demo)  ← depende do catálogo de aparelhos
+**2. Avaliação dos Pacientes (ficha clínica datada)** - COMPLETE ✅ (deployado 2026-07-22)
+
+- Histórico de avaliações por paciente: `PK=CLINIC#<clinicId>#CLIENT#<pacienteId>`, `SK=AVALIACAO#<id>` (AD-010)
+- Campos (texto livre, opcionais): diagnósticoMédico, queixaPrincipal, HMA, PA, FC, avaliação postural (4 vistas, MAP), medidas (braço/abdômen/coxa/panturrilha, MAP), inspeção geral, exames complementares. `data` default hoje
+- Endpoints aninhados `/pacientes/{id}/avaliacoes` (CRUD, soft delete); 404 se paciente inexistente na clínica
+- AVL-01..10 Verified, 38 testes (suíte 135). Smoke-test público OK (ciclo + isolamento + validações)
+
+**3. Registro de Sessões** - DEFERIDO (pós-demo)  ← depende do catálogo de aparelhos
 
 - Modelagem sessão sob o paciente: `PK=CLINIC#<clinicId>#CLIENT#<clientId>`, `SK=SESSION#<data>`
 - Sessão referencia aparelhos do catálogo, guardando snapshot (id + nome) — histórico imune a edição/remoção do aparelho

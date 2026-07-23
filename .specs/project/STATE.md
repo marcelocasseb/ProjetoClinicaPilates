@@ -2,7 +2,7 @@
 
 **Last Updated:** 2026-07-22
 **Current Work:** 🎯 **DEMO NO AR** — https://d1th2j57vyxahs.cloudfront.net (HTTPS). Estado atual do produto:
-- **Backend** (stack `clinica-pilates`): CRUD de **Pacientes** e **Aparelhos**, multi-tenant por clínica (AD-007), 97 tests verdes, deployado. CORS tratado no FastAPI (CORSMiddleware).
+- **Backend** (stack `clinica-pilates`): CRUD de **Pacientes**, **Aparelhos** e **Avaliações** (por paciente), multi-tenant por clínica (AD-007), **135 tests verdes**, deployado. CORS tratado no FastAPI (CORSMiddleware).
 - **Frontend** (React+Vite em `frontend/`, stack `clinica-pilates-frontend`): login simples (seletor de clínica → `X-Clinic-Id`), Pacientes (máscaras CPF/telefone/CEP + autofill ViaCEP + validação de CPF) e Aparelhos, CRUD completo. Hospedado em S3+CloudFront. Dados de demo semeados (Zen/Corpo).
 - Local: `cd frontend; npm run dev` → http://localhost:5173.
 
@@ -53,6 +53,7 @@
   - R1: `schemas.py` — `cpf` validado (AD-008) + submodelo `Endereco` (AD-009) — commit `2137b16`... (ver git)
   - R2/R3/R4: chave `CLINIC#<clinicId>#CLIENT#<id>`, GSI1 (`template.yaml` + `conftest.py`), `get_clinic_id` (header `X-Clinic-Id` / default; token no M3), isolamento testado
   - Chave multi-tenant escolhida: **cliente-na-PK + GSI** (não clínica-na-PK) — preserva "ficha do paciente = 1 Query por PK" (AD-005). B-003 resolvido.
+- ✅ **Feature `avaliacao-pacientes` COMPLETA e DEPLOYADA** (2026-07-22, AD-010): CRUD de **avaliações por paciente** como histórico datado. `PK=CLINIC#<clinicId>#CLIENT#<pacienteId>`, `SK=AVALIACAO#<id>` (sob o paciente, AD-005). Campos definidos pelo cliente (diagnosticoMedico, queixaPrincipal, hma, pressaoArterial, fc, `avaliacaoPostural` MAP, `medidas` MAP, inspecaoGeral, examesComplementares) — todos texto livre e opcionais; `data` default hoje. Endpoints aninhados `/pacientes/{id}/avaliacoes` (POST/GET/PUT/DELETE) com 404 se paciente inexistente na clínica (dependência de router). 3 tasks (A1 schemas, A2 repo, A3 router), 38 testes novos (suíte 135). Smoke-test público OK (ciclo completo + isolamento + validações). ⚠️ Nota: `data` default usa a data **UTC** — perto da meia-noite pode divergir do fuso BR; o front deve enviar `data` explícita.
 - ⏭️ FAZER A SEGUIR: **M2 — Registro de Sessões e Aparelhos**. Escrever a spec (endpoints de sessão por paciente, `SK=SESSION#<data>` com lista denormalizada de aparelhos/exercícios), **sob a mesma PK multi-tenant** (`CLINIC#<clinicId>#CLIENT#<clientId>`). Rodar app local: `TABLE_NAME=clinica-pilates-ClinicaTable-8YQAEIFAKZGE .venv\Scripts\python -m uvicorn app.main:app --app-dir src --reload` (header `X-Clinic-Id` opcional). Deploy: `sam build --use-container; sam deploy` (Docker aberto).
 
 **Ambiente local:** venv em `.venv` (Python 3.14). Testes: `.\.venv\Scripts\python.exe -m pytest -q`.
@@ -61,6 +62,13 @@
 ---
 
 ## Recent Decisions (Last 60 days)
+
+### AD-010: Avaliação do paciente — histórico datado com `SK=AVALIACAO#<id>` (2026-07-22)
+
+**Decision:** A avaliação física do paciente é um **item time-series** sob a PK do paciente (`PK=CLINIC#<clinicId>#CLIENT#<pacienteId>`, `SK=AVALIACAO#<id>`), permitindo **várias avaliações no tempo** (histórico/evolução). A identidade é a `data` (obrigatória, default hoje) + um `id` uuid. Optou-se por `SK=AVALIACAO#<id>` (id no SK, como aparelhos) em vez de `SK=AVALIACAO#<data>` — mantém GET/PUT/DELETE por id triviais e evita colisão de duas avaliações no mesmo dia; a ordenação por data é feita na aplicação (volume por paciente é baixo). Blocos `avaliacaoPostural` e `medidas` são **MAPs aninhados** (AD-009). Todos os campos clínicos são texto livre e opcionais (cadastro flexível). Campos definidos pelo cliente.
+**Reason:** Casa com o modelo centrado no cliente (AD-005) — "evolução do paciente" = 1 Query por PK + `begins_with`. Endpoints aninhados em `/pacientes/{id}/avaliacoes` deixam a relação explícita e reaproveitam `PacienteRepository.get` para 404/isolamento.
+**Trade-off:** Ordenação por data na aplicação (não no SK) — aceito no volume esperado. `data` default em UTC pode divergir do fuso BR perto da meia-noite (front deve enviar `data` explícita).
+**Impact:** `schemas_avaliacao.py`, `repository_avaliacao.py`, `routers/avaliacoes.py`, fiação no `main.py`. AVL-01..10, 38 testes. Deployado na stack `clinica-pilates`.
 
 ### AD-009: Endereço do paciente como MAP (objeto aninhado), preenchido via CEP no front (2026-07-21)
 
