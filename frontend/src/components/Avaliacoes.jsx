@@ -167,22 +167,22 @@ export default function Avaliacoes({ clinic, paciente, onVoltar }) {
             </div>
           </div>
 
-          <label>Diagnóstico médico <span className="opt">(opcional)</span></label>
+          <label>Diagnóstico médico</label>
           <textarea rows={2} value={form.diagnosticoMedico} onChange={(e) => setCampo("diagnosticoMedico", e.target.value)} />
 
-          <label>Queixa principal <span className="opt">(opcional)</span></label>
+          <label>Queixa principal</label>
           <textarea rows={2} value={form.queixaPrincipal} onChange={(e) => setCampo("queixaPrincipal", e.target.value)} />
 
-          <label>HMA — História da Moléstia Atual <span className="opt">(opcional)</span></label>
+          <label>HMA — História da Moléstia Atual</label>
           <textarea rows={2} value={form.hma} onChange={(e) => setCampo("hma", e.target.value)} />
 
           <div className="row">
             <div>
-              <label>Pressão arterial <span className="opt">(opcional)</span></label>
+              <label>Pressão arterial</label>
               <input value={form.pressaoArterial} onChange={(e) => setCampo("pressaoArterial", e.target.value)} placeholder="12/8" />
             </div>
             <div>
-              <label>FC — freq. cardíaca <span className="opt">(opcional)</span></label>
+              <label>FC — freq. cardíaca</label>
               <input value={form.fc} onChange={(e) => setCampo("fc", e.target.value)} placeholder="72 bpm" />
             </div>
           </div>
@@ -228,7 +228,7 @@ export default function Avaliacoes({ clinic, paciente, onVoltar }) {
           <div className="sep">Inspeção geral e exames</div>
           <label>Inspeção geral <span className="opt">(flexibilidade, força, dor)</span></label>
           <textarea rows={2} value={form.inspecaoGeral} onChange={(e) => setCampo("inspecaoGeral", e.target.value)} />
-          <label>Exames complementares ou testes <span className="opt">(opcional)</span></label>
+          <label>Exames complementares ou testes</label>
           <textarea rows={2} value={form.examesComplementares} onChange={(e) => setCampo("examesComplementares", e.target.value)} />
 
           <div className="actions">
