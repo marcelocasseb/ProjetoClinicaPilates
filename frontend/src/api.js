@@ -45,6 +45,17 @@ export const aparelhosApi = {
   remove: (clinic, id) => request("DELETE", `/aparelhos/${id}`, clinic),
 };
 
+// --- Avaliações (por paciente, aninhadas — AVL-01..08) ---
+export const avaliacoesApi = {
+  list: (clinic, pacienteId) => request("GET", `/pacientes/${pacienteId}/avaliacoes`, clinic),
+  create: (clinic, pacienteId, data) =>
+    request("POST", `/pacientes/${pacienteId}/avaliacoes`, clinic, data),
+  update: (clinic, pacienteId, id, data) =>
+    request("PUT", `/pacientes/${pacienteId}/avaliacoes/${id}`, clinic, data),
+  remove: (clinic, pacienteId, id) =>
+    request("DELETE", `/pacientes/${pacienteId}/avaliacoes/${id}`, clinic),
+};
+
 // --- ViaCEP (consulta de endereço pelo CEP, feita no front — AD-009) ---
 export async function buscarCep(cep) {
   const digits = (cep || "").replace(/\D/g, "");

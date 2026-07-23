@@ -28,6 +28,17 @@ export function maskCep(v) {
   return d;
 }
 
+// Data de hoje em YYYY-MM-DD no fuso local (default do campo de data da avaliação).
+export const hojeISO = () => new Date().toLocaleDateString("en-CA");
+
+// YYYY-MM-DD -> DD/MM/YYYY (exibição).
+export function formatDataBR(iso) {
+  if (!iso) return "—";
+  const [y, m, d] = iso.split("-");
+  if (!y || !m || !d) return iso;
+  return `${d}/${m}/${y}`;
+}
+
 // Validação de CPF pelos dígitos verificadores (mesma regra do backend).
 export function isValidCpf(v) {
   const d = onlyDigits(v);

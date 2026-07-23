@@ -296,6 +296,19 @@
   color: var(--danger);
 }
 
+/* ---------- Breadcrumb (avaliações) ---------- */
+.crumbs {
+  margin-bottom: 16px;
+  font-size: 14px;
+}
+.crumbs .link {
+  font-size: 14px;
+  padding-left: 0;
+}
+.form textarea {
+  resize: vertical;
+}
+
 /* ---------- Utilidades ---------- */
 .muted {
   color: var(--muted);

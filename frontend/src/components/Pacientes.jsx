@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { pacientesApi, buscarCep } from "../api";
 import { maskCpf, maskTelefone, maskCep, isValidCpf, onlyDigits } from "../utils/format";
+import Avaliacoes from "./Avaliacoes";
 
 const VAZIO = {
   nome: "",
@@ -16,6 +17,7 @@ export default function Pacientes({ clinic }) {
   const [editId, setEditId] = useState(null);
   const [erro, setErro] = useState("");
   const [loading, setLoading] = useState(false);
+  const [verAvaliacoes, setVerAvaliacoes] = useState(null);
 
   async function carregar() {
     setErro("");
@@ -123,6 +125,16 @@ export default function Pacientes({ clinic }) {
     setEditId(null);
   }
 
+  if (verAvaliacoes) {
+    return (
+      <Avaliacoes
+        clinic={clinic}
+        paciente={verAvaliacoes}
+        onVoltar={() => setVerAvaliacoes(null)}
+      />
+    );
+  }
+
   return (
     <div className="grid">
       <form className="card form" onSubmit={salvar}>
@@ -226,6 +238,7 @@ export default function Pacientes({ clinic }) {
                   <td>{p.telefone || "—"}</td>
                   <td>{p.endereco?.cidade || "—"}</td>
                   <td className="td-actions">
+                    <button className="link" onClick={() => setVerAvaliacoes(p)}>avaliações</button>
                     <button className="link" onClick={() => editar(p)}>editar</button>
                     <button className="link danger" onClick={() => remover(p)}>remover</button>
                   </td>
