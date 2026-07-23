@@ -75,6 +75,7 @@ Cada clínica mantém seu próprio catálogo de aparelhos (multi-tenant, AD-007)
 - Campos (texto livre, opcionais): diagnósticoMédico, queixaPrincipal, HMA, PA, FC, avaliação postural (4 vistas, MAP), medidas (braço/abdômen/coxa/panturrilha, MAP), inspeção geral, exames complementares. `data` default hoje
 - Endpoints aninhados `/pacientes/{id}/avaliacoes` (CRUD, soft delete); 404 se paciente inexistente na clínica
 - AVL-01..10 Verified, 38 testes (suíte 135). Smoke-test público OK (ciclo + isolamento + validações)
+- ✅ **Front no ar**: tela de Avaliações por paciente (link "avaliações" na linha) publicada no CloudFront
 
 **3. Registro de Sessões** - DEFERIDO (pós-demo)  ← depende do catálogo de aparelhos
 
