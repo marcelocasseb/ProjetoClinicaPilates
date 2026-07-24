@@ -125,6 +125,10 @@ export default function Pacientes({ clinic }) {
   async function salvar(e) {
     e.preventDefault();
     if (cpfInvalido) return;
+    if (!form.nome.trim()) {
+      setErro("Nome é obrigatório.");
+      return;
+    }
     setErro("");
     setLoading(true);
     try {
