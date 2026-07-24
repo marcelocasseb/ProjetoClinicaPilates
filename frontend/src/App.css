@@ -169,6 +169,22 @@
   background: rgba(109, 94, 252, 0.06);
 }
 
+/* ---------- Banner de consultas na ficha ---------- */
+.aval-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: rgba(109, 94, 252, 0.08);
+  font-size: 14px;
+  font-weight: 600;
+}
+
 /* ---------- Grid / Cards ---------- */
 .grid {
   display: grid;

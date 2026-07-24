@@ -35,7 +35,7 @@ function mapOuNull(obj) {
   return algum ? limpo : null;
 }
 
-export default function Avaliacoes({ clinic, paciente, onVoltar, embedded = false }) {
+export default function Avaliacoes({ clinic, paciente, onVoltar, onCount, embedded = false }) {
   const [lista, setLista] = useState([]);
   const [form, setForm] = useState(vazio());
   const [editId, setEditId] = useState(null);
@@ -45,7 +45,9 @@ export default function Avaliacoes({ clinic, paciente, onVoltar, embedded = fals
   async function carregar() {
     setErro("");
     try {
-      setLista(await avaliacoesApi.list(clinic.id, paciente.id));
+      const dados = await avaliacoesApi.list(clinic.id, paciente.id);
+      setLista(dados);
+      onCount?.(dados.length);
     } catch (e) {
       setErro(e.message);
     }

@@ -16,6 +16,7 @@ export default function Pacientes({ clinic }) {
   const [busca, setBusca] = useState("");
   const [view, setView] = useState("lista"); // "lista" (consulta) | "detalhe" (ficha)
   const [selecionado, setSelecionado] = useState(null); // paciente aberto na ficha (com id/nome)
+  const [avalCount, setAvalCount] = useState(null); // nº de avaliações do paciente aberto
   const [form, setForm] = useState(VAZIO);
   const [editId, setEditId] = useState(null);
   const [erro, setErro] = useState("");
@@ -96,6 +97,7 @@ export default function Pacientes({ clinic }) {
   // Abre a ficha de um paciente existente (consulta/edição + avaliações).
   function abrirPaciente(p) {
     setErro("");
+    setAvalCount(null);
     setEditId(p.id);
     setSelecionado(p);
     preencherForm(p);
@@ -106,6 +108,7 @@ export default function Pacientes({ clinic }) {
   // Abre a ficha vazia para cadastrar um novo paciente.
   function abrirNovo() {
     setErro("");
+    setAvalCount(null);
     setEditId(null);
     setSelecionado(null);
     setForm(VAZIO);
@@ -237,6 +240,25 @@ export default function Pacientes({ clinic }) {
         <strong>{editId ? selecionado?.nome || "Ficha do paciente" : "Novo paciente"}</strong>
       </div>
 
+      {editId && avalCount != null && (
+        <div className="aval-banner">
+          <span>
+            {avalCount === 0
+              ? "Nenhuma consulta registrada para este paciente."
+              : `📋 ${avalCount} consulta${avalCount > 1 ? "s" : ""} registrada${avalCount > 1 ? "s" : ""}.`}
+          </span>
+          <button
+            type="button"
+            className="btn"
+            onClick={() =>
+              document.getElementById("secao-avaliacoes")?.scrollIntoView({ behavior: "smooth" })
+            }
+          >
+            {avalCount === 0 ? "Registrar consulta ↓" : "Ver consultas ↓"}
+          </button>
+        </div>
+      )}
+
       <form className="card form" style={{ maxWidth: 640 }} onSubmit={salvar}>
         <h2>{editId ? "Dados do paciente" : "Novo paciente"}</h2>
         {erro && <div className="erro">{erro}</div>}
@@ -319,8 +341,8 @@ export default function Pacientes({ clinic }) {
       </form>
 
       {selecionado ? (
-        <div style={{ marginTop: 28 }}>
-          <Avaliacoes key={selecionado.id} clinic={clinic} paciente={selecionado} embedded />
+        <div id="secao-avaliacoes" style={{ marginTop: 28 }}>
+          <Avaliacoes key={selecionado.id} clinic={clinic} paciente={selecionado} onCount={setAvalCount} embedded />
         </div>
       ) : (
         <p className="muted" style={{ marginTop: 20 }}>
