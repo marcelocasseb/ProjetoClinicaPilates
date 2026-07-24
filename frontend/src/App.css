@@ -363,6 +363,22 @@
 .obs-card {
   margin-top: 20px;
 }
+/* fieldset usado só para habilitar/desabilitar em bloco (modo leitura) */
+.fs-reset {
+  border: none;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+/* Em modo leitura, mantém o texto legível (sem o cinza padrão de disabled) */
+.form fieldset:disabled input,
+.form fieldset:disabled textarea {
+  opacity: 1;
+  color: var(--text);
+  -webkit-text-fill-color: var(--text);
+  background: var(--panel);
+  cursor: default;
+}
 .sep-top {
   border-top: none;
   padding-top: 0;

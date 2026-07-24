@@ -39,6 +39,7 @@ export default function Avaliacoes({ clinic, paciente, onVoltar, onCount, embedd
   const [lista, setLista] = useState([]);
   const [form, setForm] = useState(vazio());
   const [editId, setEditId] = useState(null);
+  const [readonly, setReadonly] = useState(false); // consulta aberta em modo leitura
   const [erro, setErro] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -57,6 +58,7 @@ export default function Avaliacoes({ clinic, paciente, onVoltar, onCount, embedd
     carregar();
     setForm(vazio());
     setEditId(null);
+    setReadonly(false);
   }, [clinic.id, paciente.id]);
 
   function setCampo(campo, valor) {
@@ -104,6 +106,7 @@ export default function Avaliacoes({ clinic, paciente, onVoltar, onCount, embedd
       else await avaliacoesApi.create(clinic.id, paciente.id, payload);
       setForm(vazio());
       setEditId(null);
+      setReadonly(false);
       await carregar();
     } catch (e) {
       setErro(e.message);
@@ -112,7 +115,10 @@ export default function Avaliacoes({ clinic, paciente, onVoltar, onCount, embedd
     }
   }
 
-  function editar(a) {
+  // Abre uma consulta existente em modo leitura (só visualização).
+  function consultar(a) {
+    setErro("");
+    setReadonly(true);
     setEditId(a.id);
     setForm({
       data: a.data || hojeISO(),
@@ -140,6 +146,11 @@ export default function Avaliacoes({ clinic, paciente, onVoltar, onCount, embedd
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
+  // Habilita a edição da consulta que está aberta.
+  function habilitarEdicao() {
+    setReadonly(false);
+  }
+
   async function remover(a) {
     if (!confirm(`Remover a avaliação de ${formatDataBR(a.data)}?`)) return;
     setErro("");
@@ -148,6 +159,7 @@ export default function Avaliacoes({ clinic, paciente, onVoltar, onCount, embedd
       if (editId === a.id) {
         setForm(vazio());
         setEditId(null);
+        setReadonly(false);
       }
       await carregar();
     } catch (e) {
@@ -155,9 +167,11 @@ export default function Avaliacoes({ clinic, paciente, onVoltar, onCount, embedd
     }
   }
 
+  // Volta para o formulário de nova consulta (limpo e editável).
   function cancelar() {
     setForm(vazio());
     setEditId(null);
+    setReadonly(false);
   }
 
   return (
@@ -175,9 +189,10 @@ export default function Avaliacoes({ clinic, paciente, onVoltar, onCount, embedd
       <form onSubmit={salvar}>
       <div className="grid">
         <div className="card form">
-          <h2>{editId ? "Editar avaliação/consulta" : "Nova avaliação/consulta"}</h2>
+          <h2>{!editId ? "Nova avaliação/consulta" : readonly ? "Consulta" : "Editar consulta"}</h2>
           {erro && <div className="erro">{erro}</div>}
 
+          <fieldset className="fs-reset" disabled={readonly}>
           <div className="row">
             <div style={{ maxWidth: 180 }}>
               <label>Data *</label>
@@ -248,6 +263,7 @@ export default function Avaliacoes({ clinic, paciente, onVoltar, onCount, embedd
           <textarea rows={2} value={form.inspecaoGeral} onChange={(e) => setCampo("inspecaoGeral", e.target.value)} />
           <label>Exames complementares ou testes</label>
           <textarea rows={2} value={form.examesComplementares} onChange={(e) => setCampo("examesComplementares", e.target.value)} />
+          </fieldset>
         </div>
 
         <div className="card">
@@ -269,7 +285,7 @@ export default function Avaliacoes({ clinic, paciente, onVoltar, onCount, embedd
                     <td>{formatDataBR(a.data)}</td>
                     <td className="td-desc">{a.queixaPrincipal || "—"}</td>
                     <td className="td-actions">
-                      <button className="link" onClick={() => editar(a)}>editar</button>
+                      <button className="link" onClick={() => consultar(a)}>consultar</button>
                       <button className="link danger" onClick={() => remover(a)}>remover</button>
                     </td>
                   </tr>
@@ -281,23 +297,38 @@ export default function Avaliacoes({ clinic, paciente, onVoltar, onCount, embedd
       </div>
 
       <div className="card form obs-card">
-        <div className="sep sep-top">Observação</div>
-        <label>
-          Observação <span className="opt">(anotações livres da consulta/sessão)</span>
-        </label>
-        <textarea
-          className="obs"
-          rows={7}
-          value={form.observacao}
-          onChange={(e) => setCampo("observacao", e.target.value)}
-          placeholder="Escreva aqui o que quiser sobre esta consulta/avaliação…"
-        />
+        <fieldset className="fs-reset" disabled={readonly}>
+          <div className="sep sep-top">Observação</div>
+          <label>
+            Observação <span className="opt">(anotações livres da consulta/sessão)</span>
+          </label>
+          <textarea
+            className="obs"
+            rows={7}
+            value={form.observacao}
+            onChange={(e) => setCampo("observacao", e.target.value)}
+            placeholder="Escreva aqui o que quiser sobre esta consulta/avaliação…"
+          />
+        </fieldset>
         <div className="actions">
-          <button type="submit" className="btn primary" disabled={loading}>
-            {loading ? "Salvando..." : editId ? "Salvar" : "Salvar avaliação"}
-          </button>
-          {editId && (
-            <button type="button" className="btn" onClick={cancelar}>Cancelar</button>
+          {readonly ? (
+            <>
+              <button type="button" className="btn primary" onClick={habilitarEdicao}>
+                Editar
+              </button>
+              <button type="button" className="btn" onClick={cancelar}>
+                Nova consulta
+              </button>
+            </>
+          ) : (
+            <>
+              <button type="submit" className="btn primary" disabled={loading}>
+                {loading ? "Salvando..." : editId ? "Salvar" : "Salvar avaliação"}
+              </button>
+              {editId && (
+                <button type="button" className="btn" onClick={cancelar}>Cancelar</button>
+              )}
+            </>
           )}
         </div>
       </div>
