@@ -320,7 +320,7 @@ export default function Pacientes({ clinic }) {
 
       {selecionado ? (
         <div style={{ marginTop: 28 }}>
-          <Avaliacoes clinic={clinic} paciente={selecionado} embedded />
+          <Avaliacoes key={selecionado.id} clinic={clinic} paciente={selecionado} embedded />
         </div>
       ) : (
         <p className="muted" style={{ marginTop: 20 }}>
