@@ -87,9 +87,17 @@ export default function Avaliacoes({ clinic, paciente, onVoltar, embedded = fals
   async function salvar(e) {
     e.preventDefault();
     setErro("");
+    const payload = montarPayload();
+    // Nenhum campo é obrigatório, mas não faz sentido salvar em branco.
+    // A `data` auto-preenche, então ela não conta como "conteúdo".
+    const { data: _data, ...conteudo } = payload;
+    const temConteudo = Object.values(conteudo).some((v) => v != null);
+    if (!temConteudo) {
+      setErro("Todos os campos estão em branco — preencha ao menos um antes de salvar.");
+      return;
+    }
     setLoading(true);
     try {
-      const payload = montarPayload();
       if (editId) await avaliacoesApi.update(clinic.id, paciente.id, editId, payload);
       else await avaliacoesApi.create(clinic.id, paciente.id, payload);
       setForm(vazio());
