@@ -6,7 +6,11 @@
 - **Frontend** (React+Vite em `frontend/`, stack `clinica-pilates-frontend`): login simples (seletor de clínica → `X-Clinic-Id`), Pacientes (máscaras CPF/telefone/CEP + autofill ViaCEP + validação de CPF), Aparelhos e **Avaliações por paciente** (link "avaliações" na linha do paciente → tela com form completo + histórico datado), CRUD completo. Hospedado em S3+CloudFront. Dados de demo semeados (Zen/Corpo).
 - Local: `cd frontend; npm run dev` → http://localhost:5173.
 
-⏭️ **PRÓXIMO (pós-feedback do cliente):** spec "impecable" do front definitivo → **Cognito** (login real, troca só o `get_clinic_id`) → **Registro de Sessões** (M2 parte 2). Ver Rota do Demo no ROADMAP.
+⏭️ **AO RETOMAR ("continuar"):** avaliação (back+front) concluída e no ar. Próximo passo **ainda não escolhido** — perguntar ao usuário qual das 3 frentes:
+1. **Registro de Sessões** (CORE do produto, M2 pt2; depende do catálogo de aparelhos, que está pronto) — back (spec+testes+deploy) → front.
+2. **Cognito** (login real, M3; troca só o `get_clinic_id` no back) → tela de login no front.
+3. **Front definitivo** (spec "impecable", idealmente com feedback do cliente).
+Recomendação: **Registro de Sessões** (é o coração do produto e destrava o pitch). Ver Rota do Demo no ROADMAP.
 
 **Recursos AWS provisionados (stack `clinica-pilates`, us-east-1):**
 - API base: https://8f1ffym997.execute-api.us-east-1.amazonaws.com
