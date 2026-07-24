@@ -1,6 +1,6 @@
 # State
 
-**Last Updated:** 2026-07-22
+**Last Updated:** 2026-07-24
 **Current Work:** 🎯 **DEMO NO AR** — https://d1th2j57vyxahs.cloudfront.net (HTTPS). Estado atual do produto:
 - **Backend** (stack `clinica-pilates`): CRUD de **Pacientes**, **Aparelhos** e **Avaliações** (por paciente), multi-tenant por clínica (AD-007), **135 tests verdes**, deployado. CORS tratado no FastAPI (CORSMiddleware).
 - **Frontend** (React+Vite em `frontend/`, stack `clinica-pilates-frontend`): login simples (seletor de clínica → `X-Clinic-Id`), Pacientes (máscaras CPF/telefone/CEP + autofill ViaCEP + validação de CPF), Aparelhos e **Avaliações por paciente** (link "avaliações" na linha do paciente → tela com form completo + histórico datado), CRUD completo. Hospedado em S3+CloudFront. Dados de demo semeados (Zen/Corpo).
@@ -53,7 +53,7 @@
   - R1: `schemas.py` — `cpf` validado (AD-008) + submodelo `Endereco` (AD-009) — commit `2137b16`... (ver git)
   - R2/R3/R4: chave `CLINIC#<clinicId>#CLIENT#<id>`, GSI1 (`template.yaml` + `conftest.py`), `get_clinic_id` (header `X-Clinic-Id` / default; token no M3), isolamento testado
   - Chave multi-tenant escolhida: **cliente-na-PK + GSI** (não clínica-na-PK) — preserva "ficha do paciente = 1 Query por PK" (AD-005). B-003 resolvido.
-- ✅ **Feature `avaliacao-pacientes` COMPLETA no BACK e no FRONT, no ar** (2026-07-22, AD-010): CRUD de **avaliações por paciente** como histórico datado. Front: componente `frontend/src/components/Avaliacoes.jsx` (form completo + lista datada) acessível pelo link "avaliações" na linha do paciente; `avaliacoesApi` em `api.js`; publicado no CloudFront (bundle `index-D8sML8oi.js`). O front envia `data` explícita (fuso local), contornando o desvio UTC do back. `PK=CLINIC#<clinicId>#CLIENT#<pacienteId>`, `SK=AVALIACAO#<id>` (sob o paciente, AD-005). Campos definidos pelo cliente (diagnosticoMedico, queixaPrincipal, hma, pressaoArterial, fc, `avaliacaoPostural` MAP, `medidas` MAP, inspecaoGeral, examesComplementares) — todos texto livre e opcionais; `data` default hoje. Endpoints aninhados `/pacientes/{id}/avaliacoes` (POST/GET/PUT/DELETE) com 404 se paciente inexistente na clínica (dependência de router). 3 tasks (A1 schemas, A2 repo, A3 router), 38 testes novos (suíte 135). Smoke-test público OK (ciclo completo + isolamento + validações). ⚠️ Nota: `data` default usa a data **UTC** — perto da meia-noite pode divergir do fuso BR; o front deve enviar `data` explícita.
+- ✅ **Feature `avaliacao-pacientes` COMPLETA no BACK e no FRONT, no ar** (2026-07-22..24, AD-010): CRUD de **avaliações por paciente** como histórico datado. Front: `frontend/src/components/Avaliacoes.jsx` (form + lista datada) via link "avaliações" na linha do paciente; `avaliacoesApi` em `api.js`; publicado no CloudFront. O front envia `data` explícita (fuso local), contornando o desvio UTC do back. **Polido pós-review (2026-07-24):** botão "Salvar avaliação", campos PA/FC alinhados pela base (`.row { align-items: flex-end }`), rótulos sem "(opcional)". Paciente de demo completo semeado em `clinica-corpo` (Mariana Oliveira Souza, CPF válido fictício). `PK=CLINIC#<clinicId>#CLIENT#<pacienteId>`, `SK=AVALIACAO#<id>` (sob o paciente, AD-005). Campos definidos pelo cliente (diagnosticoMedico, queixaPrincipal, hma, pressaoArterial, fc, `avaliacaoPostural` MAP, `medidas` MAP, inspecaoGeral, examesComplementares) — todos texto livre e opcionais; `data` default hoje. Endpoints aninhados `/pacientes/{id}/avaliacoes` (POST/GET/PUT/DELETE) com 404 se paciente inexistente na clínica (dependência de router). 3 tasks (A1 schemas, A2 repo, A3 router), 38 testes novos (suíte 135). Smoke-test público OK (ciclo completo + isolamento + validações). ⚠️ Nota: `data` default usa a data **UTC** — perto da meia-noite pode divergir do fuso BR; o front deve enviar `data` explícita.
 - ⏭️ FAZER A SEGUIR: **M2 — Registro de Sessões e Aparelhos**. Escrever a spec (endpoints de sessão por paciente, `SK=SESSION#<data>` com lista denormalizada de aparelhos/exercícios), **sob a mesma PK multi-tenant** (`CLINIC#<clinicId>#CLIENT#<clientId>`). Rodar app local: `TABLE_NAME=clinica-pilates-ClinicaTable-8YQAEIFAKZGE .venv\Scripts\python -m uvicorn app.main:app --app-dir src --reload` (header `X-Clinic-Id` opcional). Deploy: `sam build --use-container; sam deploy` (Docker aberto).
 
 **Ambiente local:** venv em `.venv` (Python 3.14). Testes: `.\.venv\Scripts\python.exe -m pytest -q`.
@@ -179,7 +179,9 @@ Campo **opcional**. A consulta ao CEP (ViaCEP) é feita **no front-end** — o b
 
 ## Lessons Learned
 
-_Nenhuma ainda._
+### LL-001: "Textos estranhos" no front podem ser tradução automática do navegador (2026-07-24)
+
+Usuário reportou o link aparecendo como "removedor" (print) enquanto o código/bundle diziam "remover". Causa: **tradução automática do Chrome** reescrevendo a página PT→PT. Antes de "corrigir" um texto que já está certo no código, **conferir o bundle no ar** (`curl <site>/assets/index-*.js | grep`) e lembrar dessa hipótese. Solução do lado do usuário: desativar tradução automática da página.
 
 ---
 

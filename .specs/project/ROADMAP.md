@@ -16,7 +16,7 @@ validar a ideia e destravar venda antes de o sistema estar 100%.
 2. ✅ **Login simples** — seletor de clínica (envia `X-Clinic-Id`); feito no front
    NÃO é o Cognito ainda — o `get_clinic_id()` no back já está isolado, então trocar
    simples → Cognito depois é mexer num ponto só.
-3. ✅ **Front leve (demo)** — React+Vite, Pacientes + Aparelhos, máscaras/CEP/validação.
+3. ✅ **Front leve (demo)** — React+Vite, Pacientes + Aparelhos + Avaliações, máscaras/CEP/validação.
    **NO AR (HTTPS):** https://d1th2j57vyxahs.cloudfront.net (S3+CloudFront, stack separado).
 4. **📣 DEMO pro cliente** ← ESTAMOS AQUI (pronto pra mostrar; aguardando feedback)
 5. **Depois do demo:** spec "impecable" (front definitivo, com feedback do cliente) →
