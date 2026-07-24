@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { avaliacoesApi } from "../api";
 import { hojeISO, formatDataBR } from "../utils/format";
 
@@ -42,6 +42,7 @@ export default function Avaliacoes({ clinic, paciente, onVoltar, onCount, embedd
   const [readonly, setReadonly] = useState(false); // consulta aberta em modo leitura
   const [erro, setErro] = useState("");
   const [loading, setLoading] = useState(false);
+  const topoRef = useRef(null); // topo da seção de avaliações (p/ rolar ao consultar)
 
   async function carregar() {
     setErro("");
@@ -143,7 +144,7 @@ export default function Avaliacoes({ clinic, paciente, onVoltar, onCount, embedd
       examesComplementares: a.examesComplementares || "",
       observacao: a.observacao || "",
     });
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    topoRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   // Habilita a edição da consulta que está aberta.
@@ -175,7 +176,7 @@ export default function Avaliacoes({ clinic, paciente, onVoltar, onCount, embedd
   }
 
   return (
-    <div>
+    <div ref={topoRef}>
       {embedded ? (
         <div className="sep">Avaliações de {paciente.nome}</div>
       ) : (
@@ -285,8 +286,8 @@ export default function Avaliacoes({ clinic, paciente, onVoltar, onCount, embedd
                     <td>{formatDataBR(a.data)}</td>
                     <td className="td-desc">{a.queixaPrincipal || "—"}</td>
                     <td className="td-actions">
-                      <button className="link" onClick={() => consultar(a)}>consultar</button>
-                      <button className="link danger" onClick={() => remover(a)}>remover</button>
+                      <button type="button" className="link" onClick={() => consultar(a)}>consultar</button>
+                      <button type="button" className="link danger" onClick={() => remover(a)}>remover</button>
                     </td>
                   </tr>
                 ))}
