@@ -69,6 +69,7 @@ class AvaliacaoBase(BaseModel):
     medidas: Optional[Medidas] = None
     inspecaoGeral: Optional[str] = None
     examesComplementares: Optional[str] = None
+    observacao: Optional[str] = None
 
     @field_validator("data", mode="before")
     @classmethod
@@ -95,6 +96,7 @@ class AvaliacaoBase(BaseModel):
         "fc",
         "inspecaoGeral",
         "examesComplementares",
+        "observacao",
         mode="before",
     )
     @classmethod

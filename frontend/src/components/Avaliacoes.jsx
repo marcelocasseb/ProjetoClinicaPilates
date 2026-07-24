@@ -19,6 +19,7 @@ function vazio() {
     medidas: { braco: "", abdomen: "", coxa: "", panturrilha: "" },
     inspecaoGeral: "",
     examesComplementares: "",
+    observacao: "",
   };
 }
 
@@ -34,7 +35,7 @@ function mapOuNull(obj) {
   return algum ? limpo : null;
 }
 
-export default function Avaliacoes({ clinic, paciente, onVoltar }) {
+export default function Avaliacoes({ clinic, paciente, onVoltar, embedded = false }) {
   const [lista, setLista] = useState([]);
   const [form, setForm] = useState(vazio());
   const [editId, setEditId] = useState(null);
@@ -79,6 +80,7 @@ export default function Avaliacoes({ clinic, paciente, onVoltar }) {
       medidas: mapOuNull(form.medidas),
       inspecaoGeral: txt(form.inspecaoGeral),
       examesComplementares: txt(form.examesComplementares),
+      observacao: txt(form.observacao),
     };
   }
 
@@ -123,6 +125,7 @@ export default function Avaliacoes({ clinic, paciente, onVoltar }) {
       },
       inspecaoGeral: a.inspecaoGeral || "",
       examesComplementares: a.examesComplementares || "",
+      observacao: a.observacao || "",
     });
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -149,15 +152,20 @@ export default function Avaliacoes({ clinic, paciente, onVoltar }) {
 
   return (
     <div>
-      <div className="crumbs">
-        <button className="link" onClick={onVoltar}>← Pacientes</button>
-        <span className="muted"> / Avaliações de </span>
-        <strong>{paciente.nome}</strong>
-      </div>
+      {embedded ? (
+        <div className="sep">Avaliações de {paciente.nome}</div>
+      ) : (
+        <div className="crumbs">
+          <button className="link" onClick={onVoltar}>← Pacientes</button>
+          <span className="muted"> / Avaliações de </span>
+          <strong>{paciente.nome}</strong>
+        </div>
+      )}
 
+      <form onSubmit={salvar}>
       <div className="grid">
-        <form className="card form" onSubmit={salvar}>
-          <h2>{editId ? "Editar avaliação" : "Nova avaliação"}</h2>
+        <div className="card form">
+          <h2>{editId ? "Editar avaliação/consulta" : "Nova avaliação/consulta"}</h2>
           {erro && <div className="erro">{erro}</div>}
 
           <div className="row">
@@ -230,16 +238,7 @@ export default function Avaliacoes({ clinic, paciente, onVoltar }) {
           <textarea rows={2} value={form.inspecaoGeral} onChange={(e) => setCampo("inspecaoGeral", e.target.value)} />
           <label>Exames complementares ou testes</label>
           <textarea rows={2} value={form.examesComplementares} onChange={(e) => setCampo("examesComplementares", e.target.value)} />
-
-          <div className="actions">
-            <button type="submit" className="btn primary" disabled={loading}>
-              {loading ? "Salvando..." : editId ? "Salvar" : "Salvar avaliação"}
-            </button>
-            {editId && (
-              <button type="button" className="btn" onClick={cancelar}>Cancelar</button>
-            )}
-          </div>
-        </form>
+        </div>
 
         <div className="card">
           <h2>Avaliações ({lista.length})</h2>
@@ -270,6 +269,29 @@ export default function Avaliacoes({ clinic, paciente, onVoltar }) {
           )}
         </div>
       </div>
+
+      <div className="card form obs-card">
+        <div className="sep sep-top">Observação</div>
+        <label>
+          Observação <span className="opt">(anotações livres da consulta/sessão)</span>
+        </label>
+        <textarea
+          className="obs"
+          rows={7}
+          value={form.observacao}
+          onChange={(e) => setCampo("observacao", e.target.value)}
+          placeholder="Escreva aqui o que quiser sobre esta consulta/avaliação…"
+        />
+        <div className="actions">
+          <button type="submit" className="btn primary" disabled={loading}>
+            {loading ? "Salvando..." : editId ? "Salvar" : "Salvar avaliação"}
+          </button>
+          {editId && (
+            <button type="button" className="btn" onClick={cancelar}>Cancelar</button>
+          )}
+        </div>
+      </div>
+      </form>
     </div>
   );
 }

@@ -136,6 +136,39 @@
   padding: 20px 24px 48px;
 }
 
+/* ---------- Barra de consulta (lista de pacientes) ---------- */
+.list-header {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.search {
+  flex: 1;
+  padding: 11px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel);
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+}
+.search:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(109, 94, 252, 0.15);
+}
+.list-header .btn {
+  white-space: nowrap;
+}
+.row-click {
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+.row-click:hover {
+  background: rgba(109, 94, 252, 0.06);
+}
+
 /* ---------- Grid / Cards ---------- */
 .grid {
   display: grid;
@@ -308,6 +341,19 @@
 }
 .form textarea {
   resize: vertical;
+}
+
+/* ---------- Observação (campo largo, rodapé da avaliação) ---------- */
+.obs-card {
+  margin-top: 20px;
+}
+.sep-top {
+  border-top: none;
+  padding-top: 0;
+  margin-top: 0;
+}
+textarea.obs {
+  min-height: 140px;
 }
 
 /* ---------- Utilidades ---------- */

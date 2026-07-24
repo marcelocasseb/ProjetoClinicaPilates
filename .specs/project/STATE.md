@@ -1,9 +1,9 @@
 # State
 
-**Last Updated:** 2026-07-24
+**Last Updated:** 2026-07-24 (fluxo de Pacientes em 2 telas + campo Observação na avaliação, back+front deployados)
 **Current Work:** 🎯 **DEMO NO AR** — https://d1th2j57vyxahs.cloudfront.net (HTTPS). Estado atual do produto:
-- **Backend** (stack `clinica-pilates`): CRUD de **Pacientes**, **Aparelhos** e **Avaliações** (por paciente), multi-tenant por clínica (AD-007), **135 tests verdes**, deployado. CORS tratado no FastAPI (CORSMiddleware).
-- **Frontend** (React+Vite em `frontend/`, stack `clinica-pilates-frontend`): login simples (seletor de clínica → `X-Clinic-Id`), Pacientes (máscaras CPF/telefone/CEP + autofill ViaCEP + validação de CPF), Aparelhos e **Avaliações por paciente** (link "avaliações" na linha do paciente → tela com form completo + histórico datado), CRUD completo. Hospedado em S3+CloudFront. Dados de demo semeados (Zen/Corpo).
+- **Backend** (stack `clinica-pilates`): CRUD de **Pacientes**, **Aparelhos** e **Avaliações/consultas** (por paciente), multi-tenant por clínica (AD-007), **136 tests verdes**, deployado. Avaliação tem campo `observacao` (texto livre, no DynamoDB). CORS tratado no FastAPI (CORSMiddleware).
+- **Frontend** (React+Vite em `frontend/`, stack `clinica-pilates-frontend`): login simples (seletor de clínica → `X-Clinic-Id`). **Fluxo de Pacientes em 2 telas (2026-07-24):** (1) tela de **consulta** — campo de busca (nome/CPF/telefone) + botão "+ Adicionar paciente" + lista clicável (sem form à vista); (2) **ficha do paciente** — abre ao clicar numa linha ou em Adicionar: form de dados (máscaras CPF/telefone/CEP + ViaCEP + validação CPF) **e a seção de Avaliações/consultas embutida** (só liberada após salvar o paciente novo). Avaliação: título "Nova avaliação/consulta" + campo largo **Observação** no rodapé. Aparelhos em aba separada. CRUD completo. Hospedado em S3+CloudFront. Dados de demo semeados (Zen/Corpo).
 - Local: `cd frontend; npm run dev` → http://localhost:5173.
 
 ⏭️ **AO RETOMAR ("continuar"):** avaliação (back+front) concluída e no ar. Próximo passo **ainda não escolhido** — perguntar ao usuário qual das 3 frentes:

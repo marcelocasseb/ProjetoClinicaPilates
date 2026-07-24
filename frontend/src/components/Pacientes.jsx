@@ -13,11 +13,13 @@ const VAZIO = {
 
 export default function Pacientes({ clinic }) {
   const [lista, setLista] = useState([]);
+  const [busca, setBusca] = useState("");
+  const [view, setView] = useState("lista"); // "lista" (consulta) | "detalhe" (ficha)
+  const [selecionado, setSelecionado] = useState(null); // paciente aberto na ficha (com id/nome)
   const [form, setForm] = useState(VAZIO);
   const [editId, setEditId] = useState(null);
   const [erro, setErro] = useState("");
   const [loading, setLoading] = useState(false);
-  const [verAvaliacoes, setVerAvaliacoes] = useState(null);
 
   async function carregar() {
     setErro("");
@@ -30,8 +32,11 @@ export default function Pacientes({ clinic }) {
 
   useEffect(() => {
     carregar();
+    setView("lista");
+    setBusca("");
     setForm(VAZIO);
     setEditId(null);
+    setSelecionado(null);
   }, [clinic.id]);
 
   function setCampo(campo, valor) {
@@ -71,27 +76,7 @@ export default function Pacientes({ clinic }) {
     };
   }
 
-  async function salvar(e) {
-    e.preventDefault();
-    if (cpfInvalido) return;
-    setErro("");
-    setLoading(true);
-    try {
-      const payload = montarPayload();
-      if (editId) await pacientesApi.update(clinic.id, editId, payload);
-      else await pacientesApi.create(clinic.id, payload);
-      setForm(VAZIO);
-      setEditId(null);
-      await carregar();
-    } catch (e) {
-      setErro(e.message);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  function editar(p) {
-    setEditId(p.id);
+  function preencherForm(p) {
     setForm({
       nome: p.nome || "",
       cpf: maskCpf(p.cpf || ""),
@@ -106,7 +91,60 @@ export default function Pacientes({ clinic }) {
         uf: p.endereco?.uf || "",
       },
     });
+  }
+
+  // Abre a ficha de um paciente existente (consulta/edição + avaliações).
+  function abrirPaciente(p) {
+    setErro("");
+    setEditId(p.id);
+    setSelecionado(p);
+    preencherForm(p);
+    setView("detalhe");
     window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  // Abre a ficha vazia para cadastrar um novo paciente.
+  function abrirNovo() {
+    setErro("");
+    setEditId(null);
+    setSelecionado(null);
+    setForm(VAZIO);
+    setView("detalhe");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function voltarLista() {
+    setView("lista");
+    setErro("");
+    setForm(VAZIO);
+    setEditId(null);
+    setSelecionado(null);
+    carregar();
+  }
+
+  async function salvar(e) {
+    e.preventDefault();
+    if (cpfInvalido) return;
+    setErro("");
+    setLoading(true);
+    try {
+      const payload = montarPayload();
+      if (editId) {
+        const atualizado = await pacientesApi.update(clinic.id, editId, payload);
+        setSelecionado(atualizado);
+      } else {
+        // Após criar, permanece na ficha já em modo edição para liberar as avaliações.
+        const criado = await pacientesApi.create(clinic.id, payload);
+        setEditId(criado.id);
+        setSelecionado(criado);
+        preencherForm(criado);
+      }
+      await carregar();
+    } catch (e) {
+      setErro(e.message);
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function remover(p) {
@@ -114,31 +152,89 @@ export default function Pacientes({ clinic }) {
     setErro("");
     try {
       await pacientesApi.remove(clinic.id, p.id);
-      await carregar();
+      voltarLista();
     } catch (e) {
       setErro(e.message);
     }
   }
 
-  function cancelar() {
-    setForm(VAZIO);
-    setEditId(null);
-  }
+  // ---------- Tela 1: consulta de pacientes ----------
+  if (view === "lista") {
+    const filtro = busca.trim().toLowerCase();
+    const filtroDigits = onlyDigits(busca);
+    const filtrados = filtro
+      ? lista.filter(
+          (p) =>
+            (p.nome || "").toLowerCase().includes(filtro) ||
+            (filtroDigits && onlyDigits(p.cpf || "").includes(filtroDigits)) ||
+            (filtroDigits && onlyDigits(p.telefone || "").includes(filtroDigits))
+        )
+      : lista;
 
-  if (verAvaliacoes) {
     return (
-      <Avaliacoes
-        clinic={clinic}
-        paciente={verAvaliacoes}
-        onVoltar={() => setVerAvaliacoes(null)}
-      />
+      <div>
+        <div className="list-header">
+          <input
+            className="search"
+            value={busca}
+            onChange={(e) => setBusca(e.target.value)}
+            placeholder="Pesquisar paciente por nome, CPF ou telefone…"
+          />
+          <button className="btn primary" onClick={abrirNovo}>
+            + Adicionar paciente
+          </button>
+        </div>
+
+        {erro && <div className="erro">{erro}</div>}
+
+        <div className="card">
+          <h2>Pacientes ({filtrados.length})</h2>
+          {lista.length === 0 ? (
+            <p className="muted">Nenhum paciente cadastrado ainda.</p>
+          ) : filtrados.length === 0 ? (
+            <p className="muted">Nenhum paciente encontrado para “{busca}”.</p>
+          ) : (
+            <table className="tbl">
+              <thead>
+                <tr>
+                  <th>Nome</th>
+                  <th>CPF</th>
+                  <th>Telefone</th>
+                  <th>Cidade</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtrados.map((p) => (
+                  <tr key={p.id} className="row-click" onClick={() => abrirPaciente(p)}>
+                    <td>{p.nome}</td>
+                    <td>{p.cpf ? maskCpf(p.cpf) : "—"}</td>
+                    <td>{p.telefone || "—"}</td>
+                    <td>{p.endereco?.cidade || "—"}</td>
+                    <td className="td-actions">
+                      <span className="link">abrir ficha →</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </div>
     );
   }
 
+  // ---------- Tela 2: ficha do paciente (dados + avaliações) ----------
   return (
-    <div className="grid">
-      <form className="card form" onSubmit={salvar}>
-        <h2>{editId ? "Editar paciente" : "Novo paciente"}</h2>
+    <div>
+      <div className="crumbs">
+        <button className="link" onClick={voltarLista}>← Pacientes</button>
+        <span className="muted"> / </span>
+        <strong>{editId ? selecionado?.nome || "Ficha do paciente" : "Novo paciente"}</strong>
+      </div>
+
+      <form className="card form" style={{ maxWidth: 640 }} onSubmit={salvar}>
+        <h2>{editId ? "Dados do paciente" : "Novo paciente"}</h2>
         {erro && <div className="erro">{erro}</div>}
 
         <label>Nome *</label>
@@ -207,47 +303,26 @@ export default function Pacientes({ clinic }) {
           <button type="submit" className="btn primary" disabled={loading || cpfInvalido}>
             {loading ? "Salvando..." : editId ? "Salvar" : "Cadastrar"}
           </button>
+          <button type="button" className="btn" onClick={voltarLista}>
+            Voltar
+          </button>
           {editId && (
-            <button type="button" className="btn" onClick={cancelar}>
-              Cancelar
+            <button type="button" className="btn" style={{ marginLeft: "auto" }} onClick={() => remover(selecionado)}>
+              Remover paciente
             </button>
           )}
         </div>
       </form>
 
-      <div className="card">
-        <h2>Pacientes ({lista.length})</h2>
-        {lista.length === 0 ? (
-          <p className="muted">Nenhum paciente cadastrado ainda.</p>
-        ) : (
-          <table className="tbl">
-            <thead>
-              <tr>
-                <th>Nome</th>
-                <th>CPF</th>
-                <th>Telefone</th>
-                <th>Cidade</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {lista.map((p) => (
-                <tr key={p.id}>
-                  <td>{p.nome}</td>
-                  <td>{p.cpf ? maskCpf(p.cpf) : "—"}</td>
-                  <td>{p.telefone || "—"}</td>
-                  <td>{p.endereco?.cidade || "—"}</td>
-                  <td className="td-actions">
-                    <button className="link" onClick={() => setVerAvaliacoes(p)}>avaliações</button>
-                    <button className="link" onClick={() => editar(p)}>editar</button>
-                    <button className="link danger" onClick={() => remover(p)}>remover</button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
+      {selecionado ? (
+        <div style={{ marginTop: 28 }}>
+          <Avaliacoes clinic={clinic} paciente={selecionado} embedded />
+        </div>
+      ) : (
+        <p className="muted" style={{ marginTop: 20 }}>
+          Salve o paciente para registrar avaliações.
+        </p>
+      )}
     </div>
   );
 }

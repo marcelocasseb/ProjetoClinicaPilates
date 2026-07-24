@@ -89,6 +89,14 @@ def test_update_altera_campos(dynamo_table):
     assert atualizado["criadoEm"] == criado["criadoEm"]
 
 
+def test_observacao_persiste_no_create_e_update(dynamo_table):
+    repo = _repo()
+    criado = repo.create({"observacao": "paciente evoluiu bem na sessão"})
+    assert repo.get(criado["id"])["observacao"] == "paciente evoluiu bem na sessão"
+    atualizado = repo.update(criado["id"], {"observacao": "manteve o quadro"})
+    assert atualizado["observacao"] == "manteve o quadro"
+
+
 def test_update_inexistente_retorna_none(dynamo_table):
     assert _repo().update("nao-existe", {"data": "2026-05-01"}) is None
 

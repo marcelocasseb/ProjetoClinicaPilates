@@ -33,6 +33,7 @@ _CAMPOS = (
     "medidas",
     "inspecaoGeral",
     "examesComplementares",
+    "observacao",
 )
 
 
