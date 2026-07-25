@@ -103,11 +103,17 @@ export default function Avaliacoes({ clinic, paciente, onVoltar, onCount, embedd
     }
     setLoading(true);
     try {
-      if (editId) await avaliacoesApi.update(clinic.id, paciente.id, editId, payload);
-      else await avaliacoesApi.create(clinic.id, paciente.id, payload);
-      setForm(vazio());
-      setEditId(null);
-      setReadonly(false);
+      if (editId) {
+        // Edição: mantém os dados na tela (volta pro modo leitura), não limpa.
+        await avaliacoesApi.update(clinic.id, paciente.id, editId, payload);
+        setReadonly(true);
+      } else {
+        // Nova consulta: limpa o formulário para o próximo cadastro.
+        await avaliacoesApi.create(clinic.id, paciente.id, payload);
+        setForm(vazio());
+        setEditId(null);
+        setReadonly(false);
+      }
       await carregar();
     } catch (e) {
       setErro(e.message);
