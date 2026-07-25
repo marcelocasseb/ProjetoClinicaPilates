@@ -238,3 +238,17 @@ Cobertura: 9/9 requisitos mapeados para tasks. ✅
 - `DELETE` passou a retornar `200 {"detail":"Paciente removido com sucesso"}` (era `204`) e `404 {"detail":"Paciente não encontrado"}`. Spec atualizada (PAC-08 AC1).
 
 **Deploy (2026-07-20):** `sam build --use-container` + `sam deploy` → endpoints `/pacientes` no ar em `https://8f1ffym997.execute-api.us-east-1.amazonaws.com`. Smoke-test público confirmou POST/GET/PUT/DELETE e validação `400`. **Milestone M1 concluído.**
+
+---
+
+## Front / UX (React+Vite, `frontend/`) ✅ — no CloudFront
+
+Backend inalterado; só front. Refactor multi-tenant/cpf/endereço (AD-008/009) já refletido no form (máscaras CPF/telefone/CEP + autofill ViaCEP + validação de CPF).
+
+| Item | Commit | Notas |
+| ---- | ------ | ----- |
+| Fluxo em 2 telas (consulta + ficha) | `f871317` | tela de busca (nome/CPF/telefone) + "Adicionar paciente" + lista clicável; ficha abre ao clicar |
+| Validação de nome obrigatório no front | `243d836` | barra antes de enviar (não depende do 400 do back) |
+| Ficha abre em leitura → Editar → Salvar | `0ea164f` | paciente existente read-only (`fieldset disabled`); novo já editável; botões `type=button`+`key` (sem submit-fantasma) |
+
+Avaliações do paciente ficam embutidas na ficha (ver feature `avaliacao-pacientes`).

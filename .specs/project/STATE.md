@@ -1,6 +1,6 @@
 # State
 
-**Last Updated:** 2026-07-24 (fluxo de Pacientes em 2 telas + campo Observação na avaliação, back+front deployados)
+**Last Updated:** 2026-07-24 (fim do dia — UX de Pacientes/Avaliação polida e no ar; tudo commitado e **pushado pro GitHub** `origin/main`; tasks atualizadas)
 **Current Work:** 🎯 **DEMO NO AR** — https://d1th2j57vyxahs.cloudfront.net (HTTPS). Estado atual do produto:
 - **Backend** (stack `clinica-pilates`): CRUD de **Pacientes**, **Aparelhos** e **Avaliações/consultas** (por paciente), multi-tenant por clínica (AD-007), **136 tests verdes**, deployado. Avaliação tem campo `observacao` (texto livre, no DynamoDB). CORS tratado no FastAPI (CORSMiddleware).
 - **Frontend** (React+Vite em `frontend/`, stack `clinica-pilates-frontend`): login simples (seletor de clínica → `X-Clinic-Id`). **Fluxo de Pacientes em 2 telas (2026-07-24):** (1) tela de **consulta** — campo de busca (nome/CPF/telefone) + botão "+ Adicionar paciente" + lista clicável (sem form à vista); (2) **ficha do paciente** — abre ao clicar numa linha ou em Adicionar: form de dados (máscaras CPF/telefone/CEP + ViaCEP + validação CPF) **e a seção de Avaliações/consultas embutida** (só liberada após salvar o paciente novo). Avaliação: título "Nova avaliação/consulta" + campo largo **Observação** no rodapé. Aparelhos em aba separada. CRUD completo. Hospedado em S3+CloudFront. Dados de demo semeados (Zen/Corpo).
@@ -8,7 +8,7 @@
 
 **Polimento de UX da avaliação (2026-07-24, no ar):** fluxo de Pacientes em 2 telas (consulta+ficha); campo **Observação** (largo, no DynamoDB); validações de front (nome obrigatório; avaliação em branco bloqueada); fluxo **consultar → Editar → Salvar** (consulta abre em leitura, botão Editar destrava). Três bugs de front caçados e resolvidos: tradução do Chrome ([[browser-autotranslate-front]]), cache do index.html (agora `no-cache`), e submit-fantasma por type-swap de botão ([[react-button-type-swap-submit]]).
 
-⏭️ **AO RETOMAR ("continuar"):** avaliação (back+front, com fluxo consultar/editar/salvar) concluída e no ar. Próximo passo **ainda não escolhido** — perguntar ao usuário qual das 3 frentes:
+⏭️ **AO RETOMAR AMANHÃ ("continuar"):** nada pendente/quebrado — tudo commitado, pushado (`origin/main`) e no ar (back na stack `clinica-pilates`, front no CloudFront `index-C4S-zm6z.js`). Ficha do paciente e avaliação com fluxo **abrir em leitura → Editar → Salvar**. **Próximo passo = ESCOLHER a frente** (perguntar ao usuário qual das 3):
 1. **Registro de Sessões** (CORE do produto, M2 pt2; depende do catálogo de aparelhos, que está pronto) — back (spec+testes+deploy) → front.
 2. **Cognito** (login real, M3; troca só o `get_clinic_id` no back) → tela de login no front.
 3. **Front definitivo** (spec "impecable", idealmente com feedback do cliente).

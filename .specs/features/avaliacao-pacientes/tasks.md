@@ -1,5 +1,7 @@
 # Tasks — Cadastro de Avaliação dos Pacientes
 
+**Status:** ✅ **CONCLUÍDA (back + front) e DEPLOYADA** — A1–A3 (backend) + campo `observacao` + front completo (tela de avaliações com fluxo consultar → editar → salvar). Suíte **136 tests verdes**. Backend na stack `clinica-pilates`; front no CloudFront. Vira "avaliação/consulta" na UI (AD-010).
+
 Feature espelha a estrutura de `cadastro-aparelhos` (3 tasks: schemas → repositório → router).
 Backend primeiro; front numa etapa seguinte. Testes com pytest + moto (fixture `dynamo_table`).
 
@@ -7,7 +9,7 @@ Backend primeiro; front numa etapa seguinte. Testes com pytest + moto (fixture `
 
 ---
 
-## A1 — Schemas Pydantic (`src/app/schemas_avaliacao.py`)
+## A1 — Schemas Pydantic (`src/app/schemas_avaliacao.py`) ✅ DONE (`9afd4e0`)
 
 **What:** Modelos de validação da avaliação. Cadastro flexível: nenhum campo clínico
 obrigatório; `data` opcional na entrada (default hoje no repositório), validada como
@@ -30,7 +32,7 @@ obrigatório; `data` opcional na entrada (default hoje no repositório), validad
 
 ---
 
-## A2 — Repositório DynamoDB (`src/app/repository_avaliacao.py`)
+## A2 — Repositório DynamoDB (`src/app/repository_avaliacao.py`) ✅ DONE (`9afb71d`)
 
 **What:** CRUD do item de avaliação sob a PK do paciente, escopado por `(clinic_id, paciente_id)`.
 Soft delete. `data` default = hoje quando ausente. Listagem ordenada por `data` desc na app.
@@ -52,7 +54,7 @@ soft delete via `ativo=False`). PK igual à do paciente (`repository.py`).
 
 ---
 
-## A3 — Router + fiação (`src/app/routers/avaliacoes.py`, `main.py`)
+## A3 — Router + fiação (`src/app/routers/avaliacoes.py`, `main.py`) ✅ DONE (`aa5e331`)
 
 **What:** Endpoints REST aninhados no paciente. Valida existência do paciente (404) via
 `PacienteRepository` numa dependência de router. `get_clinic_id` (deps.py) dá o tenant.
@@ -72,8 +74,37 @@ soft delete via `ativo=False`). PK igual à do paciente (`repository.py`).
 
 ---
 
-## Depois das tasks
-- Rodar suíte completa (deve seguir verde, +N testes).
-- Commits atômicos: spec+tasks; A1; A2; A3.
-- Deploy: `sam build --use-container` + `sam deploy` + smoke test público.
-- Atualizar STATE.md/ROADMAP.md.
+## A4 — Campo `observacao` (texto livre) ✅ DONE (`f871317`)
+
+**What:** Anotações livres da consulta/sessão, no DynamoDB junto da avaliação.
+**Where:** `schemas_avaliacao.py` (campo + validador vazio→None), `repository_avaliacao.py` (whitelist `_CAMPOS`), `tests/test_repository_avaliacao.py` (round-trip create+update).
+**Done when:** `observacao: Optional[str]` na Base; persiste e relê; suíte 136 verde; deployado (smoke-test público OK).
+
+---
+
+## Front (React+Vite, `frontend/`) ✅ DONE — no CloudFront
+
+**F1 — Tela de Avaliações por paciente** (`ea14300`): `components/Avaliacoes.jsx` (form completo + histórico datado), `avaliacoesApi` em `api.js`. O front envia `data` explícita (fuso local), contornando o desvio UTC do back.
+
+**F2 — Fluxo consultar → editar → salvar** (`3dc958b`, `672f0a5`, `ef95bb6`, `1622329`): botão da lista "consultar" abre a avaliação em **modo leitura** (`<fieldset disabled>`); botão **Editar** destrava e vira **Salvar**; ao salvar edição, volta pra leitura mantendo os dados. Título "Nova avaliação/consulta". Campo **Observação** largo no rodapé.
+
+**F3 — Validações e UX** (`20bb5b6`, `7ccbd33`, `e3e71cf`): salvar bloqueado com todos os campos em branco; destaque "📋 N consulta(s)" no topo da ficha com atalho pra seção; remonta por paciente (`key`).
+
+**Bugs de front resolvidos (LL):** tradução automática do Chrome quebrando o React (`0c5f2ce` — `lang=pt-BR` + `notranslate`); cache do `index.html` servindo bundle velho (`9d46a09` — `Cache-Control: no-cache`); **submit-fantasma** por troca de `type` no mesmo botão (`1622329` — `type=button` + `key`).
+
+---
+
+## Execution Log
+
+| Task | Status | Commit | Notas |
+| ---- | ------ | ------ | ----- |
+| A1 — Schemas Pydantic | ✅ Done | `9afd4e0` | AvaliacaoPostural/Medidas MAP, campos opcionais |
+| A2 — Repositório DynamoDB | ✅ Done | `9afb71d` | `PK=CLINIC#..#CLIENT#..`, `SK=AVALIACAO#<id>` |
+| A3 — Router aninhado | ✅ Done | `aa5e331` | `/pacientes/{id}/avaliacoes`, 404 se paciente inexistente |
+| Deploy back + estado (AD-010) | ✅ Done | `9d4dd9b` | 38 testes, suíte 135; smoke-test público OK |
+| A4 — Campo `observacao` | ✅ Done | `f871317` | suíte 136; deployado |
+| F1 — Front tela de avaliações | ✅ Done | `ea14300` | publicada no CloudFront |
+| F2 — Fluxo consultar/editar/salvar | ✅ Done | `1622329` | + fix submit-fantasma |
+| F3 — Validações/UX + fixes | ✅ Done | `c452224` | tradução/cache/type-swap resolvidos |
+
+**Requirements:** AVL-01..10 Verified (back + front). Feature **concluída**.
