@@ -320,20 +320,20 @@ export default function Avaliacoes({ clinic, paciente, onVoltar, onCount, embedd
         <div className="actions">
           {readonly ? (
             <>
-              <button type="button" className="btn primary" onClick={habilitarEdicao}>
+              <button key="editar" type="button" className="btn primary" onClick={habilitarEdicao}>
                 Editar
               </button>
-              <button type="button" className="btn" onClick={cancelar}>
+              <button key="nova" type="button" className="btn" onClick={cancelar}>
                 Nova consulta
               </button>
             </>
           ) : (
             <>
-              <button type="submit" className="btn primary" disabled={loading}>
+              <button key="salvar" type="button" className="btn primary" disabled={loading} onClick={salvar}>
                 {loading ? "Salvando..." : editId ? "Salvar" : "Salvar avaliação"}
               </button>
               {editId && (
-                <button type="button" className="btn" onClick={cancelar}>Cancelar</button>
+                <button key="cancelar" type="button" className="btn" onClick={cancelar}>Cancelar</button>
               )}
             </>
           )}
