@@ -17,6 +17,7 @@ export default function Pacientes({ clinic }) {
   const [view, setView] = useState("lista"); // "lista" (consulta) | "detalhe" (ficha)
   const [selecionado, setSelecionado] = useState(null); // paciente aberto na ficha (com id/nome)
   const [avalCount, setAvalCount] = useState(null); // nº de avaliações do paciente aberto
+  const [readonly, setReadonly] = useState(false); // ficha aberta em modo leitura
   const [form, setForm] = useState(VAZIO);
   const [editId, setEditId] = useState(null);
   const [erro, setErro] = useState("");
@@ -98,6 +99,7 @@ export default function Pacientes({ clinic }) {
   function abrirPaciente(p) {
     setErro("");
     setAvalCount(null);
+    setReadonly(true); // paciente existente abre em modo leitura
     setEditId(p.id);
     setSelecionado(p);
     preencherForm(p);
@@ -109,6 +111,7 @@ export default function Pacientes({ clinic }) {
   function abrirNovo() {
     setErro("");
     setAvalCount(null);
+    setReadonly(false); // paciente novo já abre editável
     setEditId(null);
     setSelecionado(null);
     setForm(VAZIO);
@@ -119,6 +122,7 @@ export default function Pacientes({ clinic }) {
   function voltarLista() {
     setView("lista");
     setErro("");
+    setReadonly(false);
     setForm(VAZIO);
     setEditId(null);
     setSelecionado(null);
@@ -140,12 +144,13 @@ export default function Pacientes({ clinic }) {
         const atualizado = await pacientesApi.update(clinic.id, editId, payload);
         setSelecionado(atualizado);
       } else {
-        // Após criar, permanece na ficha já em modo edição para liberar as avaliações.
+        // Após criar, permanece na ficha (agora em leitura) para liberar as avaliações.
         const criado = await pacientesApi.create(clinic.id, payload);
         setEditId(criado.id);
         setSelecionado(criado);
         preencherForm(criado);
       }
+      setReadonly(true); // volta para leitura mantendo os dados na tela
       await carregar();
     } catch (e) {
       setErro(e.message);
@@ -263,6 +268,7 @@ export default function Pacientes({ clinic }) {
         <h2>{editId ? "Dados do paciente" : "Novo paciente"}</h2>
         {erro && <div className="erro">{erro}</div>}
 
+        <fieldset className="fs-reset" disabled={readonly}>
         <label>Nome *</label>
         <input value={form.nome} onChange={(e) => setCampo("nome", e.target.value)} placeholder="Nome do paciente" />
 
@@ -324,16 +330,23 @@ export default function Pacientes({ clinic }) {
             <input value={form.endereco.uf} onChange={(e) => setEndereco("uf", e.target.value)} maxLength={2} />
           </div>
         </div>
+        </fieldset>
 
         <div className="actions">
-          <button type="submit" className="btn primary" disabled={loading || cpfInvalido}>
-            {loading ? "Salvando..." : editId ? "Salvar" : "Cadastrar"}
-          </button>
-          <button type="button" className="btn" onClick={voltarLista}>
+          {readonly ? (
+            <button key="editar" type="button" className="btn primary" onClick={() => setReadonly(false)}>
+              Editar
+            </button>
+          ) : (
+            <button key="salvar" type="button" className="btn primary" disabled={loading || cpfInvalido} onClick={salvar}>
+              {loading ? "Salvando..." : editId ? "Salvar" : "Cadastrar"}
+            </button>
+          )}
+          <button key="voltar" type="button" className="btn" onClick={voltarLista}>
             Voltar
           </button>
           {editId && (
-            <button type="button" className="btn" style={{ marginLeft: "auto" }} onClick={() => remover(selecionado)}>
+            <button key="remover" type="button" className="btn" style={{ marginLeft: "auto" }} onClick={() => remover(selecionado)}>
               Remover paciente
             </button>
           )}
