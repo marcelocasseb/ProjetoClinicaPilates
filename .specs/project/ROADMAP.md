@@ -77,12 +77,14 @@ Cada clínica mantém seu próprio catálogo de aparelhos (multi-tenant, AD-007)
 - AVL-01..10 Verified, 38 testes (suíte 135). Smoke-test público OK (ciclo + isolamento + validações)
 - ✅ **Front no ar**: tela de Avaliações por paciente (link "avaliações" na linha) publicada no CloudFront
 
-**3. Registro de Sessões** - DEFERIDO (pós-demo)  ← depende do catálogo de aparelhos
+**3. Registro de Sessões (Aula de Pilates)** - BACK COMPLETE ✅ (deployado 2026-07-27); FRONT em andamento
 
-- Modelagem sessão sob o paciente: `PK=CLINIC#<clinicId>#CLIENT#<clientId>`, `SK=SESSION#<data>`
-- Sessão referencia aparelhos do catálogo, guardando snapshot (id + nome) — histórico imune a edição/remoção do aparelho
-- Endpoints para registrar e consultar sessões por paciente ("última sessão", "evolução" = 1 Query por PK)
-- **Sai da frente pela Rota do Demo** — entra depois de mostrar o MVP pro cliente
+- Modelagem aula sob o paciente: `PK=CLINIC#<clinicId>#CLIENT#<clientId>`, `SK=SESSION#<id>` (id no SK, como AD-010)
+- Aula = data + `aparelhos` (lista de maps `{aparelhoId, nome, treinos[]}`, snapshot ≥1) + `observacao` + `profissional`
+- Tipos de treino = lista fixa hardcoded no front (Membros superiores/inferiores, Abdômen, Força, Mobilidade); back guarda snapshot de texto
+- Endpoints aninhados `/pacientes/{id}/sessoes` (CRUD, soft delete, 404 se paciente inexistente na clínica). SES-01..11
+- Back: S1 schemas + S2 repo + S3 router, **44 testes novos (suíte 180)**, deployado; smoke-test público OK
+- Front (aba "Pilates"): F1 (registrar) + F2 (consulta datada/editar/remover) — **PENDENTE**
 
 ---
 

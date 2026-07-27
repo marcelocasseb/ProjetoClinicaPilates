@@ -159,10 +159,10 @@ Remover (soft delete) com confirmação.
 
 | Task | Status | Commit | Notas |
 | ---- | ------ | ------ | ----- |
-| S1 — Schemas | ⬜ Pending | — | `aparelhos` lista de maps, min 1 |
-| S2 — Repositório | ⬜ Pending | — | `SK=SESSION#<id>`, snapshot aparelhos |
-| S3 — Router aninhado | ⬜ Pending | — | `/pacientes/{id}/sessoes`, 404/400 |
-| Deploy back | ⬜ Pending | — | smoke-test público |
+| S1 — Schemas | ✅ Done | — | `aparelhos` lista de maps, min 1; 16 testes |
+| S2 — Repositório | ✅ Done | — | `SK=SESSION#<id>`, snapshot aparelhos; 14 testes |
+| S3 — Router aninhado | ✅ Done | — | `/pacientes/{id}/sessoes`, 404/400; 14 testes (suíte 180) |
+| Deploy back | ✅ Done | — | stack `clinica-pilates`; smoke-test público OK (ciclo+isolamento+400/404) |
 | F1 — Aba Pilates (registrar) | ⬜ Pending | — | combo aparelhos + treinos hardcode |
 | F2 — Consulta/editar/remover | ⬜ Pending | — | fluxo leitura→editar→salvar |
 

@@ -1,6 +1,6 @@
 # State
 
-**Last Updated:** 2026-07-24 (fim do dia — UX de Pacientes/Avaliação polida e no ar; tudo commitado e **pushado pro GitHub** `origin/main`; tasks atualizadas)
+**Last Updated:** 2026-07-27 — **Registro de Sessões (Aula de Pilates): BACKEND completo e DEPLOYADO** (S1 schemas + S2 repo + S3 router, 44 testes novos → suíte **180 verde**; smoke-test público OK). Spec+tasks da feature `registro-sessoes` escritas. Falta o FRONT (aba "Pilates": F1 registrar + F2 consulta/editar). Commits locais em `main` — **ainda NÃO pushado** pro GitHub.
 **Current Work:** 🎯 **DEMO NO AR** — https://d1th2j57vyxahs.cloudfront.net (HTTPS). Estado atual do produto:
 - **Backend** (stack `clinica-pilates`): CRUD de **Pacientes**, **Aparelhos** e **Avaliações/consultas** (por paciente), multi-tenant por clínica (AD-007), **136 tests verdes**, deployado. Avaliação tem campo `observacao` (texto livre, no DynamoDB). CORS tratado no FastAPI (CORSMiddleware).
 - **Frontend** (React+Vite em `frontend/`, stack `clinica-pilates-frontend`): login simples (seletor de clínica → `X-Clinic-Id`). **Fluxo de Pacientes em 2 telas (2026-07-24):** (1) tela de **consulta** — campo de busca (nome/CPF/telefone) + botão "+ Adicionar paciente" + lista clicável (sem form à vista); (2) **ficha do paciente** — abre ao clicar numa linha ou em Adicionar: form de dados (máscaras CPF/telefone/CEP + ViaCEP + validação CPF) **e a seção de Avaliações/consultas embutida** (só liberada após salvar o paciente novo). Avaliação: título "Nova avaliação/consulta" + campo largo **Observação** no rodapé. Aparelhos em aba separada. CRUD completo. Hospedado em S3+CloudFront. Dados de demo semeados (Zen/Corpo).
@@ -8,11 +8,8 @@
 
 **Polimento de UX da avaliação (2026-07-24, no ar):** fluxo de Pacientes em 2 telas (consulta+ficha); campo **Observação** (largo, no DynamoDB); validações de front (nome obrigatório; avaliação em branco bloqueada); fluxo **consultar → Editar → Salvar** (consulta abre em leitura, botão Editar destrava). Três bugs de front caçados e resolvidos: tradução do Chrome ([[browser-autotranslate-front]]), cache do index.html (agora `no-cache`), e submit-fantasma por type-swap de botão ([[react-button-type-swap-submit]]).
 
-⏭️ **AO RETOMAR AMANHÃ ("continuar"):** nada pendente/quebrado — tudo commitado, pushado (`origin/main`) e no ar (back na stack `clinica-pilates`, front no CloudFront `index-C4S-zm6z.js`). Ficha do paciente e avaliação com fluxo **abrir em leitura → Editar → Salvar**. **Próximo passo = ESCOLHER a frente** (perguntar ao usuário qual das 3):
-1. **Registro de Sessões** (CORE do produto, M2 pt2; depende do catálogo de aparelhos, que está pronto) — back (spec+testes+deploy) → front.
-2. **Cognito** (login real, M3; troca só o `get_clinic_id` no back) → tela de login no front.
-3. **Front definitivo** (spec "impecable", idealmente com feedback do cliente).
-Recomendação: **Registro de Sessões** (é o coração do produto e destrava o pitch). Ver Rota do Demo no ROADMAP.
+⏭️ **AO RETOMAR ("continuar"):** feature **`registro-sessoes`** em andamento — **backend PRONTO e no ar**, falta só o **FRONT**. Próximo passo = **F1 (aba "Pilates")**: nova aba na navegação do front (`frontend/src/`), fluxo buscar/selecionar aluno → aula com data de hoje → adicionar aparelhos por **combo box** (`aparelhosApi.list`, catálogo ativo da clínica) → para cada aparelho, multi-seleção de **tipos de treino** (constante hardcoded `TIPOS_TREINO = ['Membros superiores','Membros inferiores','Abdômen','Força','Mobilidade']`) → campos **Observação** + **Profissional** → Salvar (envia `data` explícita, fuso local). Depois **F2**: consulta datada (lista por data desc) + abrir em leitura → Editar → Salvar + remover (soft delete). Reusar `frontend/src/components/Avaliacoes.jsx` como molde e `sessoesApi` novo em `api.js`. Endpoints já no ar: `/pacientes/{id}/sessoes` (POST/GET/GET id/PUT/DELETE). ⚠️ Botões que trocam estado: `type="button"` + `key` ([[react-button-type-swap-submit]]). Publicar no CloudFront com headers de cache corretos (ver bloco Frontend hospedado). **Lembrar de `git push origin main`** (commits do back ainda locais).
+**Após o front:** as outras frentes (não escolhidas hoje): **Cognito** (M3, troca só `get_clinic_id`) e **Front definitivo** (spec "impecable").
 
 **Recursos AWS provisionados (stack `clinica-pilates`, us-east-1):**
 - API base: https://8f1ffym997.execute-api.us-east-1.amazonaws.com
@@ -71,6 +68,13 @@ Recomendação: **Registro de Sessões** (é o coração do produto e destrava o
 ---
 
 ## Recent Decisions (Last 60 days)
+
+### AD-011: Registro de Sessões (Aula) — `SK=SESSION#<id>` com `aparelhos` snapshot em lista de maps (2026-07-27)
+
+**Decision:** A aula de Pilates é um **item time-series** sob a PK do paciente (`PK=CLINIC#<clinicId>#CLIENT#<pacienteId>`, `SK=SESSION#<id>`, id no SK como AD-010 — permite +1 aula/dia e CRUD por id trivial). A aula carrega `data` (default hoje, front envia explícita), `profissional` e `observacao` (texto livre, opcionais) e um campo **obrigatório** `aparelhos`: **lista de maps** `{aparelhoId, nome, treinos[]}` com **≥1 item**. Cada aparelho é um **snapshot** (id+nome copiados no registro) — o back **não revalida** contra o catálogo, deixando o histórico imune a edição/remoção posterior do aparelho (mesma lógica do soft delete de aparelho, APR-07). Os **tipos de treino** vêm de uma lista **fixa hardcoded no front** (Membros superiores, Membros inferiores, Abdômen, Força, Mobilidade); o back só guarda os textos escolhidos (sem enum server-side, coerente com o cadastro flexível do resto). Treinos ficam **por aparelho** (não no nível da aula); observação/profissional são **gerais da aula**.
+**Reason:** Casa com o modelo centrado no cliente (AD-005) — "última aula / evolução" = 1 Query por PK + `begins_with`. Espelha a arquitetura de `avaliacao-pacientes` (router aninhado com dependência que exige paciente ativo → 404/isolamento). O snapshot é o que torna o histórico confiável mesmo com o catálogo mudando.
+**Trade-off:** Ordenação por data na aplicação (não no SK) — aceito no volume esperado. `aparelhos` é o único campo obrigatório (uma aula sem aparelho não faz sentido) → 400 legível via handler global.
+**Impact:** `schemas_sessao.py`, `repository_sessao.py`, `routers/sessoes.py`, fiação no `main.py`. SES-01..11; 44 testes (suíte 180). Deployado na stack `clinica-pilates`. Front (aba "Pilates") pendente.
 
 ### AD-010: Avaliação do paciente — histórico datado com `SK=AVALIACAO#<id>` (2026-07-22)
 
