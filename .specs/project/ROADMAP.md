@@ -77,7 +77,7 @@ Cada clínica mantém seu próprio catálogo de aparelhos (multi-tenant, AD-007)
 - AVL-01..10 Verified, 38 testes (suíte 135). Smoke-test público OK (ciclo + isolamento + validações)
 - ✅ **Front no ar**: tela de Avaliações por paciente (link "avaliações" na linha) publicada no CloudFront
 
-**3. Registro de Sessões (Aula de Pilates)** - BACK COMPLETE ✅ (deployado 2026-07-27); FRONT em andamento
+**3. Registro de Sessões (Aula de Pilates)** - COMPLETE ✅ (back deployado + front no CloudFront, 2026-07-27)
 
 - Modelagem aula sob o paciente: `PK=CLINIC#<clinicId>#CLIENT#<clientId>`, `SK=SESSION#<id>` (id no SK, como AD-010)
 - Aula = data + `aparelhos` (lista de maps `{aparelhoId, nome, treinos[]}`, snapshot ≥1) + `observacao` + `profissional`

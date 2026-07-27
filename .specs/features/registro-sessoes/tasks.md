@@ -1,6 +1,6 @@
 # Tasks — Registro de Sessões (Aula de Pilates)
 
-**Status:** 🟡 Planejada. Feature **espelha `avaliacao-pacientes`** (recurso aninhado no paciente,
+**Status:** ✅ **CONCLUÍDA (back + front) e no ar.** Backend deployado (stack `clinica-pilates`, 44 testes novos → suíte 180); front (aba "Pilates") publicado no CloudFront. Feature **espelha `avaliacao-pacientes`** (recurso aninhado no paciente,
 soft delete, fluxo consultar → editar → salvar). Única novidade de modelagem: `aparelhos` é uma
 **lista de maps** (`{aparelhoId, nome, treinos[]}`), obrigatória com ≥1 item; o back guarda snapshot
 (não revalida contra o catálogo). Backend primeiro (S1→S2→S3), front depois (F1→F2). Deploy ao fim.
@@ -163,7 +163,9 @@ Remover (soft delete) com confirmação.
 | S2 — Repositório | ✅ Done | — | `SK=SESSION#<id>`, snapshot aparelhos; 14 testes |
 | S3 — Router aninhado | ✅ Done | — | `/pacientes/{id}/sessoes`, 404/400; 14 testes (suíte 180) |
 | Deploy back | ✅ Done | — | stack `clinica-pilates`; smoke-test público OK (ciclo+isolamento+400/404) |
-| F1 — Aba Pilates (registrar) | ⬜ Pending | — | combo aparelhos + treinos hardcode |
-| F2 — Consulta/editar/remover | ⬜ Pending | — | fluxo leitura→editar→salvar |
+| F1 — Aba Pilates (registrar) | ✅ Done | — | combo aparelhos + chips de treino; verificado (Playwright mock) |
+| F2 — Consulta/editar/remover | ✅ Done | — | fluxo leitura→editar→salvar; publicado no CloudFront |
 
-**Requirements coverage:** SES-01..11 mapeados. Atualizar status para Verified conforme execução.
+**Requirements coverage:** SES-01..11 Verified (back deployado + smoke-test público; front no CloudFront, verificado ponta a ponta com API mockada — browser do ambiente automatizado não alcança a API real). **Feature CONCLUÍDA.**
+
+**Nota de verificação do front:** o browser headless do ambiente automatizado tem egress de rede bloqueado, então a verificação visual foi feita com as chamadas de API **mockadas** (Playwright `page.route`), cobrindo toda a lógica React (combo, chips, salvar, consultar/leitura/editar). O backend foi validado à parte via smoke-test público (curl). Um teste browser-contra-API-viva deve ser feito manualmente no demo.
