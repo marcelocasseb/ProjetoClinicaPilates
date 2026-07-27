@@ -18,7 +18,24 @@
       "PowerShell($env:SAM_CLI_TELEMETRY=0; & \"C:\\\\Program Files\\\\Amazon\\\\AWSSAMCLI\\\\bin\\\\sam.cmd\" build 2>&1 | Select-Object -Last 25; Write-Output \"--- sam build exit: $LASTEXITCODE ---\")",
       "PowerShell(docker --version 2>&1; Write-Output \"--- docker exit: $LASTEXITCODE ---\"; docker info --format '{{.ServerVersion}}' 2>&1 | Select-Object -First 3)",
       "PowerShell($env:SAM_CLI_TELEMETRY=0; & \"C:\\\\Program Files\\\\Amazon\\\\AWSSAMCLI\\\\bin\\\\sam.cmd\" build --use-container 2>&1 | Select-Object -Last 30; Write-Output \"--- sam build exit: $LASTEXITCODE ---\")",
-      "PowerShell($out = aws cloudformation describe-stacks --stack-name clinica-pilates --region us-east-1 --query \"Stacks[0].Outputs\" --output json | ConvertFrom-Json; $out | ForEach-Object { Write-Output \"$\\($_.OutputKey\\) = $\\($_.OutputValue\\)\" }; $url = \\($out | Where-Object { $_.OutputKey -eq 'ApiBaseUrl' }\\).OutputValue; Write-Output \"--- testando health ---\"; try { \\(Invoke-WebRequest -Uri \"$url/health\" -UseBasicParsing\\).Content } catch { Write-Output \"ERRO: $_\" })"
+      "PowerShell($out = aws cloudformation describe-stacks --stack-name clinica-pilates --region us-east-1 --query \"Stacks[0].Outputs\" --output json | ConvertFrom-Json; $out | ForEach-Object { Write-Output \"$\\($_.OutputKey\\) = $\\($_.OutputValue\\)\" }; $url = \\($out | Where-Object { $_.OutputKey -eq 'ApiBaseUrl' }\\).OutputValue; Write-Output \"--- testando health ---\"; try { \\(Invoke-WebRequest -Uri \"$url/health\" -UseBasicParsing\\).Content } catch { Write-Output \"ERRO: $_\" })",
+      "Bash(./.venv/Scripts/python.exe -m pytest -q)",
+      "Bash(./.venv/Scripts/python.exe -m pytest -q tests/test_pacientes.py tests/test_health.py)",
+      "Bash(./.venv/Scripts/python.exe -c \"import importlib.util as u; print\\('uvicorn:', bool\\(u.find_spec\\('uvicorn'\\)\\)\\); print\\('boto3:', bool\\(u.find_spec\\('boto3'\\)\\)\\)\")",
+      "Bash(./.venv/Scripts/python.exe -c \"import boto3; s=boto3.Session\\(\\); print\\('region:', s.region_name\\); print\\('creds:', bool\\(s.get_credentials\\(\\)\\)\\)\")",
+      "Bash(./.venv/Scripts/python.exe -m pip install uvicorn -q)",
+      "Bash(./.venv/Scripts/python.exe -c \"import uvicorn; print\\('uvicorn', uvicorn.__version__\\)\")",
+      "Bash(TABLE_NAME=clinica-pilates-ClinicaTable-8YQAEIFAKZGE ./.venv/Scripts/python.exe -m uvicorn app.main:app --app-dir src --host 127.0.0.1 --port 8000)",
+      "Bash(TABLE_NAME=clinica-pilates-ClinicaTable-8YQAEIFAKZGE ./.venv/Scripts/python.exe -m uvicorn app.main:app --app-dir src --reload --host 127.0.0.1 --port 8000)",
+      "Bash(docker info *)",
+      "Bash(\"C:/Program Files/Amazon/AWSSAMCLI/bin/sam.cmd\" --version)",
+      "Bash(./.venv/Scripts/python.exe -c \"import boto3;print\\(boto3.client\\('sts'\\).get_caller_identity\\(\\)['Account']\\)\")",
+      "Bash(echo \"DOCKER_READY $\\(docker info --format '{{.ServerVersion}}' 2>/dev/null\\)\")",
+      "Bash(\"C:/Program Files/Amazon/AWSSAMCLI/bin/sam.cmd\" build --use-container)",
+      "Bash(\"C:/Program Files/Amazon/AWSSAMCLI/bin/sam.cmd\" deploy --no-confirm-changeset --no-fail-on-empty-changeset)",
+      "Bash(\"C:/Program Files/Amazon/AWSSAMCLI/bin/sam.cmd\" validate --lint)",
+      "Bash(./.venv/Scripts/python.exe -m pytest -q tests/test_schemas_aparelho.py)",
+      "Bash(./.venv/Scripts/python.exe -m pytest -q tests/test_repository_aparelho.py)"
     ]
   }
 }
