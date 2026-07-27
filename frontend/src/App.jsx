@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import Login from "./components/Login";
 import Pacientes from "./components/Pacientes";
 import Aparelhos from "./components/Aparelhos";
+import Pilates from "./components/Pilates";
 import "./App.css";
 
 export default function App() {
@@ -45,10 +46,15 @@ export default function App() {
         <button className={aba === "aparelhos" ? "tab on" : "tab"} onClick={() => setAba("aparelhos")}>
           Aparelhos
         </button>
+        <button className={aba === "pilates" ? "tab on" : "tab"} onClick={() => setAba("pilates")}>
+          Pilates
+        </button>
       </nav>
 
       <main className="content">
-        {aba === "pacientes" ? <Pacientes clinic={clinic} /> : <Aparelhos clinic={clinic} />}
+        {aba === "pacientes" && <Pacientes clinic={clinic} />}
+        {aba === "aparelhos" && <Aparelhos clinic={clinic} />}
+        {aba === "pilates" && <Pilates clinic={clinic} />}
       </main>
     </div>
   );

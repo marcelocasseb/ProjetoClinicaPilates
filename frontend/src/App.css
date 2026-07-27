@@ -388,6 +388,74 @@ textarea.obs {
   min-height: 140px;
 }
 
+/* ---------- Pilates (aula: combo de aparelhos + chips de treino) ---------- */
+.form select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+}
+.form select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(109, 94, 252, 0.15);
+}
+.aparelhos-aula {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+}
+.aparelho-item {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  background: var(--bg);
+}
+.aparelho-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.chip {
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--muted);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+.chip:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+.chip.on {
+  background: rgba(109, 94, 252, 0.12);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.chip:disabled {
+  cursor: default;
+}
+/* mantém os chips selecionados legíveis no modo leitura */
+.fs-reset:disabled .chip.on {
+  opacity: 1;
+}
+
 /* ---------- Utilidades ---------- */
 .muted {
   color: var(--muted);

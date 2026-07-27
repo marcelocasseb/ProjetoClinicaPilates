@@ -56,6 +56,17 @@ export const avaliacoesApi = {
     request("DELETE", `/pacientes/${pacienteId}/avaliacoes/${id}`, clinic),
 };
 
+// --- Sessões / Aulas (por paciente, aninhadas — SES-01..08) ---
+export const sessoesApi = {
+  list: (clinic, pacienteId) => request("GET", `/pacientes/${pacienteId}/sessoes`, clinic),
+  create: (clinic, pacienteId, data) =>
+    request("POST", `/pacientes/${pacienteId}/sessoes`, clinic, data),
+  update: (clinic, pacienteId, id, data) =>
+    request("PUT", `/pacientes/${pacienteId}/sessoes/${id}`, clinic, data),
+  remove: (clinic, pacienteId, id) =>
+    request("DELETE", `/pacientes/${pacienteId}/sessoes/${id}`, clinic),
+};
+
 // --- ViaCEP (consulta de endereço pelo CEP, feita no front — AD-009) ---
 export async function buscarCep(cep) {
   const digits = (cep || "").replace(/\D/g, "");
