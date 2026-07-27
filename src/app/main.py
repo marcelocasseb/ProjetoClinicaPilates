@@ -7,7 +7,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.routers import aparelhos, avaliacoes, pacientes
+from app.routers import aparelhos, avaliacoes, pacientes, sessoes
 
 app = FastAPI(title="Clínica de Pilates API")
 
@@ -24,6 +24,7 @@ app.add_middleware(
 app.include_router(pacientes.router)
 app.include_router(aparelhos.router)
 app.include_router(avaliacoes.router)
+app.include_router(sessoes.router)
 
 
 @app.exception_handler(RequestValidationError)
