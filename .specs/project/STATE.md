@@ -73,6 +73,21 @@
 
 ## Recent Decisions (Last 60 days)
 
+### AD-012: Provisionamento de usuários e binding usuário↔clínica (planejado, M3) (2026-07-28)
+
+**Decision:** O vínculo usuário↔clínica é um atributo **imutável pelo usuário** gravado **no ato de criação da conta**, nunca escolhido no login. Detalhes:
+- **Onde fica gravado:** atributo `custom:clinicId` (valor **único/escalar**) no registro do usuário no Cognito User Pool. Por ser escalar, um usuário pertence a exatamente **uma** clínica (não há lista) — modelo 1-login→1-clínica.
+- **A clínica NÃO faz parte do login:** a tela de login (M3) pede só e-mail+senha. O `custom:clinicId` viaja no token (assinado pela AWS) e o back o lê de lá. O **seletor de clínica atual** (`frontend/src/components/Login.jsx`, andaime do demo) **some** no M3.
+- **Quem grava (cadeia de confiança):**
+  - *1º admin de uma clínica nova:* criado pela **plataforma/super-admin (= o dono do produto)** no onboarding da clínica; o back **gera** o `clinicId` novo e carimba no admin. Único ponto onde um `clinicId` novo nasce.
+  - *Demais usuários (equipe):* criados pelo **admin da própria clínica** via tela "adicionar membro"; o endpoint do back grava `custom:clinicId` = **o clinicId do admin, lido do token dele** (não de um campo do form). Assim o admin só cria gente na própria clínica.
+- **Segurança (Cognito):** desligar auto-cadastro público (`AllowAdminCreateUserOnly=true`); não dar permissão de escrita do `custom:clinicId` ao app client; criação de conta via `AdminCreateUser` (back com credencial de admin).
+- **Enforcement (já meio pronto):** `get_clinic_id` (`src/app/deps.py`) passa a ler o claim do token (hoje lê o header); os `_pk()` dos repositórios já prefixam `CLINIC#<clinicId>#`, confinando toda query à partição da clínica. Pedir id de outra clínica → chave montada com o clinicId do token → 404.
+
+**Reason:** Fecha o buraco de "usuário se auto-atribui a qualquer clínica" (o valor nunca é escolhido pelo usuário nem passa no corpo/URL). Complementa AD-007 (que definia o *uso* do clinicId, mas não o *provisionamento*).
+**Trade-off:** 1-email→1-clínica; pessoa que atue em 2 clínicas precisa de 2 contas (ou o modelo multi-clínica-por-usuário, que fica deferido — aí sim entraria um seletor **pós-login** mostrando só as clínicas já vinculadas àquela conta).
+**Impact (M3):** trocar a fonte do `clinicId` em `get_clinic_id`; criar endpoint de provisionamento (`AdminCreateUser` carimbando o clinicId do admin) + tela "adicionar membro"; onboarding de clínica (gera clinicId). Ver Todos e ideias deferidas (roles via Cognito groups; onboarding self-service).
+
 ### AD-011: Registro de Sessões (Aula) — `SK=SESSION#<id>` com `aparelhos` snapshot em lista de maps (2026-07-27)
 
 **Decision:** A aula de Pilates é um **item time-series** sob a PK do paciente (`PK=CLINIC#<clinicId>#CLIENT#<pacienteId>`, `SK=SESSION#<id>`, id no SK como AD-010 — permite +1 aula/dia e CRUD por id trivial). A aula carrega `data` (default hoje, front envia explícita), `profissional` e `observacao` (texto livre, opcionais) e um campo **obrigatório** `aparelhos`: **lista de maps** `{aparelhoId, nome, treinos[]}` com **≥1 item**. Cada aparelho é um **snapshot** (id+nome copiados no registro) — o back **não revalida** contra o catálogo, deixando o histórico imune a edição/remoção posterior do aparelho (mesma lógica do soft delete de aparelho, APR-07). Os **tipos de treino** vêm de uma lista **fixa hardcoded no front** (Membros superiores, Membros inferiores, Abdômen, Força, Mobilidade); o back só guarda os textos escolhidos (sem enum server-side, coerente com o cadastro flexível do resto). Treinos ficam **por aparelho** (não no nível da aula); observação/profissional são **gerais da aula**.
