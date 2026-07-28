@@ -8,12 +8,12 @@
 
 **Polimento de UX da avaliação (2026-07-24, no ar):** fluxo de Pacientes em 2 telas (consulta+ficha); campo **Observação** (largo, no DynamoDB); validações de front (nome obrigatório; avaliação em branco bloqueada); fluxo **consultar → Editar → Salvar** (consulta abre em leitura, botão Editar destrava). Três bugs de front caçados e resolvidos: tradução do Chrome ([[browser-autotranslate-front]]), cache do index.html (agora `no-cache`), e submit-fantasma por type-swap de botão ([[react-button-type-swap-submit]]).
 
-⏭️ **AO RETOMAR ("continuar"):** nada pendente/quebrado — **Registro de Sessões concluído** (back + front no ar), tudo commitado e pushado (`origin/main`). O demo agora tem 3 abas: **Pacientes**, **Aparelhos**, **Pilates** (aula). **Próximo passo = ESCOLHER a frente** (perguntar ao usuário):
+⏭️ **AO RETOMAR ("continuar"):** nada pendente/quebrado — **Registro de Sessões concluído** (back + front no ar) e **aprovado no UAT do usuário (2026-07-28)**: front de Pilates usa **lista de pares aparelho→treino** (ver descrição acima). Tudo commitado e pushado (`origin/main`), árvore limpa. O demo tem 3 abas: **Pacientes**, **Aparelhos**, **Pilates** (aula). **Próximo passo = ESCOLHER a frente** (perguntar ao usuário):
 1. **Cognito** (login real, M3; troca só o `get_clinic_id` no back — ver Todos) → tela de login no front.
 2. **Front definitivo** (spec "impecable", idealmente com feedback do cliente).
-3. **Polimento/UAT do fluxo de Pilates** (ex.: mostrar treinos na lista de aulas, banner de nº de aulas na ficha do paciente, seed de aula de demo).
+3. **Polimento extra do Pilates** (ex.: banner de nº de aulas na ficha do paciente igual ao de consultas; seed de aula de demo pro pitch; ordenar/agrupar a lista de pares).
 4. Ideias deferidas: detalhe estruturado por aparelho (séries/reps/carga), tipos de treino editáveis por clínica.
-⚠️ **Verificação pendente do front de Pilates:** o teste browser-contra-API-**viva** não rodou (egress de rede bloqueado no browser do ambiente automatizado); foi verificado com API mockada. Vale um teste manual rápido no demo (Clínica Zen/Corpo têm aparelhos+alunos semeados).
+⚠️ **Teste manual recomendado:** a verificação do front rodou com API **mockada** (o browser do ambiente automatizado não tem egress de rede — [[front-verify-mock-sandbox]]). Vale um teste manual rápido no demo contra a API viva (Clínica Zen/Corpo têm aparelhos+alunos semeados).
 
 **Recursos AWS provisionados (stack `clinica-pilates`, us-east-1):**
 - API base: https://8f1ffym997.execute-api.us-east-1.amazonaws.com
