@@ -264,9 +264,9 @@ export default function Pilates({ clinic }) {
 
   // ---------- Tela 2: workspace da aula ----------
   const semCatalogo = catalogo.length === 0;
-  const disponiveis = catalogo.filter(
-    (a) => !form.aparelhos.some((x) => x.aparelhoId === a.id)
-  );
+  // O combo lista TODOS os aparelhos da clínica (os já adicionados continuam na
+  // lista, marcados/desabilitados). `jaNaAula` = o item selecionado já foi adicionado.
+  const jaNaAula = !!comboSel && form.aparelhos.some((x) => x.aparelhoId === comboSel);
 
   return (
     <div>
@@ -312,15 +312,21 @@ export default function Pilates({ clinic }) {
               ) : (
                 <div className="row" style={{ alignItems: "flex-end" }}>
                   <div>
-                    <label>Adicionar aparelho</label>
+                    <label>
+                      Adicionar aparelho <span className="opt">(pode adicionar vários)</span>
+                    </label>
                     <select value={comboSel} onChange={(e) => setComboSel(e.target.value)}>
                       <option value="">— escolha um aparelho —</option>
-                      {disponiveis.map((a) => (
-                        <option key={a.id} value={a.id}>
-                          {a.nome}
-                          {a.categoria ? ` (${a.categoria})` : ""}
-                        </option>
-                      ))}
+                      {catalogo.map((a) => {
+                        const add = form.aparelhos.some((x) => x.aparelhoId === a.id);
+                        return (
+                          <option key={a.id} value={a.id} disabled={add}>
+                            {a.nome}
+                            {a.categoria ? ` (${a.categoria})` : ""}
+                            {add ? " — já na aula" : ""}
+                          </option>
+                        );
+                      })}
                     </select>
                   </div>
                   <div style={{ flex: "0 0 auto" }}>
@@ -328,7 +334,7 @@ export default function Pilates({ clinic }) {
                       type="button"
                       className="btn primary"
                       onClick={adicionarAparelho}
-                      disabled={!comboSel}
+                      disabled={!comboSel || jaNaAula}
                     >
                       + Adicionar
                     </button>
