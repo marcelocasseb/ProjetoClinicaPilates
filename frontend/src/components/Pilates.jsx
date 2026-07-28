@@ -26,7 +26,7 @@ export default function Pilates({ clinic }) {
   const [form, setForm] = useState(vazio());
   const [editId, setEditId] = useState(null);
   const [readonly, setReadonly] = useState(false);
-  const [comboSel, setComboSel] = useState(""); // aparelho escolhido no combo (antes de adicionar)
+  const [comboSel, setComboSel] = useState(""); // aparelho "atual" (a que os treinos se aplicam)
   const [erro, setErro] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -86,37 +86,42 @@ export default function Pilates({ clinic }) {
     setForm((f) => ({ ...f, [campo]: valor }));
   }
 
-  function adicionarAparelho() {
+  // Clica num treino do aparelho ATUAL (comboSel): adiciona ou remove o par
+  // (aparelho + treino) da aula. Mesmo aparelho pode ter vários treinos.
+  function toggleTreinoAtual(treino) {
     if (!comboSel) return;
     const ap = catalogo.find((a) => a.id === comboSel);
     if (!ap) return;
-    if (form.aparelhos.some((a) => a.aparelhoId === ap.id)) {
-      setComboSel("");
-      return; // já está na aula
-    }
-    setForm((f) => ({
-      ...f,
-      aparelhos: [...f.aparelhos, { aparelhoId: ap.id, nome: ap.nome, treinos: [] }],
-    }));
-    setComboSel("");
+    setForm((f) => {
+      const existe = f.aparelhos.find((a) => a.aparelhoId === ap.id);
+      if (!existe) {
+        return { ...f, aparelhos: [...f.aparelhos, { aparelhoId: ap.id, nome: ap.nome, treinos: [treino] }] };
+      }
+      const tem = existe.treinos.includes(treino);
+      const aparelhos = f.aparelhos
+        .map((a) => {
+          if (a.aparelhoId !== ap.id) return a;
+          const treinos = tem ? a.treinos.filter((t) => t !== treino) : [...a.treinos, treino];
+          return { ...a, treinos };
+        })
+        // remove o aparelho atual se ficou sem nenhum treino
+        .filter((a) => a.aparelhoId !== ap.id || a.treinos.length > 0);
+      return { ...f, aparelhos };
+    });
   }
 
-  function removerAparelho(idx) {
-    setForm((f) => ({ ...f, aparelhos: f.aparelhos.filter((_, i) => i !== idx) }));
-  }
-
-  function toggleTreino(idx, treino) {
-    setForm((f) => ({
-      ...f,
-      aparelhos: f.aparelhos.map((a, i) => {
-        if (i !== idx) return a;
-        const tem = a.treinos.includes(treino);
-        return {
-          ...a,
-          treinos: tem ? a.treinos.filter((t) => t !== treino) : [...a.treinos, treino],
-        };
-      }),
-    }));
+  // Remove um par (linha da lista). `treino` null = aparelho sem treino (legado).
+  function removerPar(aparelhoId, treino) {
+    setForm((f) => {
+      const aparelhos = f.aparelhos
+        .map((a) =>
+          a.aparelhoId === aparelhoId
+            ? { ...a, treinos: treino == null ? [] : a.treinos.filter((t) => t !== treino) }
+            : a
+        )
+        .filter((a) => !(a.aparelhoId === aparelhoId && a.treinos.length === 0));
+      return { ...f, aparelhos };
+    });
   }
 
   function montarPayload() {
@@ -136,7 +141,7 @@ export default function Pilates({ clinic }) {
   async function salvar() {
     setErro("");
     if (form.aparelhos.length === 0) {
-      setErro("Adicione ao menos um aparelho para registrar a aula.");
+      setErro("Adicione ao menos um exercício (aparelho + treino) para registrar a aula.");
       return;
     }
     setLoading(true);
@@ -150,6 +155,7 @@ export default function Pilates({ clinic }) {
         setForm(vazio());
         setEditId(null);
         setReadonly(false);
+        setComboSel("");
       }
       await carregarAula(aluno);
     } catch (e) {
@@ -163,6 +169,7 @@ export default function Pilates({ clinic }) {
     setErro("");
     setReadonly(true);
     setEditId(s.id);
+    setComboSel("");
     setForm({
       data: s.data || hojeISO(),
       profissional: s.profissional || "",
@@ -264,9 +271,14 @@ export default function Pilates({ clinic }) {
 
   // ---------- Tela 2: workspace da aula ----------
   const semCatalogo = catalogo.length === 0;
-  // O combo lista TODOS os aparelhos da clínica (os já adicionados continuam na
-  // lista, marcados/desabilitados). `jaNaAula` = o item selecionado já foi adicionado.
-  const jaNaAula = !!comboSel && form.aparelhos.some((x) => x.aparelhoId === comboSel);
+  const nomeAtual = catalogo.find((a) => a.id === comboSel)?.nome || "";
+  const treinosAtuais = form.aparelhos.find((a) => a.aparelhoId === comboSel)?.treinos || [];
+  // lista plana de pares aparelho→treino (o "carrinho" da aula)
+  const pares = form.aparelhos.flatMap((a) =>
+    a.treinos.length
+      ? a.treinos.map((t) => ({ aparelhoId: a.aparelhoId, nome: a.nome, treino: t }))
+      : [{ aparelhoId: a.aparelhoId, nome: a.nome, treino: null }]
+  );
 
   return (
     <div>
@@ -278,6 +290,7 @@ export default function Pilates({ clinic }) {
 
       <form onSubmit={(e) => e.preventDefault()}>
         <div className="grid">
+          {/* Coluna 1: montar a aula */}
           <div className="card form">
             <h2>{!editId ? "Nova aula" : readonly ? "Aula" : "Editar aula"}</h2>
             {erro && <div className="erro">{erro}</div>}
@@ -302,123 +315,93 @@ export default function Pilates({ clinic }) {
                 </div>
               </div>
 
-              <div className="sep">Aparelhos e treinos</div>
-
-              {semCatalogo ? (
-                <div className="erro">
-                  Nenhum aparelho cadastrado nesta clínica. Cadastre aparelhos na aba
-                  Aparelhos antes de registrar a aula.
-                </div>
-              ) : (
-                <div className="row" style={{ alignItems: "flex-end" }}>
-                  <div>
-                    <label>
-                      Adicionar aparelho <span className="opt">(pode adicionar vários)</span>
-                    </label>
-                    <select value={comboSel} onChange={(e) => setComboSel(e.target.value)}>
-                      <option value="">— escolha um aparelho —</option>
-                      {catalogo.map((a) => {
-                        const add = form.aparelhos.some((x) => x.aparelhoId === a.id);
-                        return (
-                          <option key={a.id} value={a.id} disabled={add}>
+              {!readonly && (
+                <>
+                  <div className="sep">Adicionar exercício</div>
+                  {semCatalogo ? (
+                    <div className="erro">
+                      Nenhum aparelho cadastrado nesta clínica. Cadastre aparelhos na aba
+                      Aparelhos antes de registrar a aula.
+                    </div>
+                  ) : (
+                    <>
+                      <label>Aparelho</label>
+                      <select value={comboSel} onChange={(e) => setComboSel(e.target.value)}>
+                        <option value="">— escolha um aparelho —</option>
+                        {catalogo.map((a) => (
+                          <option key={a.id} value={a.id}>
                             {a.nome}
                             {a.categoria ? ` (${a.categoria})` : ""}
-                            {add ? " — já na aula" : ""}
                           </option>
-                        );
-                      })}
-                    </select>
-                  </div>
-                  <div style={{ flex: "0 0 auto" }}>
-                    <button
-                      type="button"
-                      className="btn primary"
-                      onClick={adicionarAparelho}
-                      disabled={!comboSel || jaNaAula}
-                    >
-                      + Adicionar
-                    </button>
-                  </div>
-                </div>
-              )}
+                        ))}
+                      </select>
 
-              {form.aparelhos.length === 0 ? (
-                <p className="muted">Nenhum aparelho adicionado à aula ainda.</p>
-              ) : (
-                <div className="aparelhos-aula">
-                  {form.aparelhos.map((a, idx) => (
-                    <div className="aparelho-item" key={`${a.aparelhoId || a.nome}-${idx}`}>
-                      <div className="aparelho-head">
-                        <strong>{a.nome}</strong>
-                        {!readonly && (
-                          <button
-                            type="button"
-                            className="link danger"
-                            onClick={() => removerAparelho(idx)}
-                          >
-                            remover
-                          </button>
-                        )}
-                      </div>
-                      <div className="chips">
-                        {TIPOS_TREINO.map((t) => {
-                          const on = a.treinos.includes(t);
-                          return (
-                            <button
-                              key={t}
-                              type="button"
-                              className={on ? "chip on" : "chip"}
-                              onClick={() => !readonly && toggleTreino(idx, t)}
-                              disabled={readonly}
-                            >
-                              {t}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                      {comboSel ? (
+                        <>
+                          <label>
+                            Treinos de {nomeAtual}{" "}
+                            <span className="opt">(clique para adicionar à lista)</span>
+                          </label>
+                          <div className="chips">
+                            {TIPOS_TREINO.map((t) => {
+                              const on = treinosAtuais.includes(t);
+                              return (
+                                <button
+                                  key={t}
+                                  type="button"
+                                  className={on ? "chip on" : "chip"}
+                                  onClick={() => toggleTreinoAtual(t)}
+                                >
+                                  {on ? "✓ " : "+ "}
+                                  {t}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </>
+                      ) : (
+                        <p className="muted" style={{ marginTop: 10 }}>
+                          Escolha um aparelho e clique nos treinos para montar a aula.
+                          Repita para adicionar outros aparelhos.
+                        </p>
+                      )}
+                    </>
+                  )}
+                </>
               )}
             </fieldset>
           </div>
 
+          {/* Coluna 2: lista de exercícios da aula (o "carrinho") */}
           <div className="card">
-            <h2>Aulas ({lista.length})</h2>
-            {lista.length === 0 ? (
-              <p className="muted">Nenhuma aula registrada para este aluno.</p>
+            <h2>Exercícios da aula ({pares.length})</h2>
+            {pares.length === 0 ? (
+              <p className="muted">
+                Nenhum exercício adicionado ainda. Escolha um aparelho ao lado e clique nos
+                treinos.
+              </p>
             ) : (
-              <table className="tbl">
-                <thead>
-                  <tr>
-                    <th>Data</th>
-                    <th>Aparelhos</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {lista.map((s) => (
-                    <tr key={s.id}>
-                      <td>{formatDataBR(s.data)}</td>
-                      <td className="td-desc">
-                        {(s.aparelhos || []).map((a) => a.nome).join(", ") || "—"}
-                      </td>
-                      <td className="td-actions">
-                        <button type="button" className="link" onClick={() => consultar(s)}>
-                          consultar
-                        </button>
-                        <button
-                          type="button"
-                          className="link danger"
-                          onClick={() => remover(s)}
-                        >
-                          remover
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <ul className="pares">
+                {pares.map((p, i) => (
+                  <li key={`${p.aparelhoId}-${p.treino}-${i}`}>
+                    <span>
+                      <strong>{p.nome}</strong>
+                      {" — "}
+                      {p.treino || <em className="muted">sem treino</em>}
+                    </span>
+                    {!readonly && (
+                      <button
+                        type="button"
+                        className="link danger"
+                        title="Remover"
+                        onClick={() => removerPar(p.aparelhoId, p.treino)}
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </li>
+                ))}
+              </ul>
             )}
           </div>
         </div>
@@ -468,6 +451,48 @@ export default function Pilates({ clinic }) {
           </div>
         </div>
       </form>
+
+      {/* Histórico de aulas do aluno */}
+      <div className="card" style={{ marginTop: 20 }}>
+        <h2>Aulas registradas ({lista.length})</h2>
+        {lista.length === 0 ? (
+          <p className="muted">Nenhuma aula registrada para este aluno.</p>
+        ) : (
+          <table className="tbl">
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Exercícios</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {lista.map((s) => (
+                <tr key={s.id}>
+                  <td>{formatDataBR(s.data)}</td>
+                  <td className="td-desc">
+                    {(s.aparelhos || [])
+                      .map((a) =>
+                        a.treinos && a.treinos.length
+                          ? `${a.nome} (${a.treinos.join(", ")})`
+                          : a.nome
+                      )
+                      .join(" · ") || "—"}
+                  </td>
+                  <td className="td-actions">
+                    <button type="button" className="link" onClick={() => consultar(s)}>
+                      consultar
+                    </button>
+                    <button type="button" className="link danger" onClick={() => remover(s)}>
+                      remover
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
     </div>
   );
 }
