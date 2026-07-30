@@ -43,6 +43,12 @@ def main() -> int:
         help="Opcional: usa este clinicId em vez de gerar um novo (ex.: 'clinica-zen' "
         "para o admin herdar os dados de demo já semeados). Por padrão, gera um novo.",
     )
+    parser.add_argument(
+        "--email-invite",
+        action="store_true",
+        help="Envia a senha temporária por e-mail (convite do Cognito). Sem esta flag, "
+        "o e-mail é suprimido e a senha é só impressa aqui para repasse manual.",
+    )
     args = parser.parse_args()
 
     # A região vai embutida no pool id (ex.: "us-east-1_ABC") — usa ela no cliente
@@ -56,6 +62,7 @@ def main() -> int:
             user_pool_id=args.user_pool_id,
             client=cognito,
             clinic_id=args.clinic_id,
+            enviar_email=args.email_invite,
         )
     except EmailJaExiste as exc:
         print(f"ERRO: {exc}", file=sys.stderr)
@@ -67,7 +74,11 @@ def main() -> int:
     print(f"  Admin (e-mail):   {res['email']}")
     print(f"  Senha temporária: {res['senha_temporaria']}")
     print()
-    print("Repasse a senha ao admin fora de banda. No 1º login o Cognito exige a troca.")
+    if args.email_invite:
+        print("Convite enviado por e-mail (peça para olhar o spam). A senha acima fica")
+        print("como backup. No 1º login o Cognito exige a troca da senha.")
+    else:
+        print("Repasse a senha ao admin fora de banda. No 1º login o Cognito exige a troca.")
     return 0
 
 

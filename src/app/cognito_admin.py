@@ -48,27 +48,37 @@ def criar_usuario(
     *,
     user_pool_id: str,
     client=None,
+    enviar_email: bool = False,
 ) -> dict:
     """Cria um usuário carimbando clínica e papel; devolve `{email, senha_temporaria}`.
 
     `client` permite injetar um cliente boto3 (testes com moto). Levanta
     `EmailJaExiste` se o e-mail já estiver no pool.
+
+    Se `enviar_email=True`, o Cognito envia o convite (com a senha temporária) por
+    e-mail (via e-mail padrão do Cognito, limite ~50/dia). Caso contrário, suprime o
+    e-mail (D2) e a senha volta no retorno para repasse manual. A senha temporária é
+    devolvida nos dois casos (backup, caso o e-mail caia no spam).
     """
     cognito = client or boto3.client("cognito-idp")
     senha = _gerar_senha_temporaria()
+    kwargs = dict(
+        UserPoolId=user_pool_id,
+        Username=email,
+        TemporaryPassword=senha,
+        UserAttributes=[
+            {"Name": "email", "Value": email},
+            {"Name": "email_verified", "Value": "true"},
+            {"Name": "custom:clinicId", "Value": clinic_id},
+            {"Name": "custom:role", "Value": role},
+        ],
+    )
+    if enviar_email:
+        kwargs["DesiredDeliveryMediums"] = ["EMAIL"]  # Cognito envia o convite por e-mail
+    else:
+        kwargs["MessageAction"] = "SUPPRESS"  # sem e-mail; senha volta no retorno (D2)
     try:
-        cognito.admin_create_user(
-            UserPoolId=user_pool_id,
-            Username=email,
-            TemporaryPassword=senha,
-            MessageAction="SUPPRESS",
-            UserAttributes=[
-                {"Name": "email", "Value": email},
-                {"Name": "email_verified", "Value": "true"},
-                {"Name": "custom:clinicId", "Value": clinic_id},
-                {"Name": "custom:role", "Value": role},
-            ],
-        )
+        cognito.admin_create_user(**kwargs)
     except cognito.exceptions.UsernameExistsException as exc:
         raise EmailJaExiste(f"O e-mail {email} já está cadastrado.") from exc
 
@@ -81,6 +91,7 @@ def criar_clinica_com_admin(
     user_pool_id: str,
     client=None,
     clinic_id: Optional[str] = None,
+    enviar_email: bool = False,
 ) -> dict:
     """Onboarding de clínica nova: gera o clinicId e cria o 1º admin (role=admin).
 
@@ -95,5 +106,6 @@ def criar_clinica_com_admin(
         ROLE_ADMIN,
         user_pool_id=user_pool_id,
         client=client,
+        enviar_email=enviar_email,
     )
     return {"clinic_id": novo_clinic_id, **res}
