@@ -17,16 +17,7 @@ def test_rota_inexistente_retorna_404():
     assert response.status_code == 404
 
 
-def test_preflight_cors_responde_ok():
-    # Preflight do navegador (OPTIONS com Origin + método pedido) deve passar,
-    # senão o front toma "Failed to fetch". CORS é tratado pelo CORSMiddleware.
-    response = client.options(
-        "/pacientes",
-        headers={
-            "Origin": "http://localhost:5173",
-            "Access-Control-Request-Method": "GET",
-            "Access-Control-Request-Headers": "x-clinic-id,content-type",
-        },
-    )
-    assert response.status_code == 200
-    assert response.headers["access-control-allow-origin"] == "*"
+# Preflight CORS não é mais responsabilidade do app (M3/AUTH-03): passou para o
+# API Gateway (CorsConfiguration no template.yaml), porque com o JWT Authorizer na
+# borda o OPTIONS não pode chegar à Lambda. O comportamento do preflight é validado
+# no deploy real (T7), não em teste unitário do FastAPI.

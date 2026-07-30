@@ -1,7 +1,67 @@
-import { CLINICS } from "../config";
+import { useState } from "react";
+import { definirNovaSenha, login } from "../auth";
 
-// Login simples do demo: escolher a clínica. (No M3 vira login real via Cognito.)
-export default function Login({ onSelect }) {
+// Login real (M3/AUTH-05): e-mail + senha via Cognito. No 1º acesso (senha
+// temporária) o Cognito exige definir uma nova senha antes de entrar.
+function traduzErro(err) {
+  switch (err.code) {
+    case "NotAuthorizedException":
+    case "UserNotFoundException":
+      return "E-mail ou senha inválidos.";
+    case "InvalidPasswordException":
+      return "Senha fraca: use 8+ caracteres com maiúscula, minúscula e número.";
+    case "UserNotConfirmedException":
+      return "Usuário ainda não confirmado. Fale com o administrador.";
+    default:
+      return err.message || "Não foi possível entrar. Tente novamente.";
+  }
+}
+
+export default function Login({ onLogin }) {
+  const [email, setEmail] = useState("");
+  const [senha, setSenha] = useState("");
+  const [novaSenha, setNovaSenha] = useState("");
+  const [confirmaSenha, setConfirmaSenha] = useState("");
+  const [challenge, setChallenge] = useState(null); // { session, email }
+  const [erro, setErro] = useState("");
+  const [carregando, setCarregando] = useState(false);
+
+  async function entrar(e) {
+    e.preventDefault();
+    setErro("");
+    setCarregando(true);
+    try {
+      const r = await login(email.trim().toLowerCase(), senha);
+      if (r.challenge === "NEW_PASSWORD_REQUIRED") {
+        setChallenge({ session: r.session, email: r.email });
+      } else {
+        onLogin(r.claims);
+      }
+    } catch (err) {
+      setErro(traduzErro(err));
+    } finally {
+      setCarregando(false);
+    }
+  }
+
+  async function trocarSenha(e) {
+    e.preventDefault();
+    setErro("");
+    if (novaSenha !== confirmaSenha) {
+      setErro("As senhas não coincidem.");
+      return;
+    }
+    setCarregando(true);
+    try {
+      const r = await definirNovaSenha(challenge.email, challenge.session, novaSenha);
+      onLogin(r.claims);
+    } catch (err) {
+      setErro(traduzErro(err));
+    } finally {
+      setCarregando(false);
+    }
+  }
+
   return (
     <div className="login-wrap">
       <div className="login-card">
@@ -9,24 +69,65 @@ export default function Login({ onSelect }) {
           <span className="brand-dot" />
           Clínica de Pilates
         </div>
-        <h1>Bem-vindo(a)</h1>
-        <p className="muted">Selecione sua clínica para entrar</p>
 
-        <div className="clinic-list">
-          {CLINICS.map((c) => (
-            <button key={c.id} className="clinic-btn" onClick={() => onSelect(c)}>
-              <span className="clinic-avatar">{c.nome.charAt(0)}</span>
-              <span>
-                <strong>{c.nome}</strong>
-                <small className="muted">{c.id}</small>
-              </span>
-              <span className="chevron">→</span>
-            </button>
-          ))}
-        </div>
+        {!challenge ? (
+          <>
+            <h1>Bem-vindo(a)</h1>
+            <p className="muted">Entre com seu e-mail e senha</p>
+            <form onSubmit={entrar} className="login-form">
+              <input
+                type="email"
+                placeholder="E-mail"
+                autoComplete="username"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+              <input
+                type="password"
+                placeholder="Senha"
+                autoComplete="current-password"
+                value={senha}
+                onChange={(e) => setSenha(e.target.value)}
+                required
+              />
+              {erro && <p className="login-erro">{erro}</p>}
+              <button className="btn primary" type="submit" disabled={carregando}>
+                {carregando ? "Entrando…" : "Entrar"}
+              </button>
+            </form>
+          </>
+        ) : (
+          <>
+            <h1>Defina sua senha</h1>
+            <p className="muted">Primeiro acesso: escolha uma senha definitiva.</p>
+            <form onSubmit={trocarSenha} className="login-form">
+              <input
+                type="password"
+                placeholder="Nova senha"
+                autoComplete="new-password"
+                value={novaSenha}
+                onChange={(e) => setNovaSenha(e.target.value)}
+                required
+              />
+              <input
+                type="password"
+                placeholder="Confirme a nova senha"
+                autoComplete="new-password"
+                value={confirmaSenha}
+                onChange={(e) => setConfirmaSenha(e.target.value)}
+                required
+              />
+              {erro && <p className="login-erro">{erro}</p>}
+              <button className="btn primary" type="submit" disabled={carregando}>
+                {carregando ? "Salvando…" : "Salvar e entrar"}
+              </button>
+            </form>
+          </>
+        )}
 
         <p className="login-note muted">
-          Demo — o login definitivo (Cognito) chega depois. Cada clínica só enxerga os próprios dados.
+          Acesso restrito à equipe. Cada clínica só enxerga os próprios dados.
         </p>
       </div>
     </div>

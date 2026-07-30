@@ -1,17 +1,27 @@
 // Cliente da API da Clínica de Pilates.
-// Toda chamada envia o header X-Clinic-Id (multi-tenant, AD-007). No M3 isso
-// será substituído pelo token do login — mudando só este arquivo.
+// Toda chamada envia o idToken do login como Authorization: Bearer (M3/AUTH-05).
+// O clinicId agora vem do token (claim), não mais de header — o 3º parâmetro
+// (clinic) é mantido por compatibilidade de assinatura, mas é ignorado.
 import { API_URL } from "./config";
+import { getIdToken, sair } from "./auth";
 
-async function request(method, path, clinicId, body) {
+async function request(method, path, _clinic, body) {
+  const token = getIdToken();
   const res = await fetch(`${API_URL}${path}`, {
     method,
     headers: {
       "Content-Type": "application/json",
-      "X-Clinic-Id": clinicId,
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
     body: body ? JSON.stringify(body) : undefined,
   });
+
+  // Token ausente/expirado → limpa a sessão e volta ao login.
+  if (res.status === 401) {
+    sair();
+    window.location.reload();
+    throw new Error("Sessão expirada. Faça login novamente.");
+  }
 
   if (res.status === 204) return null;
 
@@ -65,6 +75,11 @@ export const sessoesApi = {
     request("PUT", `/pacientes/${pacienteId}/sessoes/${id}`, clinic, data),
   remove: (clinic, pacienteId, id) =>
     request("DELETE", `/pacientes/${pacienteId}/sessoes/${id}`, clinic),
+};
+
+// --- Membros da equipe (admin adiciona; herda a clínica do token — AUTH-07) ---
+export const membrosApi = {
+  create: (data) => request("POST", "/membros", null, data),
 };
 
 // --- ViaCEP (consulta de endereço pelo CEP, feita no front — AD-009) ---

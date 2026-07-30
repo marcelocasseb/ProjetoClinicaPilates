@@ -4,27 +4,22 @@ Uma única app com roteamento interno, exposta ao Lambda via Mangum (ver handler
 """
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.routers import aparelhos, avaliacoes, pacientes, sessoes
+from app.routers import aparelhos, avaliacoes, membros, pacientes, sessoes
 
 app = FastAPI(title="Clínica de Pilates API")
 
-# CORS tratado pelo próprio app (não pelo API Gateway): como a Lambda captura ANY,
-# o preflight OPTIONS chega ao FastAPI, e o CORSMiddleware responde 200 corretamente.
-# allow_origins="*" sem credenciais é suficiente para o demo (restringir na produção).
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# CORS é tratado pelo API Gateway (CorsConfiguration no template.yaml), não aqui:
+# com o JWT Authorizer na borda (M3/AUTH-03), o preflight OPTIONS não pode passar
+# pelo authorizer nem chegar à Lambda. Manter CORS no app duplicaria os headers
+# Access-Control-* e quebraria o navegador. Ver comentário do ClinicaHttpApi.
 
 app.include_router(pacientes.router)
 app.include_router(aparelhos.router)
 app.include_router(avaliacoes.router)
 app.include_router(sessoes.router)
+app.include_router(membros.router)
 
 
 @app.exception_handler(RequestValidationError)
