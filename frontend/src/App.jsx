@@ -5,6 +5,7 @@ import Aparelhos from "./components/Aparelhos";
 import Pilates from "./components/Pilates";
 import AdicionarMembro from "./components/AdicionarMembro";
 import { getClaims, sair } from "./auth";
+import { clinicaApi } from "./api";
 import iconUrl from "./assets/pilatesone-icon.jpg";
 import "./App.css";
 
@@ -21,6 +22,7 @@ function clinicDasClaims(claims) {
 
 export default function App() {
   const [clinic, setClinic] = useState(null);
+  const [clinicNome, setClinicNome] = useState(null); // nome de exibição (do backend)
   const [aba, setAba] = useState("pacientes");
   const [mostrarMembro, setMostrarMembro] = useState(false);
 
@@ -30,12 +32,26 @@ export default function App() {
     if (claims && claims["custom:clinicId"]) setClinic(clinicDasClaims(claims));
   }, []);
 
+  // Busca o nome de exibição da clínica (mostrado no topo em vez do clinicId).
+  useEffect(() => {
+    if (!clinic) return;
+    let ativo = true;
+    clinicaApi
+      .get()
+      .then((r) => ativo && setClinicNome(r?.nome || null))
+      .catch(() => {});
+    return () => {
+      ativo = false;
+    };
+  }, [clinic]);
+
   function aoLogar(claims) {
     setClinic(clinicDasClaims(claims));
   }
   function sairApp() {
     sair();
     setClinic(null);
+    setClinicNome(null);
   }
 
   if (!clinic) return <Login onLogin={aoLogar} />;
@@ -55,9 +71,9 @@ export default function App() {
               + Membro
             </button>
           )}
-          <span className="clinic-tag" title="Clínica vinculada ao seu usuário">
-            {clinic.id}
-            {clinic.role ? ` · ${clinic.role}` : ""}
+          <span className="clinic-tag" title={clinicNome || clinic.id}>
+            <span className="clinic-nome">{clinicNome || clinic.id}</span>
+            {clinic.role ? <span className="clinic-role">{clinic.role}</span> : null}
           </span>
           <span className="user-email muted">{clinic.email}</span>
           <button className="btn ghost" onClick={sairApp}>

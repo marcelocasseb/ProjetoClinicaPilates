@@ -82,6 +82,11 @@ export const membrosApi = {
   create: (data) => request("POST", "/membros", null, data),
 };
 
+// --- Clínica do usuário logado (nome de exibição) ---
+export const clinicaApi = {
+  get: () => request("GET", "/clinica", null),
+};
+
 // --- ViaCEP (consulta de endereço pelo CEP, feita no front — AD-009) ---
 export async function buscarCep(cep) {
   const digits = (cep || "").replace(/\D/g, "");

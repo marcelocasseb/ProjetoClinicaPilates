@@ -24,6 +24,7 @@ import boto3
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
 from app.cognito_admin import EmailJaExiste, criar_clinica_com_admin  # noqa: E402
+from app.repository_clinica import ClinicaRepository  # noqa: E402
 
 
 def main() -> int:
@@ -49,6 +50,13 @@ def main() -> int:
         help="Envia a senha temporária por e-mail (convite do Cognito). Sem esta flag, "
         "o e-mail é suprimido e a senha é só impressa aqui para repasse manual.",
     )
+    parser.add_argument(
+        "--table-name",
+        default=None,
+        help="Nome da tabela DynamoDB. Se informado, grava o nome da clínica (--clinica) "
+        "como metadados, para ser exibido no topo do app. Ex.: "
+        "clinica-pilates-ClinicaTable-8YQAEIFAKZGE",
+    )
     args = parser.parse_args()
 
     # A região vai embutida no pool id (ex.: "us-east-1_ABC") — usa ela no cliente
@@ -67,6 +75,13 @@ def main() -> int:
     except EmailJaExiste as exc:
         print(f"ERRO: {exc}", file=sys.stderr)
         return 1
+
+    # Grava o nome de exibição da clínica (metadados no DynamoDB), se a tabela foi
+    # informada — é o que o app mostra no topo em vez do clinicId.
+    if args.table_name:
+        ClinicaRepository(table_name=args.table_name, ddb=boto3.resource("dynamodb", region_name=regiao)).set_nome(
+            res["clinic_id"], args.clinica
+        )
 
     print("Clínica criada com sucesso.")
     print(f"  Clínica:          {args.clinica}")
