@@ -262,6 +262,7 @@ Usuário reportou o link aparecendo como "removedor" (print) enquanto o código/
 - [ ] Relatórios de uso de aparelhos — Captured during: inicialização
 - [ ] **Papéis/permissões dentro da clínica (roles via Cognito groups)** — ex.: recepcionista vê pacientes mas não edita; fisioterapeuta vê tudo. Camada ADICIONAL à do `clinicId` (que já isola entre clínicas). Refinamento pós-M3. — Captured during: discussão multi-tenant (2026-07-21)
 - [ ] **Onboarding de nova clínica** (self-service) — tela que cria o `clinicId` + primeiro usuário admin da clínica. Necessário para virar SaaS de fato. — Captured during: discussão multi-tenant (2026-07-21)
+- [ ] **Paginação/escala da listagem de pacientes** — hoje `PacienteRepository.list_ativos` ([repository.py:85](../../src/app/repository.py#L85)) faz **1 query sem loop de `LastEvaluatedKey`**; o front carrega tudo e filtra no cliente. OK até ~algumas centenas; a partir de ~1.000–1.500 perfis a query do DynamoDB corta em 1 MB e a lista **trunca silenciosamente**. Fazer: (1) loop de paginação no back (correção pequena, preventiva); (2) busca server-side + paginação por nome (o `GSI1SK` já é o nome ordenado — sai barato); (3) virtualização da tabela só nos milhares. Usuário optou por adiar ("veremos mais pra frente", 2026-07-30). — Captured during: dúvida de performance 300+ pacientes
 
 ---
 
