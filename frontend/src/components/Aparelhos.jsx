@@ -9,13 +9,17 @@ export default function Aparelhos({ clinic }) {
   const [editId, setEditId] = useState(null);
   const [erro, setErro] = useState("");
   const [loading, setLoading] = useState(false);
+  const [carregandoLista, setCarregandoLista] = useState(true);
 
   async function carregar() {
     setErro("");
+    setCarregandoLista(true);
     try {
       setLista(await aparelhosApi.list(clinic.id));
     } catch (e) {
       setErro(e.message);
+    } finally {
+      setCarregandoLista(false);
     }
   }
 
@@ -101,8 +105,13 @@ export default function Aparelhos({ clinic }) {
       </form>
 
       <div className="card">
-        <h2>Aparelhos ({lista.length})</h2>
-        {lista.length === 0 ? (
+        <h2>Aparelhos ({carregandoLista ? "…" : lista.length})</h2>
+        {carregandoLista ? (
+          <div className="loading">
+            <span className="spinner" />
+            Carregando aparelhos…
+          </div>
+        ) : lista.length === 0 ? (
           <p className="muted">Nenhum aparelho cadastrado ainda.</p>
         ) : (
           <table className="tbl">

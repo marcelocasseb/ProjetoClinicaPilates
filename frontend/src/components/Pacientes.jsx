@@ -22,13 +22,17 @@ export default function Pacientes({ clinic }) {
   const [editId, setEditId] = useState(null);
   const [erro, setErro] = useState("");
   const [loading, setLoading] = useState(false);
+  const [carregandoLista, setCarregandoLista] = useState(true);
 
   async function carregar() {
     setErro("");
+    setCarregandoLista(true);
     try {
       setLista(await pacientesApi.list(clinic.id));
     } catch (e) {
       setErro(e.message);
+    } finally {
+      setCarregandoLista(false);
     }
   }
 
@@ -200,8 +204,13 @@ export default function Pacientes({ clinic }) {
         {erro && <div className="erro">{erro}</div>}
 
         <div className="card">
-          <h2>Pacientes ({filtrados.length})</h2>
-          {lista.length === 0 ? (
+          <h2>Pacientes ({carregandoLista ? "…" : filtrados.length})</h2>
+          {carregandoLista ? (
+            <div className="loading">
+              <span className="spinner" />
+              Carregando pacientes…
+            </div>
+          ) : lista.length === 0 ? (
             <p className="muted">Nenhum paciente cadastrado ainda.</p>
           ) : filtrados.length === 0 ? (
             <p className="muted">Nenhum paciente encontrado para “{busca}”.</p>

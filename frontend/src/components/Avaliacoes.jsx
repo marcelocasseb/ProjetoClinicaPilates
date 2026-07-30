@@ -42,16 +42,20 @@ export default function Avaliacoes({ clinic, paciente, onVoltar, onCount, embedd
   const [readonly, setReadonly] = useState(false); // consulta aberta em modo leitura
   const [erro, setErro] = useState("");
   const [loading, setLoading] = useState(false);
+  const [carregandoLista, setCarregandoLista] = useState(true);
   const topoRef = useRef(null); // topo da seção de avaliações (p/ rolar ao consultar)
 
   async function carregar() {
     setErro("");
+    setCarregandoLista(true);
     try {
       const dados = await avaliacoesApi.list(clinic.id, paciente.id);
       setLista(dados);
       onCount?.(dados.length);
     } catch (e) {
       setErro(e.message);
+    } finally {
+      setCarregandoLista(false);
     }
   }
 
@@ -274,8 +278,13 @@ export default function Avaliacoes({ clinic, paciente, onVoltar, onCount, embedd
         </div>
 
         <div className="card">
-          <h2>Avaliações ({lista.length})</h2>
-          {lista.length === 0 ? (
+          <h2>Avaliações ({carregandoLista ? "…" : lista.length})</h2>
+          {carregandoLista ? (
+            <div className="loading">
+              <span className="spinner" />
+              Carregando avaliações…
+            </div>
+          ) : lista.length === 0 ? (
             <p className="muted">Nenhuma avaliação registrada para este paciente.</p>
           ) : (
             <table className="tbl">

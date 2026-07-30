@@ -30,13 +30,18 @@ export default function Pilates({ clinic }) {
   const [comboSel, setComboSel] = useState(""); // aparelho "atual" (a que os treinos se aplicam)
   const [erro, setErro] = useState("");
   const [loading, setLoading] = useState(false);
+  const [carregandoLista, setCarregandoLista] = useState(true);
+  const [carregandoAula, setCarregandoAula] = useState(false);
 
   async function carregarPacientes() {
     setErro("");
+    setCarregandoLista(true);
     try {
       setPacientes(await pacientesApi.list(clinic.id));
     } catch (e) {
       setErro(e.message);
+    } finally {
+      setCarregandoLista(false);
     }
   }
 
@@ -49,6 +54,7 @@ export default function Pilates({ clinic }) {
 
   async function carregarAula(p) {
     setErro("");
+    setCarregandoAula(true);
     try {
       const [cat, aulas] = await Promise.all([
         aparelhosApi.list(clinic.id),
@@ -58,6 +64,8 @@ export default function Pilates({ clinic }) {
       setLista(aulas);
     } catch (e) {
       setErro(e.message);
+    } finally {
+      setCarregandoAula(false);
     }
   }
 
@@ -234,8 +242,13 @@ export default function Pilates({ clinic }) {
         {erro && <div className="erro">{erro}</div>}
 
         <div className="card">
-          <h2>Iniciar aula — escolha o aluno ({filtrados.length})</h2>
-          {pacientes.length === 0 ? (
+          <h2>Iniciar aula — escolha o aluno ({carregandoLista ? "…" : filtrados.length})</h2>
+          {carregandoLista ? (
+            <div className="loading">
+              <span className="spinner" />
+              Carregando alunos…
+            </div>
+          ) : pacientes.length === 0 ? (
             <p className="muted">
               Nenhum aluno cadastrado ainda. Cadastre um paciente na aba Pacientes.
             </p>
@@ -319,7 +332,12 @@ export default function Pilates({ clinic }) {
               {!readonly && (
                 <>
                   <div className="sep">Adicionar exercício</div>
-                  {semCatalogo ? (
+                  {carregandoAula ? (
+                    <div className="loading">
+                      <span className="spinner" />
+                      Carregando aparelhos…
+                    </div>
+                  ) : semCatalogo ? (
                     <div className="erro">
                       Nenhum aparelho cadastrado nesta clínica. Cadastre aparelhos na aba
                       Aparelhos antes de registrar a aula.
@@ -455,8 +473,13 @@ export default function Pilates({ clinic }) {
 
       {/* Histórico de aulas do aluno */}
       <div className="card" style={{ marginTop: 20 }}>
-        <h2>Aulas registradas ({lista.length})</h2>
-        {lista.length === 0 ? (
+        <h2>Aulas registradas ({carregandoAula ? "…" : lista.length})</h2>
+        {carregandoAula ? (
+          <div className="loading">
+            <span className="spinner" />
+            Carregando aulas…
+          </div>
+        ) : lista.length === 0 ? (
           <p className="muted">Nenhuma aula registrada para este aluno.</p>
         ) : (
           <table className="tbl">

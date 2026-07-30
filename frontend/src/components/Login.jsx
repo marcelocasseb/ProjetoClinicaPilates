@@ -126,10 +126,6 @@ export default function Login({ onLogin }) {
             </form>
           </>
         )}
-
-        <p className="login-note muted">
-          Acesso restrito à equipe. Cada clínica só enxerga os próprios dados.
-        </p>
       </div>
     </div>
   );
