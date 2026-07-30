@@ -57,6 +57,15 @@ Registro de Sessões concluído (back + front no ar), **aprovado no UAT (2026-07
 - Custo: dentro do free tier (~$0). Budget de $5/mês criado (alerta e-mail em 80%/100%).
 - ⚠️ Link ABERTO (sem login ainda) — dados de demo Zen/Corpo semeados. Autenticação real = M3 (Cognito).
 
+**REBRAND "PilatesOne" — APLICADO e NO AR (2026-07-29):** front retematizado com a identidade do logo do cliente (preto/carvão + dourado/bronze sobre branco quente). Tema claro **fixo** (removido o `@media prefers-color-scheme: dark` em `index.css`). Paleta em `index.css` (`--accent #b8935e` dourado, `--primary #26221d` carvão p/ botões, `--bg #faf8f4`). Logo em `frontend/src/assets/pilatesone-logo.jpg` (login) e `pilatesone-icon.jpg` (topo + favicon); originais em `Icones/` (raiz). Título/ favicon atualizados. ⚠️ Logos são **JPG com fundo branco** — se aparecer um retângulo claro em volta, trocar por **PNG/SVG transparente** (pedir ao cliente). Publicado no CloudFront. Ainda NÃO commitado (junto com o resto pós-M3).
+
+**DOMÍNIO `pilatesone.com.br` — ✅ NO AR COM HTTPS (2026-07-30):** `https://pilatesone.com.br` e `https://www.pilatesone.com.br` → 200, cert válido, servindo o app. Configuração abaixo (mantida como referência):
+- Registrado pelo usuário no **registro.br** (`.com.br` não pode via Route 53). `.com` está OCUPADO (estúdio Pilates One Miami) — usar só `.com.br`.
+- **Route 53 hosted zone** criada: `Z088304815X5KV64D3NJ`. Nameservers pra colar no registro.br: `ns-518.awsdns-00.net`, `ns-14.awsdns-01.com`, `ns-1663.awsdns-15.co.uk`, `ns-1178.awsdns-19.org`.
+- **Certificado ACM** (us-east-1) pedido p/ `pilatesone.com.br` + `www.pilatesone.com.br`: `arn:aws:acm:us-east-1:912689366270:certificate/0b52f3cc-9c3a-4284-94fc-56f08f8d52c0`. Registros de validação DNS já plantados na zone (CNAME). Valida sozinho quando os NS propagarem.
+- Endereço escolhido: **raiz + www** (www redireciona pra raiz).
+- ✅ **[2026-07-30] NS delegados** (os 4 `awsdns` no ar) e **cert ISSUED**. ✅ CloudFront `EGYNGZONKGVLT` atualizado: aliases `pilatesone.com.br` + `www.pilatesone.com.br` + ViewerCertificate = o cert ACM (sni-only, TLSv1.2_2021). ✅ Route 53 alias A+AAAA (apex e www) → `d1th2j57vyxahs.cloudfront.net` (CF zone `Z2FDTNDATAQYW2`). ⏳ **FALTA só:** aguardar o CloudFront terminar de propagar (`aws cloudfront wait distribution-deployed --id EGYNGZONKGVLT`) e testar `https://pilatesone.com.br` (curl 200). Opcional/futuro: CloudFront Function p/ 301 www→raiz (hoje serve o app em ambos).
+
 **Onde paramos (retomar aqui):**
 - ✅ Projeto inicializado (PROJECT/ROADMAP/STATE), commit `621b608`
 - ✅ Planejamento da infra + TESTING.md commitados, commit `8e855b6`

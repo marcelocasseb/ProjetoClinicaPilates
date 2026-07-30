@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { definirNovaSenha, login } from "../auth";
+import logoUrl from "../assets/pilatesone-logo.jpg";
 
 // Login real (M3/AUTH-05): e-mail + senha via Cognito. No 1º acesso (senha
 // temporária) o Cognito exige definir uma nova senha antes de entrar.
@@ -65,15 +66,15 @@ export default function Login({ onLogin }) {
   return (
     <div className="login-wrap">
       <div className="login-card">
-        <div className="brand">
-          <span className="brand-dot" />
-          Clínica de Pilates
-        </div>
+        <img
+          src={logoUrl}
+          alt="Pilates One — Sistema completo para gestão do Pilates"
+          className="login-logo"
+        />
 
         {!challenge ? (
           <>
-            <h1>Bem-vindo(a)</h1>
-            <p className="muted">Entre com seu e-mail e senha</p>
+            <p className="muted login-sub">Entre com seu e-mail e senha</p>
             <form onSubmit={entrar} className="login-form">
               <input
                 type="email"

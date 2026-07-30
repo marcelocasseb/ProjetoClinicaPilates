@@ -1,33 +1,26 @@
+/* Tema claro fixo, na identidade PilatesOne: preto/carvão + dourado/bronze do
+   logo, sobre branco quente. O modo escuro automático foi removido de propósito
+   (a marca é clara). Ver logo em src/assets/pilatesone-logo.jpg. */
 :root {
-  --bg: #f6f7fb;
-  --panel: #ffffff;
-  --text: #1f2430;
-  --muted: #6b7280;
-  --border: #e6e8ee;
-  --accent: #6d5efc;
-  --accent-2: #8b7bff;
-  --danger: #e05656;
+  color-scheme: light;
+  --bg: #faf8f4;          /* branco quente (fundo do app) */
+  --panel: #ffffff;       /* cards, formulários */
+  --text: #211d18;        /* carvão quente (o preto do logo) */
+  --muted: #8c857b;       /* cinza quente */
+  --border: #ece6dd;      /* borda clara quente */
+  --accent: #b8935e;      /* dourado/bronze (anel do logo) */
+  --accent-2: #d9c3a2;    /* champagne claro (detalhes/gradientes) */
+  --primary: #26221d;     /* botão primário: carvão (legível + elegante) */
+  --primary-hover: #3a332b;
+  --danger: #c0563f;      /* terracota (harmoniza com o dourado) */
   --ok: #1f9d6b;
   --radius: 12px;
-  --shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 8px 24px rgba(16, 24, 40, 0.06);
+  --shadow: 0 1px 2px rgba(60, 45, 25, 0.05), 0 8px 24px rgba(60, 45, 25, 0.08);
 
   font-family: system-ui, "Segoe UI", Roboto, sans-serif;
   color: var(--text);
   background: var(--bg);
   -webkit-font-smoothing: antialiased;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #0f1117;
-    --panel: #171a22;
-    --text: #e7e9ee;
-    --muted: #9aa1ad;
-    --border: #262a34;
-    --accent: #8b7bff;
-    --accent-2: #a897ff;
-    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.35);
-  }
 }
 
 * {

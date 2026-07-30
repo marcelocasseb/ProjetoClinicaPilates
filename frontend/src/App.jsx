@@ -5,6 +5,7 @@ import Aparelhos from "./components/Aparelhos";
 import Pilates from "./components/Pilates";
 import AdicionarMembro from "./components/AdicionarMembro";
 import { getClaims, sair } from "./auth";
+import iconUrl from "./assets/pilatesone-icon.jpg";
 import "./App.css";
 
 // Deriva o "contexto da clínica" das claims do token (M3). Os componentes
@@ -45,8 +46,8 @@ export default function App() {
     <div className="app">
       <header className="topbar">
         <div className="brand">
-          <span className="brand-dot" />
-          Clínica de Pilates
+          <img src={iconUrl} alt="" className="brand-logo" />
+          <span className="brand-name">Pilates One</span>
         </div>
         <div className="topbar-right">
           {isAdmin && (
