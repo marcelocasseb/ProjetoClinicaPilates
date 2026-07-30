@@ -9,6 +9,7 @@ const TIPOS_TREINO = [
   "Abdômen",
   "Força",
   "Mobilidade",
+  "Postural",
 ];
 
 function vazio() {

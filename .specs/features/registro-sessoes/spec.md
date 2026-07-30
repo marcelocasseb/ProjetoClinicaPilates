@@ -8,7 +8,7 @@ O **core do produto** é registrar, aula a aula, o que cada aluno fez na clínic
 
 - [ ] Permitir registrar uma **aula** de um aluno: data (default hoje) + lista de aparelhos usados, cada um com seus **tipos de treino**.
 - [ ] Reaproveitar o **catálogo de aparelhos da clínica** (combo box) e guardar um **snapshot (id + nome)** do aparelho na aula — o histórico fica imune a edição/remoção posterior do aparelho no catálogo.
-- [ ] Oferecer os **tipos de treino** por uma lista fixa (hardcode no front): *Membros superiores, Membros inferiores, Abdômen, Força, Mobilidade* — armazenados como snapshot de texto (sem enum no back).
+- [ ] Oferecer os **tipos de treino** por uma lista fixa (hardcode no front): *Membros superiores, Membros inferiores, Abdômen, Força, Mobilidade, Postural* — armazenados como snapshot de texto (sem enum no back).
 - [ ] Registrar campos gerais da aula: **observação** (texto livre) e **profissional responsável** (texto livre).
 - [ ] Consultar as aulas como histórico datado por aluno (mesma UX das avaliações: busca o aluno → lista de datas → abre o detalhe).
 - [ ] CRUD completo com **soft delete** e fluxo **abrir em leitura → Editar → Salvar**.
@@ -90,7 +90,7 @@ O **core do produto** é registrar, aula a aula, o que cada aluno fez na clínic
 
 1. WHEN a equipe abre a aba "Pilates" e busca/seleciona um aluno THEN o sistema SHALL iniciar uma aula com a **data de hoje** já preenchida.
 2. WHEN a equipe adiciona um aparelho THEN o front SHALL oferecer um **combo box** com os aparelhos **ativos da clínica** (via catálogo existente) e permitir adicionar **vários**.
-3. WHEN a equipe escolhe os treinos de um aparelho THEN o front SHALL oferecer a lista fixa (*Membros superiores, Membros inferiores, Abdômen, Força, Mobilidade*) com seleção múltipla por aparelho.
+3. WHEN a equipe escolhe os treinos de um aparelho THEN o front SHALL oferecer a lista fixa (*Membros superiores, Membros inferiores, Abdômen, Força, Mobilidade, Postural*) com seleção múltipla por aparelho.
 4. WHEN a equipe salva a aula THEN o front SHALL enviar a `data` explícita (fuso local) e a lista de aparelhos com seus treinos, mais `observacao` e `profissional`.
 5. WHEN a equipe consulta um aluno THEN o front SHALL listar as **datas das aulas** (como na tela de avaliações) e, ao clicar numa data, abrir o detalhe **em leitura**; o botão **Editar** destrava a edição e **Salvar** persiste (padrão [[react-button-type-swap-submit]]).
 6. WHEN a clínica não tem aparelhos cadastrados THEN o front SHALL orientar a cadastrar aparelhos antes (o combo fica vazio).
