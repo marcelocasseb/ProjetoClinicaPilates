@@ -27,6 +27,11 @@ Resources:
       MfaConfiguration: 'OFF'
       AdminCreateUserConfig:
         AllowAdminCreateUserOnly: true    # sem sign-up público (AD-012)
+        # Convite (AdminCreateUser) em PT-BR com a marca PilatesOne. {username} = e-mail,
+        # {####} = senha temporária (placeholders obrigatórios). Só afeta convites futuros.
+        InviteMessageTemplate:
+          EmailSubject: "Bem-vindo(a) ao Pilates One"
+          EmailMessage: "Olá! Seu acesso ao Pilates One foi criado.<br><br>Login: {username}<br>Senha temporária: {####}<br><br>Acesse https://pilatesone.com.br, entre com esses dados e defina a sua senha definitiva.<br><br>Equipe Pilates One"
       # Não vaza se o e-mail existe no fluxo de login (AUTH-05 AC5).
       # (PreventUserExistenceErrors fica no App Client abaixo.)
       Policies:
