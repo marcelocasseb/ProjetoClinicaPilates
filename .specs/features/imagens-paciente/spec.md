@@ -85,15 +85,15 @@ A clínica quer anexar **imagens ao paciente** (fotos posturais, laudos, documen
 
 | Requirement ID | Story | Task | Status |
 | -------------- | ----- | ---- | ------ |
-| IMG-01 | P1: Adicionar — solicitar upload (valida tipo + limite) | I2, I3 | Pending |
-| IMG-02 | P1: Adicionar — confirmar (`head_object` + grava metadado) | I2, I3 | Pending |
-| IMG-03 | P1: Listar imagens com URL pré-assinada | I2, I3 | Pending |
-| IMG-04 | P1: Remover (apaga do S3 + metadado) | I2, I3 | Pending |
-| IMG-05 | Limite de 5 imagens por paciente | I3 | Pending |
-| IMG-06 | Validação de `contentType` (jpeg/png/webp) | I1, I3 | Pending |
-| IMG-07 | 404 se paciente inexistente na clínica + isolamento | I3 | Pending |
-| IMG-08 | Chave S3 e item isolados por clínica/paciente | I1, I2 | Pending |
-| IMG-09 | Front — painel de imagens na ficha (add/preview/remove, até 5) | I5 | Pending |
+| IMG-01 | P1: Adicionar — solicitar upload (valida tipo + limite) | I2, I3 | Verified |
+| IMG-02 | P1: Adicionar — confirmar (`head_object` + grava metadado) | I2, I3 | Verified |
+| IMG-03 | P1: Listar imagens com URL pré-assinada | I2, I3 | Verified |
+| IMG-04 | P1: Remover (apaga do S3 + metadado) | I2, I3 | Verified |
+| IMG-05 | Limite de 5 imagens por paciente | I3 | Verified |
+| IMG-06 | Validação de `contentType` (jpeg/png/webp) | I1, I3 | Verified |
+| IMG-07 | 404 se paciente inexistente na clínica + isolamento | I3 | Verified |
+| IMG-08 | Chave S3 e item isolados por clínica/paciente | I1, I2 | Verified |
+| IMG-09 | Front — painel de imagens na ficha (add/preview/remove, até 5) | I5 | Verified |
 
 **ID format:** `IMG-[NUMBER]`
 **Status values:** Pending → Implementing → Verified

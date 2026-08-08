@@ -31,5 +31,5 @@ Deploy (SAM/CloudFormation) roda no terminal do usuário — a sessão automatiz
 ## I6 — Verificação + deploy
 - [x] `pytest -q` verde (219); `npm run build` OK; `sam validate --lint` OK.
 - [x] `sam deploy` feito (2026-08-07) — bucket criado, changeset aditivo, verificado na stack real. `STATE.md` atualizado.
-- [ ] Teste end-to-end no browser com login real (subir/ver/remover imagem).
-- [ ] Publicar o front no CloudFront (back no ar; painel ainda não visível ao cliente).
+- [x] Teste end-to-end no browser com login real — aprovado pelo usuário (S3 real, mock off).
+- [x] Front publicado no CloudFront (`index-DqDKlacc.js`, invalidação concluída e verificada no ar).
