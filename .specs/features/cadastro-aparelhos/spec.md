@@ -6,10 +6,10 @@ Cada clínica de Pilates tem seu próprio conjunto de aparelhos — e o que exis
 
 ## Goals
 
-- [ ] Permitir que a equipe cadastre, consulte, edite e remova (logicamente) os aparelhos da **sua** clínica.
-- [ ] Estabelecer o item de aparelho na tabela DynamoDB no nível da clínica (`PK=CLINIC#<clinicId>`, `SK=APARELHO#<id>`).
-- [ ] Garantir isolamento: a clínica A nunca vê nem altera aparelhos da B.
-- [ ] Manter cadastro rápido: apenas o Nome é obrigatório.
+- [x] Permitir que a equipe cadastre, consulte, edite e remova (logicamente) os aparelhos da **sua** clínica.
+- [x] Estabelecer o item de aparelho na tabela DynamoDB no nível da clínica (`PK=CLINIC#<clinicId>`, `SK=APARELHO#<id>`).
+- [x] Garantir isolamento: a clínica A nunca vê nem altera aparelhos da B.
+- [x] Manter cadastro rápido: apenas o Nome é obrigatório.
 
 ## Out of Scope
 
@@ -168,8 +168,8 @@ Atributos:
 
 ## Success Criteria
 
-- [ ] A equipe consegue cadastrar um aparelho informando só o nome e recuperá-lo em seguida.
-- [ ] A listagem retorna apenas aparelhos ativos da própria clínica.
-- [ ] Aparelhos de outra clínica nunca aparecem nem são acessíveis por id.
-- [ ] Remoção é lógica: o aparelho some das consultas, mas o item permanece no banco.
-- [ ] Todos os 9 requisitos (APR-01..09) cobertos por teste.
+- [x] A equipe consegue cadastrar um aparelho informando só o nome e recuperá-lo em seguida.
+- [x] A listagem retorna apenas aparelhos ativos da própria clínica.
+- [x] Aparelhos de outra clínica nunca aparecem nem são acessíveis por id.
+- [x] Remoção é lógica: o aparelho some das consultas, mas o item permanece no banco.
+- [x] Todos os 9 requisitos (APR-01..09) cobertos por teste.

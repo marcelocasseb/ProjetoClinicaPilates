@@ -6,10 +6,10 @@ Uma clínica de Pilates avalia fisicamente cada paciente — anamnese, avaliaç�
 
 ## Goals
 
-- [ ] Permitir registrar, consultar, editar e remover (logicamente) avaliações de um paciente da **própria** clínica.
-- [ ] Guardar cada avaliação como item datado (`SK=AVALIACAO#<id>`) sob a PK do paciente (`CLINIC#<clinicId>#CLIENT#<clientId>`) → "evolução do paciente" = 1 Query por PK.
-- [ ] Manter cadastro flexível: nenhum campo clínico é obrigatório; a `data` identifica o registro (default hoje).
-- [ ] Garantir isolamento multi-tenant: clínica A nunca vê/edita avaliações de B, nem cria avaliação para paciente inexistente na sua clínica.
+- [x] Permitir registrar, consultar, editar e remover (logicamente) avaliações de um paciente da **própria** clínica.
+- [x] Guardar cada avaliação como item datado (`SK=AVALIACAO#<id>`) sob a PK do paciente (`CLINIC#<clinicId>#CLIENT#<clientId>`) → "evolução do paciente" = 1 Query por PK.
+- [x] Manter cadastro flexível: nenhum campo clínico é obrigatório; a `data` identifica o registro (default hoje).
+- [x] Garantir isolamento multi-tenant: clínica A nunca vê/edita avaliações de B, nem cria avaliação para paciente inexistente na sua clínica.
 
 ## Out of Scope
 
@@ -184,9 +184,9 @@ Atributos:
 
 ## Success Criteria
 
-- [ ] A equipe consegue registrar uma avaliação (mesmo só com a data) e recuperá-la em seguida.
-- [ ] A listagem retorna apenas avaliações ativas do paciente, mais recente primeiro.
-- [ ] Avaliações/pacientes de outra clínica nunca aparecem nem são acessíveis por id.
-- [ ] Criar avaliação para paciente inexistente na clínica retorna `404`.
-- [ ] Remoção é lógica: a avaliação some das consultas, mas o item permanece no banco.
-- [ ] Todos os 10 requisitos (AVL-01..10) cobertos por teste.
+- [x] A equipe consegue registrar uma avaliação (mesmo só com a data) e recuperá-la em seguida.
+- [x] A listagem retorna apenas avaliações ativas do paciente, mais recente primeiro.
+- [x] Avaliações/pacientes de outra clínica nunca aparecem nem são acessíveis por id.
+- [x] Criar avaliação para paciente inexistente na clínica retorna `404`.
+- [x] Remoção é lógica: a avaliação some das consultas, mas o item permanece no banco.
+- [x] Todos os 10 requisitos (AVL-01..10) cobertos por teste.

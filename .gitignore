@@ -11,3 +11,5 @@ venv/
 
 # Ambiente
 .env
+.env.local
+.env.*.local

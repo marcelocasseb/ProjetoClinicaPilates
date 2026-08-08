@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { pacientesApi, buscarCep } from "../api";
 import { maskCpf, maskTelefone, maskCep, isValidCpf, onlyDigits } from "../utils/format";
 import Avaliacoes from "./Avaliacoes";
+import ImagensPaciente from "./ImagensPaciente";
 
 const VAZIO = {
   nome: "",
@@ -22,13 +23,17 @@ export default function Pacientes({ clinic }) {
   const [editId, setEditId] = useState(null);
   const [erro, setErro] = useState("");
   const [loading, setLoading] = useState(false);
+  const [carregandoLista, setCarregandoLista] = useState(true);
 
   async function carregar() {
     setErro("");
+    setCarregandoLista(true);
     try {
       setLista(await pacientesApi.list(clinic.id));
     } catch (e) {
       setErro(e.message);
+    } finally {
+      setCarregandoLista(false);
     }
   }
 
@@ -200,8 +205,13 @@ export default function Pacientes({ clinic }) {
         {erro && <div className="erro">{erro}</div>}
 
         <div className="card">
-          <h2>Pacientes ({filtrados.length})</h2>
-          {lista.length === 0 ? (
+          <h2>Pacientes ({carregandoLista ? "…" : filtrados.length})</h2>
+          {carregandoLista ? (
+            <div className="loading">
+              <span className="spinner" />
+              Carregando pacientes…
+            </div>
+          ) : lista.length === 0 ? (
             <p className="muted">Nenhum paciente cadastrado ainda.</p>
           ) : filtrados.length === 0 ? (
             <p className="muted">Nenhum paciente encontrado para “{busca}”.</p>
@@ -355,11 +365,22 @@ export default function Pacientes({ clinic }) {
 
       {selecionado ? (
         <div id="secao-avaliacoes" style={{ marginTop: 28 }}>
-          <Avaliacoes key={selecionado.id} clinic={clinic} paciente={selecionado} onCount={setAvalCount} embedded />
+          <Avaliacoes
+            key={selecionado.id}
+            clinic={clinic}
+            paciente={selecionado}
+            onCount={setAvalCount}
+            embedded
+            rodape={
+              <div id="secao-imagens">
+                <ImagensPaciente pacienteId={selecionado.id} />
+              </div>
+            }
+          />
         </div>
       ) : (
         <p className="muted" style={{ marginTop: 20 }}>
-          Salve o paciente para registrar avaliações.
+          Salve o paciente para registrar avaliações e anexar imagens.
         </p>
       )}
     </div>

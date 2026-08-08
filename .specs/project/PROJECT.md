@@ -15,10 +15,11 @@
 
 **Core:**
 
-- Frontend: SPA estática hospedada em **S3 + CloudFront**. Framework **a definir** — será especificado à parte via spec "impecable".
-- Backend: **Python** com **FastAPI + Mangum**, deploy em **AWS Lambda** via ZIP (sem Docker).
-- API: **API Gateway** (HTTP, integração proxy) — roteamento, CORS, auth (Cognito), rate limiting.
-- Database: **DynamoDB** on-demand (pay-per-request).
+- Frontend: SPA estática hospedada em **S3 + CloudFront**, no domínio **pilatesone.com.br**. Framework: **React + Vite** (o front "leve" do demo virou o de produção; a spec "impecable" do definitivo segue pendente).
+- Backend: **Python** com **FastAPI + Mangum**, deploy em **AWS Lambda** via ZIP.
+- API: **API Gateway** (HTTP) — roteamento por método explícito, CORS na borda, **JWT Authorizer** (Cognito).
+- Database: **DynamoDB** on-demand (pay-per-request), single-table.
+- Arquivos: **S3 privado** para imagens dos pacientes, acessado só por URL pré-assinada.
 
 **Key dependencies:**
 
@@ -35,15 +36,18 @@
 - Backend Lambda único com roteamento interno das rotas
 - Provisionamento da infraestrutura base via SAM (Lambda, API Gateway, DynamoDB)
 
-**Explicitly out of scope (v1):**
+**Explicitly out of scope (v1)** — registro histórico; o que já foi entregue desde então está marcado:
 
-- Registro de sessões/aparelhos (milestone seguinte)
-- Login da equipe via Cognito (milestone seguinte)
-- Upload de arquivos/anexos em S3 (futuro)
-- Frontend definitivo (será especificado separadamente via "impecable")
+- ✅ Registro de sessões/aparelhos — entregue (M2)
+- ✅ Login da equipe via Cognito — entregue (M3)
+- ✅ Upload de arquivos/anexos em S3 — entregue (Imagens do Paciente, 2026-08-07)
+- ⏳ Frontend definitivo (spec "impecable") — **ainda pendente**; o front atual (React+Vite) é o do demo, promovido a produção
 
 ## Constraints
 
-- Técnico: sem Docker; uma única função Lambda com roteamento interno; DynamoDB on-demand; sem instâncias ociosas.
+- Técnico: uma única função Lambda com roteamento interno; DynamoDB on-demand; sem instâncias ociosas.
+  O código roda sem Docker; o **build** oficial usa container (AD-006) só para gerar as wheels Linux —
+  ver o atalho sem Docker em `.specs/codebase/ARQUITETURA.md`.
+- Ambiente de dev: máquina com **7,7 GB de RAM** — o Docker Desktop não sobe junto com o VS Code.
 - Custo: manter dentro do free tier ($0–$5/mês).
 - Recursos: projeto de clínica pequena, tráfego baixo e intermitente.

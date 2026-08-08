@@ -1,29 +1,21 @@
 # Roadmap
 
-**Current Milestone:** Rota do Demo — ✅ DEMO NO AR (https://d1th2j57vyxahs.cloudfront.net)
-**Status:** MVP demonstrável publicado; aguardando feedback do cliente para o front definitivo
+**Current Milestone:** **Produção** — sistema no ar em https://pilatesone.com.br com **cliente real usando**
+**Status:** M1, M2 e M3 concluídos. Login real (Cognito), domínio próprio e todas as features de prontuário
+no ar. Próximo foco: front definitivo (spec "impecable", M4) com o feedback do cliente real.
 
 ---
 
-## 🎯 Rota do Demo (prioridade atual)
+## 🎯 Rota do Demo — ✅ CONCLUÍDA (superada pela produção)
 
-**Objetivo:** ter algo visual e convincente pra mostrar pro cliente o quanto antes,
-validar a ideia e destravar venda antes de o sistema estar 100%.
+**Objetivo (cumprido):** ter algo visual pra mostrar pro cliente cedo, validar a ideia e
+destravar a venda. Deu certo: virou cliente real.
 
-**Sequência priorizada:**
-
-1. ✅ **Cadastro de Aparelhos** — CONCLUÍDO e deployado (APR-01..09, 96 tests)
-2. ✅ **Login simples** — seletor de clínica (envia `X-Clinic-Id`); feito no front
-   NÃO é o Cognito ainda — o `get_clinic_id()` no back já está isolado, então trocar
-   simples → Cognito depois é mexer num ponto só.
-3. ✅ **Front leve (demo)** — React+Vite, Pacientes + Aparelhos + Avaliações, máscaras/CEP/validação.
-   **NO AR (HTTPS):** https://d1th2j57vyxahs.cloudfront.net (S3+CloudFront, stack separado).
-4. **📣 DEMO pro cliente** ← ESTAMOS AQUI (pronto pra mostrar; aguardando feedback)
-5. **Depois do demo:** spec "impecable" (front definitivo, com feedback do cliente) →
-   Cognito de verdade → Registro de Sessões.
-
-**Fora do demo (deferido):** Registro de Sessões, relatórios. Um demo com paciente +
-aparelho + multi-clínica + telinha bonita já é convincente — não gold-platear antes de mostrar.
+1. ✅ **Cadastro de Aparelhos** — deployado (APR-01..09, 96 tests)
+2. ✅ ~~Login simples (seletor de clínica, `X-Clinic-Id`)~~ — **substituído pelo Cognito** no M3
+3. ✅ **Front leve (demo)** — React+Vite, no ar
+4. ✅ **DEMO pro cliente** — feito
+5. ✅ **Pós-demo:** Cognito real + Registro de Sessões + Imagens — todos entregues
 
 ---
 
@@ -84,26 +76,41 @@ Cada clínica mantém seu próprio catálogo de aparelhos (multi-tenant, AD-007)
 - Tipos de treino = lista fixa hardcoded no front (Membros superiores/inferiores, Abdômen, Força, Mobilidade); back guarda snapshot de texto
 - Endpoints aninhados `/pacientes/{id}/sessoes` (CRUD, soft delete, 404 se paciente inexistente na clínica). SES-01..11
 - Back: S1 schemas + S2 repo + S3 router, **44 testes novos (suíte 180)**, deployado; smoke-test público OK
-- Front (aba "Pilates"): F1 (registrar) + F2 (consulta datada/editar/remover) — **PENDENTE**
+- ✅ Front (aba "Pilates", `components/Pilates.jsx`): registrar + consulta datada/editar/remover — **NO AR**
+
+**4. Imagens do Paciente** - COMPLETE ✅ (back + front no ar, 2026-08-07)
+
+- Painel de até **5 imagens por paciente** (não por consulta) no rodapé da ficha
+- Binário no **S3 privado**; a Lambda só assina **URLs pré-assinadas** (5 min) — o arquivo nunca passa pela API
+- Metadado `SK=IMAGE#<id>` sob a PK do paciente → a ficha carrega tudo em 1 Query
+- Upload em **2 fases** (`POST` presigned → browser sobe → `PUT` confirma via `head_object`), sem órfãos no Dynamo
+- IMG-01..09 Verified, **18 testes novos (suíte 219)**; end-to-end no browser aprovado
+
+**Milestone M2 CONCLUÍDO** ✅
 
 ---
 
-## M3 — Autenticação da Equipe
+## M3 — Autenticação da Equipe — CONCLUÍDO ✅ (2026-07-28)
 
 **Goal:** Proteger o sistema com login da equipe da clínica.
 
 ### Features
 
-**Login simples (pré-demo)** - PLANNED  ← faz parte da Rota do Demo
+**Login simples (pré-demo)** - SUPERSEDED
 
-- Tela de login que seleciona a clínica (substitui o header `X-Clinic-Id`)
-- Sem Cognito ainda; suficiente pra contar a história multi-tenant no demo
+- Era o seletor de clínica enviando `X-Clinic-Id` (andaime do demo)
+- **Removido:** o `clinicId` agora vem da claim do token
 
-**Login com Cognito (pós-demo)** - PLANNED
+**Login com Cognito** - COMPLETE ✅ (deployado e no ar)
 
-- User pool para a equipe
-- Integração de autenticação no API Gateway
-- `get_clinic_id()` passa a ler o `clinicId` do token (troca só esse ponto)
+- User Pool `us-east-1_tusTZNRL6`, App Client SPA `6cke2rskmcq3ogim7c7ns4qqbn`
+- Sem auto-cadastro público (`AllowAdminCreateUserOnly`); convite por e-mail em PT-BR com a marca Pilates One
+- **JWT Authorizer** no API Gateway valida o token na borda (`401` antes da Lambda); só `GET /health` é público
+- `get_clinic_id()` lê `custom:clinicId` do token — o usuário não consegue escrever esse atributo (AD-012)
+- Endpoint `/membros` (admin adiciona equipe, herda a clínica do token)
+- ✅ Verificado end-to-end na stack real; **1º cliente real logado e cadastrando**
+
+**Milestone M3 CONCLUÍDO** ✅
 
 ---
 
@@ -113,26 +120,27 @@ Cada clínica mantém seu próprio catálogo de aparelhos (multi-tenant, AD-007)
 
 ### Features
 
-**Front leve (demo)** - PLANNED  ← faz parte da Rota do Demo
+**Front leve (demo)** - COMPLETE ✅
 
-- Stack decidida + telas + fluxo principal (paciente, aparelho, login simples)
-- Objetivo: mostrar pro cliente rápido, iterar no visual
+- React + Vite; abas Pacientes / Aparelhos / Pilates, ficha com Avaliações e Imagens
+- Publicado em S3 + CloudFront (stack `clinica-pilates-frontend`)
 
-**Frontend definitivo (spec "impecable")** - PLANNED (pós-demo)
+**Domínio + SSL** - COMPLETE ✅
 
-- Especificação "impecable" escrita **com o feedback do cliente**
-- Implementação da SPA + deploy em S3 + CloudFront
+- **https://pilatesone.com.br** no ar com HTTPS
 
-**Domínio + SSL** - PLANNED
+**Frontend definitivo (spec "impecable")** - PLANNED ← **próximo foco**
 
-- Route 53 + ACM
+- Especificação "impecable" escrita **com o feedback do cliente real** (que já está usando)
+- Implementação da SPA definitiva sobre a mesma API
 
 ---
 
 ## Future Considerations
 
-- Upload de fotos, laudos e anexos por paciente (S3)
+- ~~Upload de fotos, laudos e anexos por paciente (S3)~~ — ✅ **entregue** (Imagens do Paciente, M2/4)
 - Relatórios/estatísticas de uso de aparelhos
+- **Paginação da listagem de pacientes** — hoje 1 query sem loop de `LastEvaluatedKey`; trunca em silêncio a partir de ~1.000–1.500 perfis (adiado pelo usuário)
 - Exportação de dados dos pacientes
 - **Mobile** (mesma API): via PWA (front web responsivo/instalável) ou app nativo (React Native/Flutter). Backend já serve — não precisa refazer.
 - Papéis/permissões dentro da clínica (roles via Cognito groups) — pós-Cognito

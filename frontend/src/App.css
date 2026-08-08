@@ -6,12 +6,30 @@
   font-weight: 700;
   color: var(--text);
 }
-.brand-dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--accent), var(--accent-2));
-  box-shadow: 0 0 0 4px rgba(109, 94, 252, 0.15);
+.brand-logo {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+  border-radius: 6px;
+}
+.brand-name {
+  font-family: var(--font-display);
+  font-weight: 500;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  font-size: 16px;
+}
+/* Logo completo (com tagline) na tela de login */
+.login-logo {
+  display: block;
+  width: 280px;
+  max-width: 82%;
+  height: auto;
+  margin: 8px auto 4px;
+}
+.login-sub {
+  text-align: center;
+  margin: 4px 0 0;
 }
 
 /* ---------- Login ---------- */
@@ -20,15 +38,32 @@
   display: grid;
   place-items: center;
   padding: 24px;
+  background:
+    radial-gradient(1200px 500px at 50% -10%, rgba(184, 147, 94, 0.10), transparent 60%),
+    linear-gradient(180deg, #fdfbf8 0%, var(--bg) 100%);
 }
 .login-card {
   width: 100%;
   max-width: 420px;
   background: var(--panel);
   border: 1px solid var(--border);
-  border-radius: 16px;
-  box-shadow: var(--shadow);
-  padding: 32px;
+  border-radius: 18px;
+  box-shadow: 0 4px 12px rgba(60, 45, 25, 0.05), 0 24px 60px rgba(60, 45, 25, 0.12);
+  padding: 40px 36px;
+  text-align: center;
+}
+/* Fina linha dourada no topo do cartão */
+.login-card::before {
+  content: "";
+  display: block;
+  width: 48px;
+  height: 3px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  margin: 0 auto 20px;
+}
+.login-card .login-form {
+  text-align: left;
 }
 .login-card h1 {
   font-size: 28px;
@@ -102,12 +137,29 @@
   gap: 12px;
 }
 .clinic-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 280px;
   font-weight: 600;
   font-size: 14px;
   padding: 5px 12px;
   border-radius: 999px;
-  background: rgba(109, 94, 252, 0.12);
+  background: rgba(184, 147, 94, 0.12);
   color: var(--accent);
+}
+.clinic-nome {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.clinic-role {
+  flex: none;
+  opacity: 0.7;
+  text-transform: capitalize;
+}
+.clinic-role::before {
+  content: "· ";
 }
 .tabs {
   display: flex;
@@ -121,14 +173,21 @@
   border: none;
   background: transparent;
   color: var(--muted);
+  font-family: var(--font-display);
   font-size: 15px;
-  font-weight: 600;
+  font-weight: 500;
+  letter-spacing: 0.5px;
   cursor: pointer;
   border-bottom: 2px solid transparent;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+.tab:hover {
+  color: var(--text);
 }
 .tab.on {
-  color: var(--accent);
+  color: var(--text);
   border-bottom-color: var(--accent);
+  border-bottom-width: 2.5px;
 }
 .content {
   max-width: 1080px;
@@ -156,7 +215,7 @@
 .search:focus {
   outline: none;
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(109, 94, 252, 0.15);
+  box-shadow: 0 0 0 3px rgba(184, 147, 94, 0.15);
 }
 .list-header .btn {
   white-space: nowrap;
@@ -166,7 +225,7 @@
   transition: background 0.12s ease;
 }
 .row-click:hover {
-  background: rgba(109, 94, 252, 0.06);
+  background: rgba(184, 147, 94, 0.06);
 }
 
 /* ---------- Banner de consultas na ficha ---------- */
@@ -180,7 +239,7 @@
   padding: 12px 16px;
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  background: rgba(109, 94, 252, 0.08);
+  background: rgba(184, 147, 94, 0.08);
   font-size: 14px;
   font-weight: 600;
 }
@@ -202,11 +261,30 @@
   border: 1px solid var(--border);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
-  padding: 20px;
+  padding: 24px;
 }
 .card h2 {
-  font-size: 18px;
-  margin-bottom: 16px;
+  font-size: 19px;
+  margin-bottom: 18px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+  position: relative;
+}
+/* Acento dourado sob o título da seção */
+.card h2::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -1px;
+  width: 40px;
+  height: 2px;
+  background: var(--accent);
+}
+/* Estado vazio (ex.: "Nenhum paciente cadastrado ainda.") com mais respiro */
+.card > p.muted {
+  text-align: center;
+  padding: 28px 12px 12px;
+  font-size: 14px;
 }
 
 /* ---------- Formulário ---------- */
@@ -232,7 +310,7 @@
 .form textarea:focus {
   outline: none;
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(109, 94, 252, 0.15);
+  box-shadow: 0 0 0 3px rgba(184, 147, 94, 0.15);
 }
 .form input.input-erro {
   border-color: var(--danger);
@@ -277,26 +355,32 @@
 
 /* ---------- Botões ---------- */
 .btn {
-  padding: 10px 16px;
-  border-radius: 8px;
+  padding: 10px 18px;
+  border-radius: 10px;
   border: 1px solid var(--border);
   background: var(--panel);
   color: var(--text);
-  font: inherit;
-  font-weight: 600;
+  font-family: var(--font-display);
+  font-weight: 500;
   font-size: 14px;
+  letter-spacing: 0.4px;
   cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, transform 0.08s ease;
 }
 .btn:hover {
   border-color: var(--accent);
 }
+.btn:active {
+  transform: translateY(1px);
+}
 .btn.primary {
-  background: var(--accent);
-  border-color: var(--accent);
+  background: var(--primary);
+  border-color: var(--primary);
   color: #fff;
 }
 .btn.primary:hover {
-  background: var(--accent-2);
+  background: var(--primary-hover);
+  border-color: var(--primary-hover);
 }
 .btn.primary:disabled {
   opacity: 0.6;
@@ -314,16 +398,21 @@
 }
 .tbl th {
   text-align: left;
-  font-size: 12px;
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: 0.4px;
+  letter-spacing: 1px;
   color: var(--muted);
-  padding: 8px 10px;
+  padding: 6px 12px 12px;
   border-bottom: 1px solid var(--border);
 }
 .tbl td {
-  padding: 10px;
+  padding: 13px 12px;
   border-bottom: 1px solid var(--border);
+}
+.tbl tbody tr:last-child td {
+  border-bottom: none;
 }
 .td-desc {
   color: var(--muted);
@@ -339,11 +428,23 @@
   color: var(--accent);
   font: inherit;
   font-size: 13px;
+  font-weight: 500;
   cursor: pointer;
   padding: 2px 6px;
+  transition: color 0.15s ease;
+}
+.link:hover {
+  color: var(--text);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--accent);
 }
 .link.danger {
   color: var(--danger);
+}
+.link.danger:hover {
+  color: var(--danger);
+  text-decoration-color: var(--danger);
 }
 
 /* ---------- Breadcrumb (avaliações) ---------- */
@@ -402,7 +503,7 @@ textarea.obs {
 .form select:focus {
   outline: none;
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(109, 94, 252, 0.15);
+  box-shadow: 0 0 0 3px rgba(184, 147, 94, 0.15);
 }
 .aparelhos-aula {
   display: flex;
@@ -444,7 +545,7 @@ textarea.obs {
   border-color: var(--accent);
 }
 .chip.on {
-  background: rgba(109, 94, 252, 0.12);
+  background: rgba(184, 147, 94, 0.12);
   border-color: var(--accent);
   color: var(--accent);
 }
@@ -478,6 +579,31 @@ textarea.obs {
   line-height: 1;
 }
 
+/* ---------- Loading (anel dourado, na cara do logo) ---------- */
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 40px 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+.spinner {
+  width: 22px;
+  height: 22px;
+  border: 2.5px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  flex: none;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* ---------- Utilidades ---------- */
 .muted {
   color: var(--muted);
@@ -490,4 +616,227 @@ textarea.obs {
   border-radius: 8px;
   font-size: 14px;
   margin-bottom: 8px;
+}
+
+.user-email {
+  font-size: 13px;
+}
+
+/* ---------- Login (M3) ---------- */
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 20px 0 8px;
+}
+.login-form input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+}
+.login-form input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(184, 147, 94, 0.15);
+}
+.login-form .btn.primary {
+  width: 100%;
+  padding: 12px;
+  margin-top: 4px;
+  font-size: 15px;
+}
+.login-erro {
+  color: var(--danger);
+  font-size: 13px;
+  margin: 0;
+}
+
+/* ---------- Modal (adicionar membro) ---------- */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  z-index: 50;
+}
+.modal-card {
+  width: 100%;
+  max-width: 440px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  padding: 24px;
+}
+.modal-card h2 {
+  margin: 0 0 12px;
+  font-size: 20px;
+}
+.modal-card input {
+  width: 100%;
+  padding: 11px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+  margin: 8px 0;
+}
+.modal-card input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(184, 147, 94, 0.15);
+}
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 16px;
+}
+.senha-temp {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  background: var(--bg);
+  border: 1px dashed var(--accent);
+  border-radius: 8px;
+  padding: 12px;
+  text-align: center;
+  user-select: all;
+}
+
+/* ---------- Mobile ---------- */
+@media (max-width: 640px) {
+  /* Topo: compacta e pode quebrar em 2 linhas em vez de cortar; e-mail some
+     (o selo já identifica a clínica + papel). */
+  .topbar {
+    padding: 10px 14px;
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+  .topbar-right {
+    gap: 8px;
+  }
+  .user-email {
+    display: none;
+  }
+  .brand-name {
+    font-size: 13px;
+    letter-spacing: 1px;
+  }
+  .clinic-tag {
+    font-size: 12px;
+    padding: 4px 10px;
+  }
+  .topbar-right .btn {
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+
+  /* Abas e conteúdo com menos padding lateral */
+  .tabs {
+    padding: 10px 14px 0;
+    gap: 2px;
+  }
+  .tab {
+    padding: 9px 12px;
+    font-size: 14px;
+  }
+  .content {
+    padding: 16px 14px 40px;
+  }
+
+  /* Barra de busca: campo e botão empilham (100% cada) */
+  .list-header {
+    flex-wrap: wrap;
+  }
+  .list-header .search,
+  .list-header .btn {
+    flex: 1 1 100%;
+  }
+
+  /* Campos lado a lado (PA/FC, endereço) empilham no celular */
+  .row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+  }
+
+  /* Tabelas rolam na horizontal em vez de estourar a tela */
+  .tbl {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Cartões de login/modal com menos padding */
+  .login-card {
+    padding: 24px 20px;
+  }
+  .modal-card {
+    padding: 20px 16px;
+  }
+}
+
+/* ---- Painel de imagens do paciente (feature imagens-paciente) ---- */
+.img-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.img-header h2 {
+  margin: 0;
+}
+.img-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+.img-thumb {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fff;
+}
+.img-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.img-remove {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(38, 34, 29, 0.72);
+  color: #fff;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease;
+}
+.img-remove:hover {
+  background: var(--danger);
 }

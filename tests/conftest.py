@@ -6,9 +6,30 @@ para ela. Usada pelos testes de repositório e de endpoints de pacientes.
 """
 import boto3
 import pytest
+from fastapi import Header
 from moto import mock_aws
 
 TABLE_NAME = "clinica-test-table"
+IMAGES_BUCKET = "clinica-test-imgs"
+
+
+@pytest.fixture(autouse=True)
+def clinic_via_header():
+    """Reproduz, nos testes, a fonte antiga do clinicId (header `X-Clinic-Id`).
+
+    Em produção `get_clinic_id` lê a claim do token (injetada pelo JWT Authorizer,
+    inexistente nos testes). Este override deixa a suíte inteira passar o clinicId
+    por header como antes — sem tocar em nenhum teste existente (AUTH-04).
+    """
+    from app.deps import get_clinic_id
+    from app.main import app
+
+    def _via_header(x_clinic_id: str = Header(default=None)) -> str:
+        return x_clinic_id or "default"
+
+    app.dependency_overrides[get_clinic_id] = _via_header
+    yield
+    app.dependency_overrides.pop(get_clinic_id, None)
 
 
 @pytest.fixture
@@ -43,3 +64,15 @@ def dynamo_table(monkeypatch):
             BillingMode="PAY_PER_REQUEST",
         )
         yield TABLE_NAME
+
+
+@pytest.fixture
+def imagens_ambiente(dynamo_table, monkeypatch):
+    """Cria o bucket S3 das imagens (moto) e aponta `IMAGES_BUCKET` para ele.
+
+    Reaproveita o `mock_aws` já ativo em `dynamo_table` → o mesmo contexto mockado
+    cobre DynamoDB e S3. Usada pelos testes de imagens (repo, helper S3 e endpoints).
+    """
+    monkeypatch.setenv("IMAGES_BUCKET", IMAGES_BUCKET)
+    boto3.client("s3", region_name="us-east-1").create_bucket(Bucket=IMAGES_BUCKET)
+    return IMAGES_BUCKET

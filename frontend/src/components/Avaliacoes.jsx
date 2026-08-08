@@ -35,23 +35,27 @@ function mapOuNull(obj) {
   return algum ? limpo : null;
 }
 
-export default function Avaliacoes({ clinic, paciente, onVoltar, onCount, embedded = false }) {
+export default function Avaliacoes({ clinic, paciente, onVoltar, onCount, embedded = false, rodape = null }) {
   const [lista, setLista] = useState([]);
   const [form, setForm] = useState(vazio());
   const [editId, setEditId] = useState(null);
   const [readonly, setReadonly] = useState(false); // consulta aberta em modo leitura
   const [erro, setErro] = useState("");
   const [loading, setLoading] = useState(false);
+  const [carregandoLista, setCarregandoLista] = useState(true);
   const topoRef = useRef(null); // topo da seção de avaliações (p/ rolar ao consultar)
 
   async function carregar() {
     setErro("");
+    setCarregandoLista(true);
     try {
       const dados = await avaliacoesApi.list(clinic.id, paciente.id);
       setLista(dados);
       onCount?.(dados.length);
     } catch (e) {
       setErro(e.message);
+    } finally {
+      setCarregandoLista(false);
     }
   }
 
@@ -274,8 +278,13 @@ export default function Avaliacoes({ clinic, paciente, onVoltar, onCount, embedd
         </div>
 
         <div className="card">
-          <h2>Avaliações ({lista.length})</h2>
-          {lista.length === 0 ? (
+          <h2>Avaliações ({carregandoLista ? "…" : lista.length})</h2>
+          {carregandoLista ? (
+            <div className="loading">
+              <span className="spinner" />
+              Carregando avaliações…
+            </div>
+          ) : lista.length === 0 ? (
             <p className="muted">Nenhuma avaliação registrada para este paciente.</p>
           ) : (
             <table className="tbl">
@@ -317,6 +326,13 @@ export default function Avaliacoes({ clinic, paciente, onVoltar, onCount, embedd
             placeholder="Escreva aqui o que quiser sobre esta consulta/avaliação…"
           />
         </fieldset>
+      </div>
+
+      {/* Rodapé injetável (ex.: painel de imagens do paciente) — fica ENTRE a
+          Observação e o botão Salvar, a pedido do usuário. */}
+      {rodape}
+
+      <div className="card form actions-card">
         <div className="actions">
           {readonly ? (
             <>

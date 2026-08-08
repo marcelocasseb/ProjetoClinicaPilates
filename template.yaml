@@ -11,12 +11,128 @@ Globals:
     Runtime: python3.13
 
 Resources:
-  # --- API Gateway HTTP (T4) ---
-  # CORS é tratado pelo app FastAPI (CORSMiddleware), não aqui: como a Lambda
-  # captura ANY, o preflight OPTIONS precisa chegar ao app. Ter CORS nos dois
-  # lugares duplicaria os headers Access-Control-* e quebraria o navegador.
+  # --- Cognito: autenticação de usuários (M3 / AUTH-02) ---
+  # Login por e-mail. Auto-cadastro público DESLIGADO (AllowAdminCreateUserOnly):
+  # contas nascem só via AdminCreateUser (script CLI de onboarding e endpoint
+  # "adicionar membro"). Atributos custom carregam a clínica e o papel do usuário
+  # (AD-012): custom:clinicId (imutável pelo usuário — não está em WriteAttributes
+  # do client) e custom:role (admin|membro).
+  ClinicaUserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: !Sub '${AWS::StackName}-users'
+      UsernameAttributes:
+        - email
+      AutoVerifiedAttributes: []          # sem verificação por e-mail (SUPPRESS no create)
+      MfaConfiguration: 'OFF'
+      AdminCreateUserConfig:
+        AllowAdminCreateUserOnly: true    # sem sign-up público (AD-012)
+        # Convite (AdminCreateUser) em PT-BR com a marca PilatesOne. {username} = e-mail,
+        # {####} = senha temporária (placeholders obrigatórios). Só afeta convites futuros.
+        InviteMessageTemplate:
+          EmailSubject: "Bem-vindo(a) ao Pilates One"
+          EmailMessage: "Olá! Seu acesso ao Pilates One foi criado.<br><br>Login: {username}<br>Senha temporária: {####}<br><br>Acesse https://pilatesone.com.br, entre com esses dados e defina a sua senha definitiva.<br><br>Equipe Pilates One"
+      # Não vaza se o e-mail existe no fluxo de login (AUTH-05 AC5).
+      # (PreventUserExistenceErrors fica no App Client abaixo.)
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+          RequireLowercase: true
+          RequireUppercase: true
+          RequireNumbers: true
+          RequireSymbols: false
+      Schema:
+        - Name: clinicId               # vira custom:clinicId no token
+          AttributeDataType: String
+          Mutable: true                # setado no AdminCreateUser; usuário não escreve (ver client)
+          StringAttributeConstraints:
+            MinLength: '1'
+            MaxLength: '128'
+        - Name: role                   # vira custom:role (admin|membro)
+          AttributeDataType: String
+          Mutable: true
+          StringAttributeConstraints:
+            MinLength: '1'
+            MaxLength: '32'
+
+  ClinicaUserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName: !Sub '${AWS::StackName}-spa'
+      UserPoolId: !Ref ClinicaUserPool
+      GenerateSecret: false            # SPA público (sem client secret)
+      PreventUserExistenceErrors: ENABLED
+      ExplicitAuthFlows:
+        - ALLOW_USER_PASSWORD_AUTH     # login email+senha via fetch puro (sem lib no front)
+        - ALLOW_REFRESH_TOKEN_AUTH
+      # O usuário lê a própria clínica/papel (viajam no idToken)...
+      ReadAttributes:
+        - email
+        - name
+        - custom:clinicId
+        - custom:role
+      # ...mas NÃO pode escrevê-los (AD-012): custom:* fora da lista de escrita.
+      WriteAttributes:
+        - email
+        - name
+
+  # --- API Gateway HTTP ---
+  # CORS agora é do API Gateway (CorsConfiguration), NÃO mais do FastAPI (M3/AUTH-03):
+  # com o JWT Authorizer default, o preflight OPTIONS chega SEM header Authorization e
+  # seria barrado (401) se passasse pelo authorizer. Com CORS no API GW, o preflight é
+  # respondido pela borda sem invocar authorizer nem Lambda. Por isso o CORSMiddleware
+  # foi removido do app (senão os headers Access-Control-* duplicariam).
   ClinicaHttpApi:
     Type: AWS::Serverless::HttpApi
+    Properties:
+      CorsConfiguration:
+        AllowOrigins:
+          - "*"
+        AllowMethods:
+          - "*"
+        AllowHeaders:
+          - "*"
+      # JWT Authorizer: valida assinatura/expiração do token Cognito na borda.
+      # audience = App Client (o idToken carrega `aud` + os custom:*); token inválido
+      # ou ausente → 401 antes da Lambda. `/health` fica público (evento abaixo).
+      Auth:
+        Authorizers:
+          CognitoJwt:
+            IdentitySource: "$request.header.Authorization"
+            JwtConfiguration:
+              issuer: !Sub 'https://cognito-idp.${AWS::Region}.amazonaws.com/${ClinicaUserPool}'
+              audience:
+                - !Ref ClinicaUserPoolClient
+        DefaultAuthorizer: CognitoJwt
+
+  # --- S3: imagens dos pacientes (feature imagens-paciente / IMG-08) ---
+  # Bucket PRIVADO. O binário nunca passa pela Lambda: o navegador sobe/baixa
+  # direto do S3 por URL pré-assinada (a Lambda só assina). Chave isolada por
+  # clínica/paciente: <clinicId>/<pacienteId>/<id>.<ext>. CORS libera PUT/GET/DELETE
+  # às origens do site (o preflight do browser bate direto no S3, não na API).
+  PatientImagesBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      CorsConfiguration:
+        CorsRules:
+          - AllowedMethods: [GET, PUT, DELETE, HEAD]
+            AllowedOrigins:
+              - "https://pilatesone.com.br"
+              - "https://www.pilatesone.com.br"
+              - "https://d1th2j57vyxahs.cloudfront.net"
+              - "http://localhost:5173"
+            AllowedHeaders: ["*"]
+            ExposedHeaders: ["ETag"]
+            MaxAge: 3000
 
   # --- Função Lambda única com roteamento interno (T4) ---
   ClinicaApiFunction:
@@ -27,23 +143,71 @@ Resources:
       Environment:
         Variables:
           TABLE_NAME: !Ref ClinicaTable        # nome da tabela injetado (T5 / INFRA-06)
+          USER_POOL_ID: !Ref ClinicaUserPool   # provisionamento de membros (AUTH-07)
+          IMAGES_BUCKET: !Ref PatientImagesBucket  # imagens dos pacientes (IMG-08)
       Policies:
         # Menor privilégio: CRUD apenas nesta tabela (T5 / INFRA-06)
         - DynamoDBCrudPolicy:
             TableName: !Ref ClinicaTable
+        # Criar membros da equipe (admin) — só AdminCreateUser neste pool (AUTH-07)
+        - Statement:
+            - Effect: Allow
+              Action: cognito-idp:AdminCreateUser
+              Resource: !GetAtt ClinicaUserPool.Arn
+        # Imagens dos pacientes: assinar URLs e apagar objetos deste bucket (IMG-08)
+        - Statement:
+            - Effect: Allow
+              Action:
+                - s3:PutObject
+                - s3:GetObject
+                - s3:DeleteObject
+              Resource: !Sub '${PatientImagesBucket.Arn}/*'
+      # Rotas por método explícito (GET/POST/PUT/DELETE) — de propósito SEM OPTIONS:
+      # como o JWT Authorizer é default, uma rota que casasse OPTIONS barraria o
+      # preflight do navegador (que vem sem Authorization) com 401. Deixando o OPTIONS
+      # sem rota, o API Gateway responde o preflight sozinho (público) usando a
+      # CorsConfiguration. Ver comentário do ClinicaHttpApi.
       Events:
-        Root:
+        RootGet:
           Type: HttpApi
           Properties:
             ApiId: !Ref ClinicaHttpApi
             Path: /
-            Method: ANY
-        Proxy:
+            Method: GET
+        ProxyGet:
           Type: HttpApi
           Properties:
             ApiId: !Ref ClinicaHttpApi
             Path: /{proxy+}
-            Method: ANY
+            Method: GET
+        ProxyPost:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref ClinicaHttpApi
+            Path: /{proxy+}
+            Method: POST
+        ProxyPut:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref ClinicaHttpApi
+            Path: /{proxy+}
+            Method: PUT
+        ProxyDelete:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref ClinicaHttpApi
+            Path: /{proxy+}
+            Method: DELETE
+        # /health público (smoke-test) — mais específica que /{proxy+},
+        # sobrepõe o authorizer default só para GET /health.
+        Health:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref ClinicaHttpApi
+            Path: /health
+            Method: GET
+            Auth:
+              Authorizer: NONE
 
   # --- Tabela DynamoDB single-table on-demand (T5 / AD-005) ---
   # Multi-tenant (AD-007): PK = CLINIC#<clinicId>#CLIENT#<clientId>, SK = PROFILE.
@@ -84,6 +248,18 @@ Outputs:
   TableName:
     Description: Nome da tabela DynamoDB
     Value: !Ref ClinicaTable
+  PatientImagesBucketName:
+    Description: Bucket S3 privado das imagens dos pacientes (IMG-08)
+    Value: !Ref PatientImagesBucket
   FunctionName:
     Description: Nome da função Lambda
     Value: !Ref ClinicaApiFunction
+  UserPoolId:
+    Description: ID do Cognito User Pool (usado pelo script de onboarding e pelo front)
+    Value: !Ref ClinicaUserPool
+  UserPoolClientId:
+    Description: ID do App Client (SPA) do Cognito
+    Value: !Ref ClinicaUserPoolClient
+  UserPoolProviderUrl:
+    Description: Issuer do User Pool (usado no JWT Authorizer da Fase B)
+    Value: !GetAtt ClinicaUserPool.ProviderURL

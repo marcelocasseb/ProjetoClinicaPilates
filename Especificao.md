@@ -1,5 +1,19 @@
 # Especificação de Arquitetura — Sistema de Gestão de Pilates
 
+> 📜 **Documento histórico** — é a especificação **original**, escrita antes da
+> implementação. As decisões de stack e a justificativa de custo se mantiveram, mas os
+> detalhes ("framework sugerido", modelagem "a detalhar", itens em aberto) **foram
+> superados pela implementação real**.
+>
+> Para o estado atual, use:
+> - **Arquitetura e deploy no ar:** [`.specs/codebase/ARQUITETURA.md`](.specs/codebase/ARQUITETURA.md)
+> - **Situação do projeto:** [`.specs/project/STATE.md`](.specs/project/STATE.md) e [`ROADMAP.md`](.specs/project/ROADMAP.md)
+>
+> Diferenças relevantes do que foi implementado: a modelagem virou **single-table
+> multi-tenant** (`PK=CLINIC#<clinicId>#CLIENT#<id>`), não "PK=paciente"; o framework é
+> **FastAPI + Mangum**; o front é **React + Vite**; o CORS ficou no **API Gateway** (não
+> no app); e o domínio deixou de ser opcional — **pilatesone.com.br está no ar**.
+
 ## Objetivo
 Sistema para cadastro de pacientes e registro dos aparelhos utilizados por eles em cada sessão, com foco em menor custo operacional possível na AWS.
 
@@ -46,8 +60,14 @@ Toda a stack é *serverless* e paga por uso, sem instância ociosa rodando conti
 | RDS | Custo fixo de instância mesmo com baixo uso; DynamoDB on-demand é mais econômico para este volume. |
 | EC2/Lightsail sempre ligado | Paga por tempo de servidor ligado, não por uso real — menos econômico que Lambda para tráfego baixo e intermitente. |
 
-## Em aberto (próximos passos)
-- Modelagem de dados no DynamoDB (tabelas, atributos, chaves).
-- Estrutura do projeto Python (dependências, camadas, endpoints).
-- Fluxo de autenticação com Cognito (login da equipe da clínica).
-- Infraestrutura como código (SAM, Terraform ou CDK) para provisionar tudo.
+## Em aberto (próximos passos) — ✅ TODOS RESOLVIDOS
+
+| Item original | Como ficou |
+| --- | --- |
+| Modelagem de dados no DynamoDB | **Single-table multi-tenant** (AD-005/AD-007): `PK=CLINIC#<clinicId>#CLIENT#<id>`, `SK` discrimina o tipo (`PROFILE`, `AVALIACAO#`, `SESSION#`, `IMAGE#`) + GSI1 para listar por clínica |
+| Estrutura do projeto Python | `src/app/` — `routers/` por entidade, um `repository_*.py` e um `schemas_*.py` por agregado, `deps.py` com a origem do `clinicId` |
+| Fluxo de autenticação com Cognito | **Entregue no M3**: User Pool sem auto-cadastro + **JWT Authorizer** na borda + `custom:clinicId` na claim |
+| Infraestrutura como código | **AWS SAM** (`template.yaml`), stack `clinica-pilates` |
+
+Também entregue além do previsto aqui: **imagens por paciente** em S3 privado com URLs
+pré-assinadas (o "armazenamento de arquivos, se necessário" da seção acima).

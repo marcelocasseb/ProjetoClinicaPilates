@@ -6,10 +6,10 @@ Nenhuma feature de negócio (a começar pelo Cadastro de Pacientes) pode rodar s
 
 ## Goals
 
-- [ ] Um `template.yaml` (AWS SAM) que provisiona Lambda + API Gateway (HTTP, proxy) + tabela DynamoDB on-demand.
-- [ ] Uma função Lambda em Python (FastAPI + Mangum) com roteamento interno, respondendo a um endpoint de health.
-- [ ] Deploy reproduzível via `sam build` + `sam deploy`, com CORS habilitado.
-- [ ] Tabela única seguindo a convenção de chaves do AD-005 (`PK`/`SK`).
+- [x] Um `template.yaml` (AWS SAM) que provisiona Lambda + API Gateway (HTTP, proxy) + tabela DynamoDB on-demand.
+- [x] Uma função Lambda em Python (FastAPI + Mangum) com roteamento interno, respondendo a um endpoint de health.
+- [x] Deploy reproduzível via `sam build` + `sam deploy`, com CORS habilitado.
+- [x] Tabela única seguindo a convenção de chaves do AD-005 (`PK`/`SK`).
 
 ## Out of Scope
 
@@ -72,12 +72,12 @@ Nenhuma feature de negócio (a começar pelo Cadastro de Pacientes) pode rodar s
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| INFRA-01 | P1: template SAM provisiona Lambda+APIGW+Dynamo | - | Pending |
-| INFRA-02 | P1: endpoint /health responde 200 | - | Pending |
-| INFRA-03 | P1: FastAPI+Mangum com roteamento interno | - | Pending |
-| INFRA-04 | P1: CORS habilitado | - | Pending |
-| INFRA-05 | P1: tabela PK/SK on-demand (AD-005) | - | Pending |
-| INFRA-06 | P1: IAM menor privilégio + env var do nome da tabela | - | Pending |
+| INFRA-01 | P1: template SAM provisiona Lambda+APIGW+Dynamo | - | Verified |
+| INFRA-02 | P1: endpoint /health responde 200 | - | Verified |
+| INFRA-03 | P1: FastAPI+Mangum com roteamento interno | - | Verified |
+| INFRA-04 | P1: CORS habilitado | - | Verified |
+| INFRA-05 | P1: tabela PK/SK on-demand (AD-005) | - | Verified |
+| INFRA-06 | P1: IAM menor privilégio + env var do nome da tabela | - | Verified |
 
 **ID format:** `INFRA-[NUMBER]`
 
@@ -89,8 +89,8 @@ Nenhuma feature de negócio (a começar pelo Cadastro de Pacientes) pode rodar s
 
 ## Success Criteria
 
-- [ ] `sam deploy` sobe a stack sem erros (uma vez o SAM CLI instalado).
-- [ ] `GET /health` retorna `200 {"status":"ok"}` pela URL do API Gateway.
-- [ ] Tabela DynamoDB existe com `PK`/`SK` on-demand.
-- [ ] Lambda tem permissão apenas na sua tabela (menor privilégio).
-- [ ] Estrutura de projeto Python pronta para receber os endpoints de pacientes.
+- [x] `sam deploy` sobe a stack sem erros (uma vez o SAM CLI instalado).
+- [x] `GET /health` retorna `200 {"status":"ok"}` pela URL do API Gateway.
+- [x] Tabela DynamoDB existe com `PK`/`SK` on-demand.
+- [x] Lambda tem permissão apenas na sua tabela (menor privilégio).
+- [x] Estrutura de projeto Python pronta para receber os endpoints de pacientes.
