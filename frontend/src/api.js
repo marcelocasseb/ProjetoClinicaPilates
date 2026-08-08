@@ -4,6 +4,7 @@
 // (clinic) é mantido por compatibilidade de assinatura, mas é ignorado.
 import { API_URL } from "./config";
 import { getIdToken, sair } from "./auth";
+import { imagensApiMock, uploadParaS3Mock } from "./mockImagens";
 
 async function request(method, path, _clinic, body) {
   const token = getIdToken();
@@ -76,6 +77,36 @@ export const sessoesApi = {
   remove: (clinic, pacienteId, id) =>
     request("DELETE", `/pacientes/${pacienteId}/sessoes/${id}`, clinic),
 };
+
+// --- Imagens do paciente (por paciente, até 5 — IMG-01..04) ---
+// Upload em 2 fases: (1) solicitarUpload pega a URL pré-assinada; (2) uploadParaS3
+// envia o arquivo direto ao S3; (3) confirmar grava o metadado. O binário nunca
+// passa pela nossa API.
+const imagensApiReal = {
+  list: (pacienteId) => request("GET", `/pacientes/${pacienteId}/imagens`, null),
+  solicitarUpload: (pacienteId, contentType) =>
+    request("POST", `/pacientes/${pacienteId}/imagens`, null, { contentType }),
+  confirmar: (pacienteId, imagemId, contentType) =>
+    request("PUT", `/pacientes/${pacienteId}/imagens/${imagemId}`, null, { contentType }),
+  remove: (pacienteId, imagemId) =>
+    request("DELETE", `/pacientes/${pacienteId}/imagens/${imagemId}`, null),
+};
+
+// Envia o arquivo direto ao S3 pela URL pré-assinada (sem Authorization — a URL já
+// carrega a assinatura). O header Content-Type precisa bater com o assinado no back.
+async function uploadParaS3Real(uploadUrl, file) {
+  const res = await fetch(uploadUrl, {
+    method: "PUT",
+    headers: { "Content-Type": file.type },
+    body: file,
+  });
+  if (!res.ok) throw new Error("Falha ao enviar a imagem ao armazenamento.");
+}
+
+// Modo mock (VITE_MOCK_IMAGENS=1) para validar o front sem backend/S3. Off por padrão.
+const _mockImagens = import.meta.env.VITE_MOCK_IMAGENS === "1";
+export const imagensApi = _mockImagens ? imagensApiMock : imagensApiReal;
+export const uploadParaS3 = _mockImagens ? uploadParaS3Mock : uploadParaS3Real;
 
 // --- Membros da equipe (admin adiciona; herda a clínica do token — AUTH-07) ---
 export const membrosApi = {

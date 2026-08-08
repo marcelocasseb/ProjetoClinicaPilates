@@ -6,7 +6,7 @@ from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
-from app.routers import aparelhos, avaliacoes, clinica, membros, pacientes, sessoes
+from app.routers import aparelhos, avaliacoes, clinica, imagens, membros, pacientes, sessoes
 
 app = FastAPI(title="Clínica de Pilates API")
 
@@ -19,6 +19,7 @@ app.include_router(pacientes.router)
 app.include_router(aparelhos.router)
 app.include_router(avaliacoes.router)
 app.include_router(sessoes.router)
+app.include_router(imagens.router)
 app.include_router(membros.router)
 app.include_router(clinica.router)
 

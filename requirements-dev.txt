@@ -1,7 +1,7 @@
 # Dependências de desenvolvimento/teste (NÃO empacotadas na Lambda).
 -r src/requirements.txt
 pytest
-moto[dynamodb,cognitoidp]
+moto[dynamodb,cognitoidp,s3]
 boto3
 httpx
 uvicorn  # servidor local para rodar o app e testar via Postman/navegador

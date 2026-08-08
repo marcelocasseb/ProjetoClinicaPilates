@@ -105,6 +105,35 @@ Resources:
                 - !Ref ClinicaUserPoolClient
         DefaultAuthorizer: CognitoJwt
 
+  # --- S3: imagens dos pacientes (feature imagens-paciente / IMG-08) ---
+  # Bucket PRIVADO. O binário nunca passa pela Lambda: o navegador sobe/baixa
+  # direto do S3 por URL pré-assinada (a Lambda só assina). Chave isolada por
+  # clínica/paciente: <clinicId>/<pacienteId>/<id>.<ext>. CORS libera PUT/GET/DELETE
+  # às origens do site (o preflight do browser bate direto no S3, não na API).
+  PatientImagesBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      CorsConfiguration:
+        CorsRules:
+          - AllowedMethods: [GET, PUT, DELETE, HEAD]
+            AllowedOrigins:
+              - "https://pilatesone.com.br"
+              - "https://www.pilatesone.com.br"
+              - "https://d1th2j57vyxahs.cloudfront.net"
+              - "http://localhost:5173"
+            AllowedHeaders: ["*"]
+            ExposedHeaders: ["ETag"]
+            MaxAge: 3000
+
   # --- Função Lambda única com roteamento interno (T4) ---
   ClinicaApiFunction:
     Type: AWS::Serverless::Function
@@ -115,6 +144,7 @@ Resources:
         Variables:
           TABLE_NAME: !Ref ClinicaTable        # nome da tabela injetado (T5 / INFRA-06)
           USER_POOL_ID: !Ref ClinicaUserPool   # provisionamento de membros (AUTH-07)
+          IMAGES_BUCKET: !Ref PatientImagesBucket  # imagens dos pacientes (IMG-08)
       Policies:
         # Menor privilégio: CRUD apenas nesta tabela (T5 / INFRA-06)
         - DynamoDBCrudPolicy:
@@ -124,6 +154,14 @@ Resources:
             - Effect: Allow
               Action: cognito-idp:AdminCreateUser
               Resource: !GetAtt ClinicaUserPool.Arn
+        # Imagens dos pacientes: assinar URLs e apagar objetos deste bucket (IMG-08)
+        - Statement:
+            - Effect: Allow
+              Action:
+                - s3:PutObject
+                - s3:GetObject
+                - s3:DeleteObject
+              Resource: !Sub '${PatientImagesBucket.Arn}/*'
       # Rotas por método explícito (GET/POST/PUT/DELETE) — de propósito SEM OPTIONS:
       # como o JWT Authorizer é default, uma rota que casasse OPTIONS barraria o
       # preflight do navegador (que vem sem Authorization) com 401. Deixando o OPTIONS
@@ -210,6 +248,9 @@ Outputs:
   TableName:
     Description: Nome da tabela DynamoDB
     Value: !Ref ClinicaTable
+  PatientImagesBucketName:
+    Description: Bucket S3 privado das imagens dos pacientes (IMG-08)
+    Value: !Ref PatientImagesBucket
   FunctionName:
     Description: Nome da função Lambda
     Value: !Ref ClinicaApiFunction

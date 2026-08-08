@@ -35,7 +35,7 @@ function mapOuNull(obj) {
   return algum ? limpo : null;
 }
 
-export default function Avaliacoes({ clinic, paciente, onVoltar, onCount, embedded = false }) {
+export default function Avaliacoes({ clinic, paciente, onVoltar, onCount, embedded = false, rodape = null }) {
   const [lista, setLista] = useState([]);
   const [form, setForm] = useState(vazio());
   const [editId, setEditId] = useState(null);
@@ -326,6 +326,13 @@ export default function Avaliacoes({ clinic, paciente, onVoltar, onCount, embedd
             placeholder="Escreva aqui o que quiser sobre esta consulta/avaliação…"
           />
         </fieldset>
+      </div>
+
+      {/* Rodapé injetável (ex.: painel de imagens do paciente) — fica ENTRE a
+          Observação e o botão Salvar, a pedido do usuário. */}
+      {rodape}
+
+      <div className="card form actions-card">
         <div className="actions">
           {readonly ? (
             <>

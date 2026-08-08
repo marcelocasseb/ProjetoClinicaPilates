@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { pacientesApi, buscarCep } from "../api";
 import { maskCpf, maskTelefone, maskCep, isValidCpf, onlyDigits } from "../utils/format";
 import Avaliacoes from "./Avaliacoes";
+import ImagensPaciente from "./ImagensPaciente";
 
 const VAZIO = {
   nome: "",
@@ -364,11 +365,22 @@ export default function Pacientes({ clinic }) {
 
       {selecionado ? (
         <div id="secao-avaliacoes" style={{ marginTop: 28 }}>
-          <Avaliacoes key={selecionado.id} clinic={clinic} paciente={selecionado} onCount={setAvalCount} embedded />
+          <Avaliacoes
+            key={selecionado.id}
+            clinic={clinic}
+            paciente={selecionado}
+            onCount={setAvalCount}
+            embedded
+            rodape={
+              <div id="secao-imagens">
+                <ImagensPaciente pacienteId={selecionado.id} />
+              </div>
+            }
+          />
         </div>
       ) : (
         <p className="muted" style={{ marginTop: 20 }}>
-          Salve o paciente para registrar avaliações.
+          Salve o paciente para registrar avaliações e anexar imagens.
         </p>
       )}
     </div>
