@@ -6,13 +6,13 @@ Hoje o "login" é um **andaime**: o front mostra um seletor de clínicas chumbad
 
 ## Goals
 
-- [ ] Criar um **AWS Cognito User Pool** com atributos customizados `custom:clinicId` e `custom:role`, auto-cadastro público **desligado** (`AllowAdminCreateUserOnly=true`).
-- [ ] Proteger a API com **JWT Authorizer** no HTTP API: token inválido/ausente/expirado → **401 na borda**.
-- [ ] Trocar a fonte do `clinicId` em `get_clinic_id` ([[deps.py]]): de header `X-Clinic-Id` → **claim do token**. Só essa função muda; routers e repositórios continuam iguais.
-- [ ] **Script CLI local** de onboarding ("criar clínica + 1º admin"): gera `clinicId` novo, cria o admin via `AdminCreateUser` carimbando `custom:clinicId` + `custom:role=admin`, imprime a senha temporária (D1/D2).
-- [ ] Endpoint **"adicionar membro"** (admin-only): cria usuário herdando o `clinicId` do token do admin, `custom:role=membro`, senha temporária mostrada ao admin (D2/D3).
-- [ ] **Login real no front** (email+senha) substituindo o seletor de clínica; tratamento de **troca de senha no 1º acesso** (`NEW_PASSWORD_REQUIRED`); token enviado como `Authorization: Bearer` em toda chamada; logout.
-- [ ] Preservar o isolamento (AD-007): clínica A nunca vê nem altera dados da B — agora ancorado na **identidade**, não no header.
+- [x] Criar um **AWS Cognito User Pool** com atributos customizados `custom:clinicId` e `custom:role`, auto-cadastro público **desligado** (`AllowAdminCreateUserOnly=true`).
+- [x] Proteger a API com **JWT Authorizer** no HTTP API: token inválido/ausente/expirado → **401 na borda**.
+- [x] Trocar a fonte do `clinicId` em `get_clinic_id` ([[deps.py]]): de header `X-Clinic-Id` → **claim do token**. Só essa função muda; routers e repositórios continuam iguais.
+- [x] **Script CLI local** de onboarding ("criar clínica + 1º admin"): gera `clinicId` novo, cria o admin via `AdminCreateUser` carimbando `custom:clinicId` + `custom:role=admin`, imprime a senha temporária (D1/D2).
+- [x] Endpoint **"adicionar membro"** (admin-only): cria usuário herdando o `clinicId` do token do admin, `custom:role=membro`, senha temporária mostrada ao admin (D2/D3).
+- [x] **Login real no front** (email+senha) substituindo o seletor de clínica; tratamento de **troca de senha no 1º acesso** (`NEW_PASSWORD_REQUIRED`); token enviado como `Authorization: Bearer` em toda chamada; logout.
+- [x] Preservar o isolamento (AD-007): clínica A nunca vê nem altera dados da B — agora ancorado na **identidade**, não no header.
 
 ## Out of Scope
 
@@ -152,15 +152,15 @@ Hoje o "login" é um **andaime**: o front mostra um seletor de clínicas chumbad
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| AUTH-01 | P1: Script CLI criar clínica + 1º admin (gera clinicId, AdminCreateUser) | - | Pending |
-| AUTH-02 | P1: User Pool + App Client (custom:clinicId/role, AllowAdminCreateUserOnly) | - | Pending |
-| AUTH-03 | P1: JWT Authorizer no HTTP API (401 na borda; claims no request context) | - | Pending |
-| AUTH-04 | P1: `get_clinic_id` lê clinicId da claim (não do header); routers/repos intactos | - | Pending |
-| AUTH-05 | P1: Front — login email+senha + NEW_PASSWORD_REQUIRED + Bearer token + logout | - | Pending |
-| AUTH-06 | P1: Isolamento ancorado na identidade (header ignorado; sem default) | - | Pending |
-| AUTH-07 | P2: Endpoint `POST /membros` (herda clinicId do token, role=membro, senha temp) | - | Pending |
-| AUTH-08 | P2: Autorização de papel (só admin adiciona membro; fail-closed) | - | Pending |
-| AUTH-09 | Edge cases (token expirado→401→relogin; email duplicado; senha fraca; sem clinicId) | - | Pending |
+| AUTH-01 | P1: Script CLI criar clínica + 1º admin (gera clinicId, AdminCreateUser) | - | Verified |
+| AUTH-02 | P1: User Pool + App Client (custom:clinicId/role, AllowAdminCreateUserOnly) | - | Verified |
+| AUTH-03 | P1: JWT Authorizer no HTTP API (401 na borda; claims no request context) | - | Verified |
+| AUTH-04 | P1: `get_clinic_id` lê clinicId da claim (não do header); routers/repos intactos | - | Verified |
+| AUTH-05 | P1: Front — login email+senha + NEW_PASSWORD_REQUIRED + Bearer token + logout | - | Verified |
+| AUTH-06 | P1: Isolamento ancorado na identidade (header ignorado; sem default) | - | Verified |
+| AUTH-07 | P2: Endpoint `POST /membros` (herda clinicId do token, role=membro, senha temp) | - | Verified |
+| AUTH-08 | P2: Autorização de papel (só admin adiciona membro; fail-closed) | - | Verified |
+| AUTH-09 | Edge cases (token expirado→401→relogin; email duplicado; senha fraca; sem clinicId) | - | Verified |
 
 **ID format:** `AUTH-[NUMBER]`
 
@@ -183,9 +183,9 @@ Hoje o "login" é um **andaime**: o front mostra um seletor de clínicas chumbad
 
 ## Success Criteria
 
-- [ ] O dono cria uma clínica nova e seu admin rodando **um comando local**, e recebe clinicId + senha temporária — sem tocar no console AWS.
-- [ ] O admin loga com e-mail+senha (define a senha no 1º acesso) e vê **só** a sua clínica; nenhum header troca isso.
-- [ ] Requisição sem token válido é barrada com **401 na borda** (nem chega na Lambda).
-- [ ] O admin adiciona um membro pela tela; o membro loga e opera na mesma clínica, mas **não** consegue adicionar outros membros (403).
-- [ ] O isolamento (AD-007) segue intacto — agora ancorado no token, não no `X-Clinic-Id` — com os testes de isolamento passando via claims simuladas.
-- [ ] Todos os requisitos (AUTH-01..09) cobertos por teste (back/script) e verificados no front (login real no ar).
+- [x] O dono cria uma clínica nova e seu admin rodando **um comando local**, e recebe clinicId + senha temporária — sem tocar no console AWS.
+- [x] O admin loga com e-mail+senha (define a senha no 1º acesso) e vê **só** a sua clínica; nenhum header troca isso.
+- [x] Requisição sem token válido é barrada com **401 na borda** (nem chega na Lambda).
+- [x] O admin adiciona um membro pela tela; o membro loga e opera na mesma clínica, mas **não** consegue adicionar outros membros (403).
+- [x] O isolamento (AD-007) segue intacto — agora ancorado no token, não no `X-Clinic-Id` — com os testes de isolamento passando via claims simuladas.
+- [x] Todos os requisitos (AUTH-01..09) cobertos por teste (back/script) e verificados no front (login real no ar).

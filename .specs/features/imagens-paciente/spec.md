@@ -6,11 +6,11 @@ A clínica quer anexar **imagens ao paciente** (fotos posturais, laudos, documen
 
 ## Goals
 
-- [ ] Permitir **adicionar, listar e remover** imagens de um paciente da **própria** clínica, com limite de **5 por paciente**.
-- [ ] Guardar o **binário no S3** (bucket privado) e apenas os **metadados** no DynamoDB (`SK=IMAGE#<id>` sob a PK do paciente) → a ficha carrega as imagens em 1 Query.
-- [ ] O binário **não trafega pela Lambda/API Gateway**: o navegador sobe e baixa direto do S3 via **URL pré-assinada** de curta duração (barato, rápido, dentro do free tier).
-- [ ] Isolamento multi-tenant: a chave do objeto no S3 e o item no Dynamo são escopados por `clinicId`/`pacienteId`; clínica A nunca acessa imagem de B, nem anexa a paciente inexistente na sua clínica.
-- [ ] "Editar" = remover + adicionar (substituição); reordenar fica fora de escopo.
+- [x] Permitir **adicionar, listar e remover** imagens de um paciente da **própria** clínica, com limite de **5 por paciente**.
+- [x] Guardar o **binário no S3** (bucket privado) e apenas os **metadados** no DynamoDB (`SK=IMAGE#<id>` sob a PK do paciente) → a ficha carrega as imagens em 1 Query.
+- [x] O binário **não trafega pela Lambda/API Gateway**: o navegador sobe e baixa direto do S3 via **URL pré-assinada** de curta duração (barato, rápido, dentro do free tier).
+- [x] Isolamento multi-tenant: a chave do objeto no S3 e o item no Dynamo são escopados por `clinicId`/`pacienteId`; clínica A nunca acessa imagem de B, nem anexa a paciente inexistente na sua clínica.
+- [x] "Editar" = remover + adicionar (substituição); reordenar fica fora de escopo.
 
 ## Out of Scope
 
@@ -135,8 +135,8 @@ A `ext` deriva do `contentType` (jpg/png/webp) → a confirmação reconstrói a
 
 ## Success Criteria
 
-- [ ] A equipe anexa até 5 imagens a um paciente e as vê ao reabrir a ficha.
-- [ ] O binário sobe/baixa direto do S3 (a Lambda só assina URLs) — dentro do free tier.
-- [ ] A 6ª imagem é barrada com mensagem clara; remover libera vaga.
-- [ ] Imagens de outra clínica nunca aparecem nem são acessíveis por id.
-- [ ] Todos os requisitos IMG-01..09 cobertos por teste (back) + painel verificado no front.
+- [x] A equipe anexa até 5 imagens a um paciente e as vê ao reabrir a ficha.
+- [x] O binário sobe/baixa direto do S3 (a Lambda só assina URLs) — dentro do free tier.
+- [x] A 6ª imagem é barrada com mensagem clara; remover libera vaga.
+- [x] Imagens de outra clínica nunca aparecem nem são acessíveis por id.
+- [x] Todos os requisitos IMG-01..09 cobertos por teste (back) + painel verificado no front.

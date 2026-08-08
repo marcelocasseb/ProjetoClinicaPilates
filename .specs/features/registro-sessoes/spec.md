@@ -6,13 +6,13 @@ O **core do produto** é registrar, aula a aula, o que cada aluno fez na clínic
 
 ## Goals
 
-- [ ] Permitir registrar uma **aula** de um aluno: data (default hoje) + lista de aparelhos usados, cada um com seus **tipos de treino**.
-- [ ] Reaproveitar o **catálogo de aparelhos da clínica** (combo box) e guardar um **snapshot (id + nome)** do aparelho na aula — o histórico fica imune a edição/remoção posterior do aparelho no catálogo.
-- [ ] Oferecer os **tipos de treino** por uma lista fixa (hardcode no front): *Membros superiores, Membros inferiores, Abdômen, Força, Mobilidade, Postural* — armazenados como snapshot de texto (sem enum no back).
-- [ ] Registrar campos gerais da aula: **observação** (texto livre) e **profissional responsável** (texto livre).
-- [ ] Consultar as aulas como histórico datado por aluno (mesma UX das avaliações: busca o aluno → lista de datas → abre o detalhe).
-- [ ] CRUD completo com **soft delete** e fluxo **abrir em leitura → Editar → Salvar**.
-- [ ] Manter isolamento multi-tenant (AD-007): a clínica A nunca vê nem altera aulas da B.
+- [x] Permitir registrar uma **aula** de um aluno: data (default hoje) + lista de aparelhos usados, cada um com seus **tipos de treino**.
+- [x] Reaproveitar o **catálogo de aparelhos da clínica** (combo box) e guardar um **snapshot (id + nome)** do aparelho na aula — o histórico fica imune a edição/remoção posterior do aparelho no catálogo.
+- [x] Oferecer os **tipos de treino** por uma lista fixa (hardcode no front): *Membros superiores, Membros inferiores, Abdômen, Força, Mobilidade, Postural* — armazenados como snapshot de texto (sem enum no back).
+- [x] Registrar campos gerais da aula: **observação** (texto livre) e **profissional responsável** (texto livre).
+- [x] Consultar as aulas como histórico datado por aluno (mesma UX das avaliações: busca o aluno → lista de datas → abre o detalhe).
+- [x] CRUD completo com **soft delete** e fluxo **abrir em leitura → Editar → Salvar**.
+- [x] Manter isolamento multi-tenant (AD-007): a clínica A nunca vê nem altera aulas da B.
 
 ## Out of Scope
 
@@ -149,17 +149,17 @@ O **core do produto** é registrar, aula a aula, o que cada aluno fez na clínic
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| SES-01 | P1: Registrar aula | - | Pending |
-| SES-02 | P1: Persistência PK/SK sob o paciente (SESSION#<id>) | - | Pending |
-| SES-03 | P1: Aparelhos com snapshot (id+nome) + treinos | - | Pending |
-| SES-04 | P1: Listar aulas do aluno (datadas, ordenadas) | - | Pending |
-| SES-05 | P1: Obter aula por id | - | Pending |
-| SES-06 | P1: Validação (paciente inexistente → 404; aula sem aparelho → 400) | - | Pending |
-| SES-07 | P2: Editar aula | - | Pending |
-| SES-08 | P2: Remover aula (soft delete) | - | Pending |
-| SES-09 | Isolamento multi-tenant (não vazar entre clínicas) | - | Pending |
-| SES-10 | Edge cases de validação de entrada | - | Pending |
-| SES-11 | P1: Front — aba Pilates (seleção aluno, combo aparelhos, treinos, consulta datada, editar/salvar) | - | Pending |
+| SES-01 | P1: Registrar aula | - | Verified |
+| SES-02 | P1: Persistência PK/SK sob o paciente (SESSION#<id>) | - | Verified |
+| SES-03 | P1: Aparelhos com snapshot (id+nome) + treinos | - | Verified |
+| SES-04 | P1: Listar aulas do aluno (datadas, ordenadas) | - | Verified |
+| SES-05 | P1: Obter aula por id | - | Verified |
+| SES-06 | P1: Validação (paciente inexistente → 404; aula sem aparelho → 400) | - | Verified |
+| SES-07 | P2: Editar aula | - | Verified |
+| SES-08 | P2: Remover aula (soft delete) | - | Verified |
+| SES-09 | Isolamento multi-tenant (não vazar entre clínicas) | - | Verified |
+| SES-10 | Edge cases de validação de entrada | - | Verified |
+| SES-11 | P1: Front — aba Pilates (seleção aluno, combo aparelhos, treinos, consulta datada, editar/salvar) | - | Verified |
 
 **ID format:** `SES-[NUMBER]`
 
@@ -214,9 +214,9 @@ A dependência do router reaproveita `PacienteRepository.get` para garantir 404/
 
 ## Success Criteria
 
-- [ ] A equipe consegue lançar uma aula selecionando o aluno, adicionando aparelhos por combo box e marcando os tipos de treino, e recuperá-la em seguida.
-- [ ] A aula guarda snapshot (id+nome) dos aparelhos — editar/remover o aparelho no catálogo depois não altera aulas passadas.
-- [ ] A consulta por aluno lista as aulas por data (mais recente primeiro) e abre o detalhe em leitura; Editar destrava, Salvar persiste.
-- [ ] Aulas de outra clínica nunca aparecem nem são acessíveis; paciente inexistente na clínica retorna 404.
-- [ ] Remoção é lógica: a aula some das consultas, mas o item permanece no banco.
-- [ ] Todos os requisitos (SES-01..11) cobertos por teste (back) e verificados no front (aba Pilates no ar).
+- [x] A equipe consegue lançar uma aula selecionando o aluno, adicionando aparelhos por combo box e marcando os tipos de treino, e recuperá-la em seguida.
+- [x] A aula guarda snapshot (id+nome) dos aparelhos — editar/remover o aparelho no catálogo depois não altera aulas passadas.
+- [x] A consulta por aluno lista as aulas por data (mais recente primeiro) e abre o detalhe em leitura; Editar destrava, Salvar persiste.
+- [x] Aulas de outra clínica nunca aparecem nem são acessíveis; paciente inexistente na clínica retorna 404.
+- [x] Remoção é lógica: a aula some das consultas, mas o item permanece no banco.
+- [x] Todos os requisitos (SES-01..11) cobertos por teste (back) e verificados no front (aba Pilates no ar).

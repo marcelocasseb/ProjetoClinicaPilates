@@ -6,9 +6,9 @@ A clínica de Pilates não tem um registro organizado dos seus pacientes. Antes 
 
 ## Goals
 
-- [ ] Permitir que a equipe cadastre, consulte, edite e remova (logicamente) pacientes via API.
-- [ ] Estabelecer o item de perfil do paciente na tabela DynamoDB (`SK=PROFILE`) conforme a convenção do AD-005.
-- [ ] Validar entrada de forma que apenas o Nome seja obrigatório, mantendo cadastro rápido.
+- [x] Permitir que a equipe cadastre, consulte, edite e remova (logicamente) pacientes via API.
+- [x] Estabelecer o item de perfil do paciente na tabela DynamoDB (`SK=PROFILE`) conforme a convenção do AD-005.
+- [x] Validar entrada de forma que apenas o Nome seja obrigatório, mantendo cadastro rápido.
 
 ## Out of Scope
 
@@ -170,7 +170,7 @@ Atributos:
 
 ## Success Criteria
 
-- [ ] Equipe consegue criar um paciente informando só o nome e recuperá-lo em seguida.
-- [ ] Listagem retorna apenas pacientes ativos.
-- [ ] Remoção é lógica: paciente some das consultas padrão, mas o item permanece no banco.
-- [ ] Todos os 9 requisitos (PAC-01..09) cobertos por teste.
+- [x] Equipe consegue criar um paciente informando só o nome e recuperá-lo em seguida.
+- [x] Listagem retorna apenas pacientes ativos.
+- [x] Remoção é lógica: paciente some das consultas padrão, mas o item permanece no banco.
+- [x] Todos os 9 requisitos (PAC-01..09) cobertos por teste.

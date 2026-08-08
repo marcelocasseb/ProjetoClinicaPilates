@@ -71,4 +71,4 @@ Feature **Complexa** (novo domínio: Cognito, JWT, provisionamento, infra nova).
 | AUTH-06 | T4 | ✅ Código+testes (deploy pendente T7) |
 | AUTH-07 | T5, T6 | ✅ Código+testes (back); front pronto (E2E = T7) |
 | AUTH-08 | T5 | ✅ Código+testes |
-| AUTH-09 | T3, T4, T6, T7 | Pending |
+| AUTH-09 | T3, T4, T6, T7 | Verified |

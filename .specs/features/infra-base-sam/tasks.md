@@ -38,11 +38,11 @@ Phase 3 (Deploy validation, Sequential — bloqueada por B-001):
 - Skill: NONE
 
 **Done when**:
-- [ ] Estrutura `src/app/` e `tests/` criada
-- [ ] `requirements.txt` com `fastapi`, `mangum`, `boto3` (runtime) e `pytest`, `moto` (dev)
-- [ ] `pyproject.toml` com config do pytest (testpaths=tests)
-- [ ] `.gitignore` cobre `.aws-sam/`, `__pycache__/`, `*.pyc`, `.venv/`
-- [ ] Gate check passes: `python -m compileall src && pytest --collect-only -q`
+- [x] Estrutura `src/app/` e `tests/` criada
+- [x] `requirements.txt` com `fastapi`, `mangum`, `boto3` (runtime) e `pytest`, `moto` (dev)
+- [x] `pyproject.toml` com config do pytest (testpaths=tests)
+- [x] `.gitignore` cobre `.aws-sam/`, `__pycache__/`, `*.pyc`, `.venv/`
+- [x] Gate check passes: `python -m compileall src && pytest --collect-only -q`
 
 **Tests**: none
 **Gate**: build
@@ -66,12 +66,12 @@ Phase 3 (Deploy validation, Sequential — bloqueada por B-001):
 - Skill: NONE
 
 **Done when**:
-- [ ] `app = FastAPI()` definido em `src/app/main.py`
-- [ ] `GET /health` retorna `200` com `{"status":"ok"}`
-- [ ] Rota inexistente retorna `404` (padrão FastAPI)
-- [ ] Teste unitário via `fastapi.testclient.TestClient` cobre `/health` (200) e rota inexistente (404)
-- [ ] Gate check passes: `pytest -q`
-- [ ] Test count: 2 tests pass (no silent deletions)
+- [x] `app = FastAPI()` definido em `src/app/main.py`
+- [x] `GET /health` retorna `200` com `{"status":"ok"}`
+- [x] Rota inexistente retorna `404` (padrão FastAPI)
+- [x] Teste unitário via `fastapi.testclient.TestClient` cobre `/health` (200) e rota inexistente (404)
+- [x] Gate check passes: `pytest -q`
+- [x] Test count: 2 tests pass (no silent deletions)
 
 **Tests**: unit
 **Gate**: quick
@@ -95,10 +95,10 @@ Phase 3 (Deploy validation, Sequential — bloqueada por B-001):
 - Skill: NONE
 
 **Done when**:
-- [ ] `handler = Mangum(app)` em `src/app/handler.py`
-- [ ] Smoke test invoca `handler` com um evento API Gateway HTTP mínimo de `GET /health` e valida `statusCode == 200`
-- [ ] Gate check passes: `pytest -q`
-- [ ] Test count: 1 test passes (no silent deletions)
+- [x] `handler = Mangum(app)` em `src/app/handler.py`
+- [x] Smoke test invoca `handler` com um evento API Gateway HTTP mínimo de `GET /health` e valida `statusCode == 200`
+- [x] Gate check passes: `pytest -q`
+- [x] Test count: 1 test passes (no silent deletions)
 
 **Tests**: unit
 **Gate**: quick
@@ -122,11 +122,16 @@ Phase 3 (Deploy validation, Sequential — bloqueada por B-001):
 - Skill: NONE
 
 **Done when**:
-- [ ] `AWS::Serverless::Function` com `Runtime: python3.13`, `Handler: app.handler.handler`, `CodeUri: src/`
-- [ ] Evento HTTP API com rota proxy (`ANY /{proxy+}` ou catch-all) apontando para a Lambda
-- [ ] CORS configurado no HTTP API (AllowOrigins, AllowMethods, AllowHeaders)
-- [ ] `Outputs` expõe a URL base do API
-- [ ] Gate check passes: `python -m compileall src && pytest --collect-only -q`
+- [x] `AWS::Serverless::Function` com `Runtime: python3.13`, `Handler: app.handler.handler`, `CodeUri: src/`
+- [x] Evento HTTP API com rota proxy apontando para a Lambda
+  > ⚠️ **Mudou no M3:** deixou de ser `ANY /{proxy+}` e passou a ter **métodos explícitos**
+  > (GET/POST/PUT/DELETE), de propósito **sem** `OPTIONS` — com o JWT Authorizer default,
+  > uma rota que casasse `OPTIONS` barraria o preflight do navegador com `401`.
+- [x] CORS configurado no HTTP API (AllowOrigins, AllowMethods, AllowHeaders)
+  > No M3 o `CORSMiddleware` do FastAPI foi **removido** — o CORS passou a ser só do API Gateway
+  > (senão os headers `Access-Control-*` duplicariam).
+- [x] `Outputs` expõe a URL base do API
+- [x] Gate check passes: `python -m compileall src && pytest --collect-only -q`
 
 **Tests**: none
 **Gate**: build
@@ -150,10 +155,10 @@ Phase 3 (Deploy validation, Sequential — bloqueada por B-001):
 - Skill: NONE
 
 **Done when**:
-- [ ] `AWS::DynamoDB::Table` (ou `AWS::Serverless::SimpleTable`/resource) com `PK` (HASH, String) e `SK` (RANGE, String), `BillingMode: PAY_PER_REQUEST`
-- [ ] Lambda recebe `TABLE_NAME` via `Environment.Variables`
-- [ ] Policy IAM concede `dynamodb:*Item`/`Query` apenas no ARN dessa tabela (menor privilégio), não `*`
-- [ ] Gate check passes: `python -m compileall src && pytest --collect-only -q`
+- [x] `AWS::DynamoDB::Table` (ou `AWS::Serverless::SimpleTable`/resource) com `PK` (HASH, String) e `SK` (RANGE, String), `BillingMode: PAY_PER_REQUEST`
+- [x] Lambda recebe `TABLE_NAME` via `Environment.Variables`
+- [x] Policy IAM concede `dynamodb:*Item`/`Query` apenas no ARN dessa tabela (menor privilégio), não `*`
+- [x] Gate check passes: `python -m compileall src && pytest --collect-only -q`
 
 **Tests**: none
 **Gate**: build
