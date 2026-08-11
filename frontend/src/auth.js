@@ -35,14 +35,17 @@ export function decodeClaims(idToken) {
   }
 }
 
-function guardarSessao(result) {
+// `refreshAtual` é o fallback do refreshToken: na renovação (REFRESH_TOKEN_AUTH)
+// o Cognito NÃO devolve um refreshToken novo — precisamos preservar o que já temos,
+// senão a 1ª renovação apagaria o refresh e a sessão voltaria a durar só 1 hora.
+function guardarSessao(result, refreshAtual = null) {
   const claims = decodeClaims(result.IdToken);
   localStorage.setItem(
     STORE_KEY,
     JSON.stringify({
       idToken: result.IdToken,
       accessToken: result.AccessToken,
-      refreshToken: result.RefreshToken,
+      refreshToken: result.RefreshToken || refreshAtual,
       claims,
     })
   );
@@ -71,6 +74,36 @@ export async function definirNovaSenha(email, session, novaSenha) {
     ChallengeResponses: { USERNAME: email, NEW_PASSWORD: novaSenha },
   });
   return { ok: true, claims: guardarSessao(data.AuthenticationResult) };
+}
+
+// Renova o idToken com o refreshToken guardado (fluxo REFRESH_TOKEN_AUTH, já
+// habilitado no App Client). O idToken do Cognito vale 1 hora — sem esta renovação
+// o usuário era expulso a cada hora exata de uso, perdendo o que estava digitando.
+// O refreshToken vale 30 dias, então na prática a sessão deixa de cair no expediente.
+// Retorna as claims novas, ou `null` se não deu (refresh vencido/revogado).
+export async function renovarSessao() {
+  const s = getSessao();
+  if (!s || !s.refreshToken) return null;
+  try {
+    const data = await cognito("InitiateAuth", {
+      AuthFlow: "REFRESH_TOKEN_AUTH",
+      ClientId: COGNITO_CLIENT_ID,
+      AuthParameters: { REFRESH_TOKEN: s.refreshToken },
+    });
+    const result = data.AuthenticationResult;
+    if (!result || !result.IdToken) return null;
+    return guardarSessao(result, s.refreshToken);
+  } catch {
+    return null;
+  }
+}
+
+// Quantos milissegundos faltam para o idToken vencer (`exp` é em segundos).
+// `0` se não há sessão ou o token não traz `exp`.
+export function msAteExpirar() {
+  const claims = getClaims();
+  if (!claims || !claims.exp) return 0;
+  return claims.exp * 1000 - Date.now();
 }
 
 export function getSessao() {

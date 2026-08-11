@@ -4,8 +4,9 @@ import Pacientes from "./components/Pacientes";
 import Aparelhos from "./components/Aparelhos";
 import Pilates from "./components/Pilates";
 import AdicionarMembro from "./components/AdicionarMembro";
+import SessaoExpirada from "./components/SessaoExpirada";
 import { getClaims, sair } from "./auth";
-import { clinicaApi } from "./api";
+import { clinicaApi, sessaoDescartada, sessaoRestaurada } from "./api";
 import iconUrl from "./assets/pilatesone-icon.jpg";
 import "./App.css";
 
@@ -25,6 +26,7 @@ export default function App() {
   const [clinicNome, setClinicNome] = useState(null); // nome de exibição (do backend)
   const [aba, setAba] = useState("pacientes");
   const [mostrarMembro, setMostrarMembro] = useState(false);
+  const [sessaoCaiu, setSessaoCaiu] = useState(false); // modal de re-login por cima da tela
 
   // Restaura a sessão do token guardado (não relogar a cada refresh).
   useEffect(() => {
@@ -45,10 +47,32 @@ export default function App() {
     };
   }, [clinic]);
 
+  // api.js avisa quando o refresh token também não resolveu e só o usuário pode
+  // destravar. Abrimos o modal SEM desmontar a árvore — o formulário em edição
+  // continua na tela, atrás dele.
+  useEffect(() => {
+    const abrir = () => setSessaoCaiu(true);
+    window.addEventListener("sessao-expirada", abrir);
+    return () => window.removeEventListener("sessao-expirada", abrir);
+  }, []);
+
   function aoLogar(claims) {
     setClinic(clinicDasClaims(claims));
   }
+
+  // Re-login pelo modal: atualiza as claims e libera as requisições que ficaram
+  // penduradas — o "Salvar" que o usuário clicou conclui sozinho.
+  function aoReentrar(claims) {
+    setClinic(clinicDasClaims(claims));
+    setSessaoCaiu(false);
+    sessaoRestaurada();
+  }
+
   function sairApp() {
+    if (sessaoCaiu) {
+      setSessaoCaiu(false);
+      sessaoDescartada();
+    }
     sair();
     setClinic(null);
     setClinicNome(null);
@@ -101,6 +125,7 @@ export default function App() {
       </main>
 
       {mostrarMembro && <AdicionarMembro onFechar={() => setMostrarMembro(false)} />}
+      {sessaoCaiu && <SessaoExpirada onEntrar={aoReentrar} onSair={sairApp} />}
     </div>
   );
 }

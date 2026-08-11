@@ -3,12 +3,69 @@
 // O clinicId agora vem do token (claim), não mais de header — o 3º parâmetro
 // (clinic) é mantido por compatibilidade de assinatura, mas é ignorado.
 import { API_URL } from "./config";
-import { getIdToken, sair } from "./auth";
+import { getIdToken, msAteExpirar, renovarSessao } from "./auth";
 import { imagensApiMock, uploadParaS3Mock } from "./mockImagens";
 
-async function request(method, path, _clinic, body) {
+// Margem de renovação preventiva: com menos de 2 min de token restante, renova
+// ANTES de mandar a requisição. Evita o 401 no caso comum (o authorizer do API
+// Gateway rejeita na borda, sem deixar rastro em log).
+const MARGEM_RENOVACAO_MS = 120_000;
+
+// --- Renovação silenciosa (single-flight) ---------------------------------
+// Se várias chamadas tomam 401 juntas (a tela carrega avaliações + sessões +
+// imagens de uma vez), todas compartilham UMA renovação em vez de disparar N.
+let renovacaoEmCurso = null;
+
+function renovarUmaVez() {
+  if (!renovacaoEmCurso) {
+    renovacaoEmCurso = renovarSessao().finally(() => {
+      renovacaoEmCurso = null;
+    });
+  }
+  return renovacaoEmCurso;
+}
+
+// --- Portão de re-login ----------------------------------------------------
+// Quando nem o refresh salva (refresh vencido/revogado), NÃO recarregamos a
+// página: recarregar apaga o formulário que o usuário está preenchendo — foi
+// exatamente assim que uma ficha de avaliação inteira se perdeu em 11/08/2026.
+// Em vez disso avisamos o App (que abre um modal por cima, preservando a tela),
+// e a requisição fica pendurada esperando. Quando o login volta, ela é reenviada
+// sozinha — o "Salvar" que o usuário clicou conclui de verdade.
+let esperaDeLogin = null;
+let resolverEspera = null;
+
+function pedirLogin() {
+  if (!esperaDeLogin) {
+    esperaDeLogin = new Promise((resolve) => {
+      resolverEspera = resolve;
+    });
+    window.dispatchEvent(new CustomEvent("sessao-expirada"));
+  }
+  return esperaDeLogin;
+}
+
+function encerrarEspera(entrou) {
+  const resolve = resolverEspera;
+  esperaDeLogin = null;
+  resolverEspera = null;
+  resolve?.(entrou);
+}
+
+/** O App chama quando o usuário entra de novo no modal: libera as requisições pendentes. */
+export function sessaoRestaurada() {
+  encerrarEspera(true);
+}
+
+/** O App chama quando o usuário desiste e sai: as requisições pendentes falham. */
+export function sessaoDescartada() {
+  encerrarEspera(false);
+}
+// ---------------------------------------------------------------------------
+
+function enviar(method, path, body) {
   const token = getIdToken();
-  const res = await fetch(`${API_URL}${path}`, {
+  return fetch(`${API_URL}${path}`, {
     method,
     headers: {
       "Content-Type": "application/json",
@@ -16,12 +73,27 @@ async function request(method, path, _clinic, body) {
     },
     body: body ? JSON.stringify(body) : undefined,
   });
+}
 
-  // Token ausente/expirado → limpa a sessão e volta ao login.
+async function request(method, path, _clinic, body) {
+  // Token perto de vencer: renova antes de gastar a ida ao servidor.
+  if (getIdToken() && msAteExpirar() < MARGEM_RENOVACAO_MS) await renovarUmaVez();
+
+  let res = await enviar(method, path, body);
+
+  // 401 mesmo assim (token já vencido ao abrir a aba, relógio fora de hora,
+  // renovação concorrente): tenta renovar e repete a requisição uma vez.
+  if (res.status === 401 && (await renovarUmaVez())) {
+    res = await enviar(method, path, body);
+  }
+
+  // Ainda 401: só o usuário resolve. Espera o re-login no modal e repete.
   if (res.status === 401) {
-    sair();
-    window.location.reload();
-    throw new Error("Sessão expirada. Faça login novamente.");
+    if (await pedirLogin()) res = await enviar(method, path, body);
+  }
+
+  if (res.status === 401) {
+    throw new Error("Sessão expirada. Entre novamente para salvar.");
   }
 
   if (res.status === 204) return null;
