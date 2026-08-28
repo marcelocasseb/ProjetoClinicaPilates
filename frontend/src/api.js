@@ -150,6 +150,16 @@ export const sessoesApi = {
     request("DELETE", `/pacientes/${pacienteId}/sessoes/${id}`, clinic),
 };
 
+// --- Escala semanal (grade fixa da clínica — ESC-01/03/05) ---
+// `hora` vai codificada no path (`07%3A00`): os dois-pontos são legais numa URL,
+// mas codificar dispensa confiar no comportamento de cada proxy no caminho.
+export const escalaApi = {
+  list: (clinic) => request("GET", "/escala", clinic),
+  matricular: (clinic, data) => request("POST", "/escala", clinic, data),
+  remover: (clinic, dia, hora, pacienteId) =>
+    request("DELETE", `/escala/${dia}/${encodeURIComponent(hora)}/${pacienteId}`, clinic),
+};
+
 // --- Imagens do paciente (por paciente, até 5 — IMG-01..04) ---
 // Upload em 2 fases: (1) solicitarUpload pega a URL pré-assinada; (2) uploadParaS3
 // envia o arquivo direto ao S3; (3) confirmar grava o metadado. O binário nunca

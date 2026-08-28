@@ -840,3 +840,194 @@ textarea.obs {
 .img-remove:hover {
   background: var(--danger);
 }
+
+/* ---- Escala semanal (grade 7 dias × horários, feature escala) ---- */
+/* A tabela NÃO usa a classe .tbl de propósito: a regra mobile de .tbl a viraria
+   `display:block`, o que quebra a coluna de horário fixa (sticky). */
+.escala-dica {
+  margin: -6px 0 14px;
+  font-size: 13px;
+}
+.escala-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.escala {
+  width: 100%;
+  min-width: 880px; /* 7 colunas legíveis; abaixo disso o wrapper rola */
+  border-collapse: separate; /* `collapse` desalinha as bordas da coluna sticky */
+  border-spacing: 0;
+  font-size: 13px;
+}
+.escala th,
+.escala td {
+  border-bottom: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+}
+.escala tr > *:last-child {
+  border-right: none;
+}
+.escala tbody tr:last-child > * {
+  border-bottom: none;
+}
+/* Cabeçalho dos dias */
+.escala thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--panel);
+  padding: 10px 12px;
+  text-align: left;
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.dia-curto {
+  display: none;
+}
+.dia-conta {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: rgba(184, 147, 94, 0.14);
+  color: var(--accent);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+/* Coluna de horário: fixa na rolagem horizontal (é a âncora de leitura da grade) */
+.escala .col-hora {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  width: 78px;
+  background: var(--bg);
+  padding: 10px 12px;
+  text-align: left;
+  font-weight: 600;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.escala thead .col-hora {
+  z-index: 3; /* cruzamento cabeçalho × coluna fixa */
+  background: var(--panel);
+}
+/* Células */
+.escala .cel {
+  vertical-align: top;
+  padding: 6px;
+  min-width: 112px;
+}
+.escala .cel.cheia {
+  background: rgba(184, 147, 94, 0.05);
+}
+.aluno-chip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 4px;
+  padding: 4px 4px 4px 9px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--panel);
+  font-size: 12px;
+  font-weight: 600;
+}
+.aluno-nome {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.aluno-x {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+.aluno-x:hover {
+  background: var(--danger);
+  color: #fff;
+}
+/* "+" discreto: só ganha cor no hover da célula, para a grade não virar um muro de botões */
+.cel-add {
+  width: 100%;
+  padding: 3px;
+  border: 1px dashed transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: transparent;
+  font-size: 13px;
+  line-height: 1.4;
+  cursor: pointer;
+  transition: color 0.12s ease, border-color 0.12s ease;
+}
+.cel:hover .cel-add,
+.cel-add:focus-visible {
+  border-color: var(--border);
+  color: var(--accent);
+}
+/* Combo do modal de "adicionar aluno" */
+.escala-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  margin: 8px 0 6px;
+}
+.escala-select {
+  width: 100%;
+  padding: 11px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+}
+.escala-select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(184, 147, 94, 0.15);
+}
+
+@media (max-width: 640px) {
+  /* No celular as 7 colunas não cabem: rótulo curto (Seg/Ter/…), colunas mais
+     estreitas e o "+" sempre visível (não há hover no toque). */
+  .escala {
+    min-width: 620px;
+    font-size: 12px;
+  }
+  .dia-nome {
+    display: none;
+  }
+  .dia-curto {
+    display: inline;
+  }
+  .escala .col-hora {
+    width: 58px;
+    padding: 8px 8px;
+  }
+  .escala .cel {
+    min-width: 78px;
+  }
+  .cel-add {
+    border-color: var(--border);
+    color: var(--accent);
+  }
+}

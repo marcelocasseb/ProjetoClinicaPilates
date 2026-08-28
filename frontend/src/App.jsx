@@ -3,6 +3,7 @@ import Login from "./components/Login";
 import Pacientes from "./components/Pacientes";
 import Aparelhos from "./components/Aparelhos";
 import Pilates from "./components/Pilates";
+import Escala from "./components/Escala";
 import AdicionarMembro from "./components/AdicionarMembro";
 import SessaoExpirada from "./components/SessaoExpirada";
 import { getClaims, sair } from "./auth";
@@ -116,12 +117,16 @@ export default function App() {
         <button className={aba === "pilates" ? "tab on" : "tab"} onClick={() => setAba("pilates")}>
           Pilates
         </button>
+        <button className={aba === "escala" ? "tab on" : "tab"} onClick={() => setAba("escala")}>
+          Escala
+        </button>
       </nav>
 
       <main className="content">
         {aba === "pacientes" && <Pacientes clinic={clinic} />}
         {aba === "aparelhos" && <Aparelhos clinic={clinic} />}
         {aba === "pilates" && <Pilates clinic={clinic} />}
+        {aba === "escala" && <Escala clinic={clinic} />}
       </main>
 
       {mostrarMembro && <AdicionarMembro onFechar={() => setMostrarMembro(false)} />}
