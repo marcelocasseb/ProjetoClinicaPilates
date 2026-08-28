@@ -39,6 +39,16 @@ export function formatDataBR(iso) {
   return `${d}/${m}/${y}`;
 }
 
+// "Natalia de Sousa Santos" -> "Natalia Santos". Usado para pré-preencher o
+// profissional responsável com o nome de quem está logado. Nome com uma palavra
+// só volta inteiro; vazio/ausente volta "" (melhor campo em branco do que palpite).
+export function primeiroEUltimoNome(completo) {
+  const partes = (completo || "").trim().split(/\s+/).filter(Boolean);
+  if (partes.length === 0) return "";
+  if (partes.length === 1) return partes[0];
+  return `${partes[0]} ${partes[partes.length - 1]}`;
+}
+
 // Validação de CPF pelos dígitos verificadores (mesma regra do backend).
 export function isValidCpf(v) {
   const d = onlyDigits(v);

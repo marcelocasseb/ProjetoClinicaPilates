@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { pacientesApi, aparelhosApi, sessoesApi } from "../api";
-import { onlyDigits, maskCpf, hojeISO, formatDataBR } from "../utils/format";
+import { onlyDigits, maskCpf, hojeISO, formatDataBR, primeiroEUltimoNome } from "../utils/format";
+import { getClaims } from "../auth";
 
 // Tipos de treino — lista fixa (hardcode no front, AD-011). O back só guarda o texto.
 const TIPOS_TREINO = [
@@ -10,10 +11,25 @@ const TIPOS_TREINO = [
   "Força",
   "Mobilidade",
   "Postural",
+  "Alongamento",
 ];
 
+// Quem está conduzindo a aula é, quase sempre, quem está logado — então o campo
+// já nasce preenchido com o "Primeiro Último" do token, e continua editável
+// (outro profissional pode ter dado a aula). Se o usuário não tem `name` no
+// Cognito, fica em branco de propósito: chutar um nome a partir do e-mail
+// escreveria coisa como "Natsousa2" num registro clínico.
+function profissionalPadrao() {
+  return primeiroEUltimoNome(getClaims()?.name);
+}
+
 function vazio() {
-  return { data: hojeISO(), profissional: "", observacao: "", aparelhos: [] };
+  return {
+    data: hojeISO(),
+    profissional: profissionalPadrao(),
+    observacao: "",
+    aparelhos: [],
+  };
 }
 
 export default function Pilates({ clinic }) {
