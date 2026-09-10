@@ -49,6 +49,77 @@ export function primeiroEUltimoNome(completo) {
   return `${partes[0]} ${partes[partes.length - 1]}`;
 }
 
+// --- Dinheiro (feature fluxo-caixa, FIN-09) --------------------------------
+// O valor trafega para a API como INTEIRO EM CENTAVOS e só vira texto na
+// exibição — nenhum float encosta no dinheiro. Um `parseFloat("1.234,56")` em
+// algum lugar do caminho é exatamente como um centavo some do saldo do mês.
+
+// Digitação progressiva da direita para a esquerda: "1" -> "0,01",
+// "150" -> "1,50", "123456" -> "1.234,56". Mesmo padrão de maskCpf/maskTelefone.
+export function maskMoeda(v) {
+  const d = onlyDigits(v).slice(0, 11); // teto de ~R$ 999 milhões, de sobra
+  if (!d) return "";
+  return centavosParaBR(parseInt(d, 10));
+}
+
+// 123456 -> "1.234,56". Aceita null/undefined para não quebrar tela vazia.
+export function centavosParaBR(c) {
+  const n = Number.isFinite(c) ? Math.trunc(c) : 0;
+  const negativo = n < 0;
+  const abs = String(Math.abs(n)).padStart(3, "0");
+  const reais = abs.slice(0, -2).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  return `${negativo ? "-" : ""}${reais},${abs.slice(-2)}`;
+}
+
+// "1.234,56" -> 123456. Vazio -> 0. É o inverso exato de centavosParaBR.
+export function brParaCentavos(s) {
+  const d = onlyDigits(s);
+  return d ? parseInt(d, 10) : 0;
+}
+
+// Formas de pagamento. Esta lista espelha a que o backend valida
+// (`FORMAS_PAGAMENTO` em schemas_financeiro.py) — mandar algo fora dela dá 400.
+// Fica aqui, e não num componente, porque o Caixa e a baixa de mensalidade
+// precisam das MESMAS opções: forma divergente entre as duas telas produziria
+// extrato incoerente ("pix" numa, vazio na outra, pro mesmo tipo de recebimento).
+export const FORMAS_PAGAMENTO = [
+  { v: "", label: "—" },
+  { v: "dinheiro", label: "Dinheiro" },
+  { v: "pix", label: "Pix" },
+  { v: "cartao", label: "Cartão" },
+  { v: "transferencia", label: "Transferência" },
+];
+
+export const labelForma = (v) =>
+  FORMAS_PAGAMENTO.find((f) => f.v === (v || ""))?.label || "—";
+
+// Navegação de mês em "AAAA-MM", com virada de ano correta.
+export function mesAnterior(mes) {
+  const [a, m] = mes.split("-").map(Number);
+  return m === 1 ? `${a - 1}-12` : `${a}-${String(m - 1).padStart(2, "0")}`;
+}
+
+export function mesSeguinte(mes) {
+  const [a, m] = mes.split("-").map(Number);
+  return m === 12 ? `${a + 1}-01` : `${a}-${String(m + 1).padStart(2, "0")}`;
+}
+
+const MESES = [
+  "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+  "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
+];
+
+// "2026-10" -> "Outubro/2026".
+export function formatMesBR(mes) {
+  const [a, m] = (mes || "").split("-");
+  const nome = MESES[Number(m) - 1];
+  return nome ? `${nome}/${a}` : mes || "—";
+}
+
+// Mês corrente "AAAA-MM" no fuso LOCAL (não UTC — a virada do mês no Brasil
+// aconteceria 3h antes do previsto se usássemos toISOString aqui).
+export const mesAtual = () => hojeISO().slice(0, 7);
+
 // Validação de CPF pelos dígitos verificadores (mesma regra do backend).
 export function isValidCpf(v) {
   const d = onlyDigits(v);

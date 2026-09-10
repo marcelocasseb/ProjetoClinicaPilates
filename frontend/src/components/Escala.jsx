@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { escalaApi, pacientesApi } from "../api";
+import { escalaApi, financeiroApi, pacientesApi } from "../api";
+import { centavosParaBR, mesAtual } from "../utils/format";
 
 // Dias na ordem da semana (1 = segunda … 7 = domingo, padrão ISO — o mesmo número
 // que vai no back). O rótulo curto é o que cabe na coluna do celular.
@@ -26,6 +27,9 @@ const chave = (dia, hora) => `${dia}|${hora}`;
 export default function Escala({ clinic }) {
   const [matriculas, setMatriculas] = useState([]);
   const [pacientes, setPacientes] = useState([]);
+  // Quem está devendo a mensalidade do mês corrente (F2). Só admin enxerga: para
+  // membro a API devolve 403, então nem pedimos — a grade funciona igual sem isso.
+  const [devendo, setDevendo] = useState({});
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState("");
   const [celula, setCelula] = useState(null); // {dia, hora} — célula do modal aberto
@@ -42,6 +46,21 @@ export default function Escala({ clinic }) {
       ]);
       setMatriculas(grade);
       setPacientes(alunos);
+
+      // Falha aqui NÃO pode derrubar a escala: o marcador é um extra, a grade é o
+      // que a recepção veio ver. Por isso vai num catch próprio e silencioso.
+      if (clinic.role === "admin") {
+        try {
+          const m = await financeiroApi.mensalidades(clinic.id, mesAtual());
+          const mapa = {};
+          for (const a of m.alunos) {
+            if (a.emAbertoCentavos > 0) mapa[a.pacienteId] = a.emAbertoCentavos;
+          }
+          setDevendo(mapa);
+        } catch {
+          setDevendo({});
+        }
+      }
     } catch (e) {
       setErro(e.message);
     } finally {
@@ -186,7 +205,18 @@ export default function Escala({ clinic }) {
                         return (
                           <td key={d.n} className={alunos.length ? "cel cheia" : "cel"}>
                             {alunos.map((m) => (
-                              <span key={m.pacienteId} className="aluno-chip">
+                              <span
+                                key={m.pacienteId}
+                                className={devendo[m.pacienteId] ? "aluno-chip devendo" : "aluno-chip"}
+                              >
+                                {devendo[m.pacienteId] ? (
+                                  <span
+                                    className="ponto-devendo"
+                                    title={`Mensalidade em aberto: R$ ${centavosParaBR(devendo[m.pacienteId])}`}
+                                  >
+                                    ●
+                                  </span>
+                                ) : null}
                                 <span className="aluno-nome" title={m.nome}>
                                   {m.nome}
                                 </span>

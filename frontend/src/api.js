@@ -160,6 +160,30 @@ export const escalaApi = {
     request("DELETE", `/escala/${dia}/${encodeURIComponent(hora)}/${pacienteId}`, clinic),
 };
 
+// --- Financeiro / Fluxo de Caixa (nível clínica, só admin — FIN-01..11) ---
+// `valorCentavos` é sempre INTEIRO em centavos nos dois sentidos; o front só
+// formata na exibição. Rotas protegidas por role=admin no backend: um membro
+// recebe 403 aqui, e o App esconde a aba (a proteção real é a do servidor).
+export const financeiroApi = {
+  caixa: (clinic, mes) =>
+    request("GET", `/financeiro/lancamentos?mes=${encodeURIComponent(mes)}`, clinic),
+  criar: (clinic, data) => request("POST", "/financeiro/lancamentos", clinic, data),
+  editar: (clinic, mes, id, data) =>
+    request("PUT", `/financeiro/lancamentos/${mes}/${id}`, clinic, data),
+  cancelar: (clinic, mes, id) =>
+    request("DELETE", `/financeiro/lancamentos/${mes}/${id}`, clinic),
+
+  // F2 — mensalidades, plano do aluno e tabela de preços.
+  mensalidades: (clinic, mes) =>
+    request("GET", `/financeiro/mensalidades?mes=${encodeURIComponent(mes)}`, clinic),
+  definirPlano: (clinic, pacienteId, data) =>
+    request("PUT", `/financeiro/planos/${pacienteId}`, clinic, data),
+  removerPlano: (clinic, pacienteId) =>
+    request("DELETE", `/financeiro/planos/${pacienteId}`, clinic),
+  config: (clinic) => request("GET", "/financeiro/config", clinic),
+  salvarConfig: (clinic, data) => request("PUT", "/financeiro/config", clinic, data),
+};
+
 // --- Imagens do paciente (por paciente, até 5 — IMG-01..04) ---
 // Upload em 2 fases: (1) solicitarUpload pega a URL pré-assinada; (2) uploadParaS3
 // envia o arquivo direto ao S3; (3) confirmar grava o metadado. O binário nunca

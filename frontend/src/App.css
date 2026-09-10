@@ -1031,3 +1031,254 @@ textarea.obs {
     color: var(--accent);
   }
 }
+
+
+/* ---------- Financeiro / Fluxo de Caixa (F1) ---------- */
+/* Navegacao de mes: o mes e a unidade da tela (e da particao no DynamoDB). */
+.fin-mes {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+.fin-mes h2 {
+  margin: 0;
+  min-width: 190px;
+  text-align: center;
+}
+
+/* Os tres totais. Cada um e um cartao proprio: entradas, saidas e o saldo. */
+.fin-totais {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+}
+.fin-total {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  border-left-width: 4px;
+}
+.fin-total strong {
+  font-size: 20px;
+  font-variant-numeric: tabular-nums;
+}
+.fin-rotulo {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--muted);
+}
+.fin-total.entrada {
+  border-left-color: var(--ok);
+}
+.fin-total.entrada strong {
+  color: var(--ok);
+}
+.fin-total.saida {
+  border-left-color: var(--danger);
+}
+.fin-total.saida strong {
+  color: var(--danger);
+}
+.fin-total.saldo {
+  border-left-color: var(--accent);
+}
+/* Saldo negativo em vermelho: aqui a cor E a informacao, nao decoracao. */
+.fin-total.saldo.negativo {
+  border-left-color: var(--danger);
+  background: rgba(192, 86, 63, 0.06);
+}
+.fin-total.saldo.negativo strong {
+  color: var(--danger);
+}
+
+/* Formulario de lancamento: uma linha so no desktop, empilha no celular. */
+.fin-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+}
+.fin-campo {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 120px;
+}
+.fin-campo.cresce {
+  flex: 1 1 220px;
+}
+.fin-campo > span {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--muted);
+}
+.fin-tipo {
+  display: flex;
+  gap: 6px;
+}
+.btn.tipo.on.entrada {
+  border-color: var(--ok);
+  color: var(--ok);
+}
+.btn.tipo.on.saida {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+/* Extrato: rola na horizontal no celular, como a grade da Escala. */
+.tbl-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.tbl .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.tbl .valor {
+  font-weight: 600;
+}
+.tbl .valor.entrada {
+  color: var(--ok);
+}
+.tbl .valor.saida {
+  color: var(--danger);
+}
+
+
+/* ---------- Financeiro F2: sub-abas, status e tabela de precos ---------- */
+.subtabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+.subtab {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 6px 16px;
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--muted);
+  cursor: pointer;
+}
+.subtab:hover {
+  border-color: var(--accent);
+  color: var(--text);
+}
+.subtab.on {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+/* Situacao da mensalidade. A cor E a informacao: o vermelho e quem deve. */
+.st {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.st-pago {
+  background: rgba(31, 157, 107, 0.12);
+  color: var(--ok);
+}
+.st-parcial {
+  background: rgba(184, 147, 94, 0.16);
+  color: #8a6a34;
+}
+.st-aberto {
+  background: rgba(192, 86, 63, 0.12);
+  color: var(--danger);
+}
+.st-isento {
+  background: rgba(140, 133, 123, 0.14);
+  color: var(--muted);
+}
+.st-sem-plano {
+  background: none;
+  border: 1px dashed var(--border);
+  color: var(--muted);
+  font-weight: 500;
+}
+
+/* Divergencia entre o plano e a grade da Escala. */
+.chip-alerta {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(184, 147, 94, 0.16);
+  color: #8a6a34;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: help;
+}
+
+/* Linha que abre o formulario embaixo do aluno. */
+.linha-form > td {
+  background: rgba(236, 230, 221, 0.35);
+}
+
+/* Campo de valor dentro da tabela de precos. */
+.input-valor {
+  width: 120px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.ok-msg {
+  padding: 10px 14px;
+  border: 1px solid var(--ok);
+  border-left-width: 4px;
+  border-radius: var(--radius);
+  color: var(--ok);
+  margin-bottom: 14px;
+}
+
+/* Marcador de inadimplente na grade da Escala (F2) — o financeiro aparecendo
+   onde a recepcao ja olha todo dia, em vez de num relatorio que ninguem abre. */
+.aluno-chip.devendo {
+  border-color: var(--danger);
+}
+.ponto-devendo {
+  color: var(--danger);
+  font-size: 10px;
+  margin-right: 4px;
+  cursor: help;
+  line-height: 1;
+}
+
+/* Filtros da tela de Mensalidades (busca + situacao + vencimento). */
+.fin-filtros {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 0 16px;
+}
+.fin-filtros .search {
+  flex: 1 1 200px;
+  min-width: 160px;
+}
+.fin-filtros select {
+  flex: 0 1 auto;
+}

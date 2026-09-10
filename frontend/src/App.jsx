@@ -4,6 +4,7 @@ import Pacientes from "./components/Pacientes";
 import Aparelhos from "./components/Aparelhos";
 import Pilates from "./components/Pilates";
 import Escala from "./components/Escala";
+import Financeiro from "./components/Financeiro";
 import AdicionarMembro from "./components/AdicionarMembro";
 import SessaoExpirada from "./components/SessaoExpirada";
 import { getClaims, sair } from "./auth";
@@ -120,6 +121,16 @@ export default function App() {
         <button className={aba === "escala" ? "tab on" : "tab"} onClick={() => setAba("escala")}>
           Escala
         </button>
+        {/* Financeiro é só de admin (FIN-06). Esconder a aba é higiene de UI — quem
+            garante mesmo é o backend, que devolve 403 para quem não é admin. */}
+        {isAdmin && (
+          <button
+            className={aba === "financeiro" ? "tab on" : "tab"}
+            onClick={() => setAba("financeiro")}
+          >
+            Financeiro
+          </button>
+        )}
       </nav>
 
       <main className="content">
@@ -127,6 +138,7 @@ export default function App() {
         {aba === "aparelhos" && <Aparelhos clinic={clinic} />}
         {aba === "pilates" && <Pilates clinic={clinic} />}
         {aba === "escala" && <Escala clinic={clinic} />}
+        {aba === "financeiro" && isAdmin && <Financeiro clinic={clinic} />}
       </main>
 
       {mostrarMembro && <AdicionarMembro onFechar={() => setMostrarMembro(false)} />}

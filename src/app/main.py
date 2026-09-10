@@ -11,6 +11,7 @@ from app.routers import (
     avaliacoes,
     clinica,
     escala,
+    financeiro,
     imagens,
     membros,
     pacientes,
@@ -29,6 +30,7 @@ app.include_router(aparelhos.router)
 app.include_router(avaliacoes.router)
 app.include_router(sessoes.router)
 app.include_router(escala.router)
+app.include_router(financeiro.router)
 app.include_router(imagens.router)
 app.include_router(membros.router)
 app.include_router(clinica.router)
