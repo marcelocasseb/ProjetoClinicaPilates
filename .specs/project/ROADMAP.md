@@ -136,6 +136,47 @@ Cada clínica mantém seu próprio catálogo de aparelhos (multi-tenant, AD-007)
 
 ---
 
+## M5 — Financeiro (Fluxo de Caixa)
+
+**Goal:** O sistema deixar de saber só do atendimento e passar a saber do dinheiro — começando
+pelo livro-caixa mensal e terminando na mensalidade por aluno com inadimplência visível.
+**Target:** A clínica abandonar o caderno/planilha paralela.
+
+### Features
+
+**F1 — Livro-caixa mensal** - COMPLETE (código) ⏳ deploy pendente
+
+- Lançar entrada/saída, extrato do mês, entradas/saídas/saldo calculados no backend
+- Editar e cancelar (soft delete — histórico financeiro não se apaga)
+- Partição mensal `CLINIC#<id>#FIN#<AAAA-MM>`; dinheiro em **centavos inteiros**, nunca float (AD-014)
+- **Restrito a admin** (`require_admin` no `APIRouter`): 403 para membro em todas as rotas
+- FIN-01..12; **140 testes** novos (suíte 294 → **434**); `template.yaml` **não muda**
+- Front: aba **Financeiro** (só admin), navegação de mês, máscara de reais
+
+**F2 — Mensalidade por aluno e inadimplência** - COMPLETE (código) ⏳ deploy pendente ← **o diferencial**
+
+- Plano do aluno (`SK=FIN#PLANO#<pacienteId>`, na partição da clínica) + tabela de preços por frequência
+- Tela de mensalidades: **previsto × recebido × em aberto**, com os 5 status por aluno
+  (pago / parcial / em aberto / isento / sem plano)
+- **Dar baixa em 1 clique**: `data` = hoje, `competencia` = mês exibido → a mensalidade atrasada
+  cai no caixa do mês em que o dinheiro entrou E quita a competência certa
+- **Marcador de inadimplente na aba Escala** — o financeiro aparece onde a recepção já olha
+- Aviso de **divergência** plano × grade ("paga 2x, está em 3 horários")
+- Preço de aula avulsa e de reposição (esses sim por aula); o "por aula" do mensalista é
+  **calculado e read-only**, nunca digitado
+- Princípio fixado: **a Escala nunca é fonte da verdade do valor** — a fonte é o plano do aluno no
+  cadastro. Tudo funciona numa clínica que não usa a Escala (a lista vem do cadastro de pacientes)
+- GSI1 reindexado por **competência** (AD-015) — sem migração, a F1 não tinha sido deployada
+- FIN-13..20; **106 testes** novos (suíte 434 → **540**); `template.yaml` **não muda**
+
+**F3 — Relatório** - PLANNED
+
+- Categorias de despesa, comparativo mês a mês, gráfico
+- Export CSV para o contador
+- Custo real por aula (despesas ÷ aulas registradas)
+
+---
+
 ## Future Considerations
 
 - ~~Upload de fotos, laudos e anexos por paciente (S3)~~ — ✅ **entregue** (Imagens do Paciente, M2/4)

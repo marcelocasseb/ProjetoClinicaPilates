@@ -113,6 +113,47 @@ Registro de Sessões concluído (back + front no ar), **aprovado no UAT (2026-07
 
 ## Recent Decisions (Last 60 days)
 
+### AD-015: Mensalidades — plano na partição da clínica e GSI1 indexado por COMPETÊNCIA (2026-09-09)
+
+**Decision:** A F2 do financeiro (mensalidade por aluno e inadimplência) acrescenta:
+```
+PK = CLINIC#<clinicId>   SK = FIN#PLANO#<pacienteId>   (plano: valor mensal, dia venc., frequência)
+PK = CLINIC#<clinicId>   SK = FIN#CONFIG               (tabela de preços por frequência + avulsa/reposição)
+GSI1PK = CLINIC#<clinicId>#FIN#COMP#<competencia>      GSI1SK = <pacienteId>#<id>
+```
+- **O plano mora na partição da CLÍNICA, não sob a PK do paciente.** O acesso dominante é a tela de mensalidades, que precisa de **todos os planos de uma vez** → 1 Query. Sob a PK do paciente seria um `get_item` por aluno (30-60 por carregamento). Mesma lógica da escala (AD-013): modela-se para o acesso dominante.
+- **O GSI1 foi REINDEXADO por competência** (a F1 indexava por aluno). A pergunta da tela é "quem pagou a competência de setembro?" — e o pagamento de setembro pode ter sido feito em 3 de outubro, ou seja, mora na **partição de outubro**. Por competência a tela é **1 Query**; por aluno seria uma Query por aluno. **Custo de migração: zero — a F1 não chegou a ser deployada.**
+- **O índice exige `pacienteId` E `competencia`:** aula avulsa de um aluno tem paciente mas não tem competência — não é mensalidade e fica fora, de propósito. O `<id>` no fim do `GSI1SK` deixa o mesmo aluno pagar a competência em duas parcelas sem uma sobrescrever a outra.
+- **Valor zero é válido no plano** (bolsista/cortesia = `isento`), ao contrário do lançamento, onde zero é `400`. E `isento` é um estado **diferente** de `sem_plano` (ninguém definiu quanto ele paga): o primeiro está resolvido, o segundo é trabalho pendente. Tratar os dois como "R$ 0,00" esconderia serviço.
+- **Em aberto é somado por aluno** (`max(0, valor − pago)`), nunca `previsto − recebido`: um aluno que pagou 3 meses adiantado não pode mascarar a dívida de outro no total da clínica.
+- **A ESCALA NUNCA é fonte da verdade do valor.** A fonte é o plano no cadastro; a grade só (a) sugere a frequência ao definir o plano e (b) aponta divergência ("paga 2x, está em 3 horários"). Toda a tela funciona numa clínica que nunca usou a Escala — a lista vem do cadastro de pacientes.
+- **Marcador de inadimplente na aba Escala:** só para admin (membro tomaria 403) e com catch silencioso — falhar ali não pode derrubar a grade, que é o que a recepção veio ver.
+- **Custo da tela:** 4 Queries fixas (alunos, planos, pagamentos da competência, grade), nenhuma por aluno.
+
+**Reason:** O valor do produto está em cruzar dinheiro com alunos — coisa que nenhum app de caixa genérico faz, porque nenhum deles conhece a clínica. Para esse cruzamento ser barato, tanto o plano quanto o pagamento precisam ser legíveis "da clínica inteira de uma vez", e não aluno a aluno.
+**Trade-off:** "Histórico de pagamento de um aluno" deixou de ser 1 Query (virou filtro por competência). É aceitável: não é uma tela pedida, e a tela que existe é a do mês. A ficha do paciente também não traz mais o plano em 1 Query junto do perfil — mas o plano não é exibido lá. Descartadas: (a) plano sob a PK do paciente — N `get_item` por carregamento; (b) GSI por aluno — N Queries por carregamento; (c) computar "pago" só da partição do mês — perderia toda mensalidade atrasada, que é o caso comum numa clínica pequena.
+**Impact:** `repository_plano.py`, `schemas_plano.py`, rotas novas em `routers/financeiro.py`, reindexação em `repository_financeiro.py`; front `Mensalidades.jsx`, `TabelaPrecos.jsx`, sub-abas em `Financeiro.jsx`, marcador em `Escala.jsx`. FIN-13..20, **106 testes** (suíte 434 → **540**). `template.yaml` **não muda**.
+
+### AD-014: Fluxo de Caixa — partição MENSAL, dinheiro em centavos inteiros e financeiro restrito a admin (2026-09-09)
+
+**Decision:** O livro-caixa (F1 da feature `fluxo-caixa`) é modelado com **uma partição por mês** da clínica:
+```
+PK = CLINIC#<clinicId>#FIN#<AAAA-MM>      (mês derivado da `data` DO LANÇAMENTO, nunca de hoje)
+SK = LANC#<id>
+GSI1PK = CLINIC#<clinicId>#FIN#CLIENT#<pacienteId>   (só quando há pacienteId — esparso, prepara a F2)
+```
+- **A partição é a unidade da tela:** o usuário sempre olha um mês, então o extrato inteiro sai de **1 Query**. Uma clínica com 10 anos vira 120 partições pequenas, não uma partição quente que só cresce.
+- **Dinheiro é `int` em centavos, de ponta a ponta** (`valorCentavos`), inclusive no JSON da API — o front só formata na exibição. Float é **recusado com 400**, não arredondado. `Decimal` do boto3 resolveria a persistência mas voltaria como `Decimal` e viraria float na serialização JSON.
+- **A `data` NÃO entra no SK** (o desenho original da spec era `LANC#<data>#<id>`, mudado durante a implementação): com a data na chave, corrigir "05" para "03" viraria **movimentação de item** (put na chave nova + delete na antiga) — duas escritas não-atômicas num livro-caixa. Custo: ordenar por data na aplicação, barato porque a partição de um mês é pequena por construção.
+- **`require_admin` declarado no `APIRouter`**, não rota a rota: faturamento é dado sensível e uma rota nova acrescentada amanhã nasce protegida sem ninguém precisar lembrar.
+- **Soft delete** (ao contrário da escala, AD-013): o caixa é **histórico**, e "essa despesa foi lançada e cancelada por engano" é informação de auditoria que um delete físico apagaria.
+- **`pacienteId`/`competencia` já gravados na F1** mesmo sem tela que os use — dois atributos opcionais no mesmo `put_item`, custo zero, e evitam migração de backfill quando a F2 precisar do histórico por aluno.
+- **Zero mudança de infraestrutura:** `template.yaml` intacto, `GSI1` reaproveitado (já era esparso), `requirements.txt` inalterado → deploy é só código Lambda + front.
+
+**Reason:** O acesso dominante é "o caixa deste mês", e a competência é a chave natural desse acesso. Sobre o dinheiro: um centavo perdido num total destrói a confiança na tela inteira, e a única forma de garantir isso é nunca deixar float encostar no valor. Sobre o admin: abrir agora e fechar depois é vazamento; fechar agora e abrir depois é uma linha de código.
+**Trade-off:** "Todos os lançamentos do ano" exige N Queries (uma por mês) — aceitável, e é exatamente o recorte que o relatório da F3 vai querer paginar de qualquer forma. Mudar um lançamento de mês é proibido (`400`): cancela e relança, o que é bom que seja explícito porque mexe no fechamento de dois meses. Descartadas: (a) partição única de financeiro por clínica — partição quente e sem recorte natural; (b) valor em `Decimal`/float — perda de centavo na serialização.
+**Impact:** `schemas_financeiro.py`, `repository_financeiro.py`, `routers/financeiro.py`, fiação no `main.py`; front `Financeiro.jsx`, `financeiroApi`, helpers de dinheiro em `utils/format.js`, aba em `App.jsx`. FIN-01..12, **140 testes** (suíte 294 → **434**). `template.yaml` **não muda**.
+
 ### AD-013: Escala semanal — 1 item por matrícula na partição da clínica, com remoção física (2026-08-28)
 
 **Decision:** A grade fixa da semana é modelada como **um item por matrícula** (aluno × dia × horário) na **partição de nível clínica** — a mesma de `METADATA` e `APARELHO#<id>`:
