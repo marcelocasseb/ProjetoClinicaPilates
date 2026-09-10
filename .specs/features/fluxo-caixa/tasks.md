@@ -202,7 +202,7 @@ e confirmar **403 com usuário membro**.
 | C4 — Máscara de dinheiro | ✅ Done | — | `maskMoeda`/`centavosParaBR`/`brParaCentavos` + navegação de mês; 21 casos conferidos no Node |
 | C5 — Aba Financeiro | ✅ Done | — | totais, `‹ mês ›`, formulário, extrato, cancelar; `npm run build` OK |
 | C6 — Fiação do front | ✅ Done | — | aba só com `isAdmin` (const que já existia no `App.jsx`); lint sem erro novo |
-| Deploy | ⏳ | — | usuário (back sem mudança de infra + front no CloudFront) |
+| Deploy | ✅ Done | — | **no ar 2026-09-09**: changeset só `Modify` na Lambda e na API (Replacement: False) |
 
 **Requirements coverage:** FIN-01..12 implementados; back coberto por **140 testes novos**
 (suíte 294 → **434**, `pytest -q` verde).

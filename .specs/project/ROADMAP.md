@@ -144,7 +144,7 @@ pelo livro-caixa mensal e terminando na mensalidade por aluno com inadimplência
 
 ### Features
 
-**F1 — Livro-caixa mensal** - COMPLETE (código) ⏳ deploy pendente
+**F1 — Livro-caixa mensal** - COMPLETE ✅ (no ar 2026-09-09)
 
 - Lançar entrada/saída, extrato do mês, entradas/saídas/saldo calculados no backend
 - Editar e cancelar (soft delete — histórico financeiro não se apaga)
@@ -153,7 +153,7 @@ pelo livro-caixa mensal e terminando na mensalidade por aluno com inadimplência
 - FIN-01..12; **140 testes** novos (suíte 294 → **434**); `template.yaml` **não muda**
 - Front: aba **Financeiro** (só admin), navegação de mês, máscara de reais
 
-**F2 — Mensalidade por aluno e inadimplência** - COMPLETE (código) ⏳ deploy pendente ← **o diferencial**
+**F2 — Mensalidade por aluno e inadimplência** - COMPLETE ✅ (no ar 2026-09-09) ← **o diferencial**
 
 - Plano do aluno (`SK=FIN#PLANO#<pacienteId>`, na partição da clínica) + tabela de preços por frequência
 - Tela de mensalidades: **previsto × recebido × em aberto**, com os 5 status por aluno

@@ -2,7 +2,7 @@
 
 Continuação de [`tasks.md`](tasks.md) (F1). Spec: [`spec-f2.md`](spec-f2.md).
 
-**Status:** ✅ Implementada e verde. ⏳ Deploy e teste de browser pendentes.
+**Status:** ✅ Implementada, verde e **em produção desde 2026-09-09**. ⏳ Teste de browser pendente.
 
 **⚠️ Infra:** continua **sem alterar `template.yaml`** — o `GSI1` já existia e já era
 esparso; a F2 só mudou o **conteúdo** das chaves que a F1 escrevia nele. Como a F1 **não
@@ -190,7 +190,7 @@ conversão de encoding. Conferido: a linha é ASCII puro.
 | D6 — Preços + sub-abas | ✅ Done | — | por-aula derivado, nunca digitado |
 | D7 — Marcador na Escala | ✅ Done | — | degrada em silêncio para membro |
 | D8 — Ajustes do feedback | ✅ Done | — | bug do Caixa desatualizado; forma de pagamento na baixa; filtros (nome/situação/vencimento) |
-| Deploy | ⏳ | — | usuário (back sem mudança de infra + front no CloudFront) |
+| Deploy | ✅ Done | — | **no ar 2026-09-09**: back via atalho sem Docker + front no CloudFront |
 
 **Requirements coverage:** FIN-13..20 implementados. Suíte **434 → 540 testes** (106 novos),
 `pytest -q` verde em **115s**.
