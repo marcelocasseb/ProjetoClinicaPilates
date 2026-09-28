@@ -35,7 +35,14 @@
       "Bash(\"C:/Program Files/Amazon/AWSSAMCLI/bin/sam.cmd\" deploy --no-confirm-changeset --no-fail-on-empty-changeset)",
       "Bash(\"C:/Program Files/Amazon/AWSSAMCLI/bin/sam.cmd\" validate --lint)",
       "Bash(./.venv/Scripts/python.exe -m pytest -q tests/test_schemas_aparelho.py)",
-      "Bash(./.venv/Scripts/python.exe -m pytest -q tests/test_repository_aparelho.py)"
+      "Bash(./.venv/Scripts/python.exe -m pytest -q tests/test_repository_aparelho.py)",
+      "Bash(aws cloudformation execute-change-set --change-set-name arn:aws:cloudformation:us-east-1:912689366270:changeSet/samcli-deploy*)",
+      "Bash(aws cloudformation wait stack-update-complete --stack-name clinica-pilates)",
+      "Bash(aws s3 sync frontend/dist s3://clinica-pilates-frontend-sitebucket-n6oomystbesc *)",
+      "Bash(aws s3 cp frontend/dist/index.html s3://clinica-pilates-frontend-sitebucket-n6oomystbesc/index.html *)",
+      "Bash(aws cloudfront create-invalidation --distribution-id EGYNGZONKGVLT *)"
+
+
     ]
   }
 }
