@@ -7,8 +7,8 @@ clinicId + a senha temporária para repasse fora de banda. Nada disso fica expos
 na web — o nascimento de uma clínica só acontece por este comando.
 
 Uso:
-    python scripts/criar_clinica.py --email dono@zen.com --clinica "Clínica Zen" \
-        --user-pool-id us-east-1_XXXX
+    python scripts/criar_clinica.py --email dono@zen.com --nome "Ana Souza" \
+        --clinica "Clínica Zen" --user-pool-id us-east-1_XXXX
 
 Descubra o --user-pool-id no output da stack:
     aws cloudformation describe-stacks --stack-name clinica-pilates \
@@ -23,8 +23,9 @@ import boto3
 # Permite rodar direto (python scripts/criar_clinica.py) achando o pacote em src/.
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
-from app.cognito_admin import EmailJaExiste, criar_clinica_com_admin  # noqa: E402
+from app.cognito_admin import ROLE_ADMIN, EmailJaExiste, criar_clinica_com_admin  # noqa: E402
 from app.repository_clinica import ClinicaRepository  # noqa: E402
+from app.schemas_membro import valida_nome  # noqa: E402
 
 
 def main() -> int:
@@ -32,6 +33,9 @@ def main() -> int:
         description="Cria uma clínica nova e seu primeiro admin no Cognito."
     )
     parser.add_argument("--email", required=True, help="E-mail do admin da clínica.")
+    parser.add_argument(
+        "--nome", required=True, help="Nome do admin (aparece na saudação do app)."
+    )
     parser.add_argument(
         "--clinica", required=True, help="Nome da clínica (só para exibição/log)."
     )
@@ -58,6 +62,11 @@ def main() -> int:
         "clinica-pilates-ClinicaTable-8YQAEIFAKZGE",
     )
     args = parser.parse_args()
+    try:
+        nome = valida_nome(args.nome)
+    except ValueError as exc:
+        print(f"ERRO: {exc}", file=sys.stderr)
+        return 1
 
     # A região vai embutida no pool id (ex.: "us-east-1_ABC") — usa ela no cliente
     # para não depender do default region da AWS local do operador.
@@ -67,6 +76,7 @@ def main() -> int:
     try:
         res = criar_clinica_com_admin(
             args.email,
+            nome=nome,
             user_pool_id=args.user_pool_id,
             client=cognito,
             clinic_id=args.clinic_id,
@@ -76,16 +86,20 @@ def main() -> int:
         print(f"ERRO: {exc}", file=sys.stderr)
         return 1
 
-    # Grava o nome de exibição da clínica (metadados no DynamoDB), se a tabela foi
-    # informada — é o que o app mostra no topo em vez do clinicId.
+    # Grava o nome de exibição da clínica e o registro do admin como membro
+    # (DynamoDB), se a tabela foi informada — o nome da clínica é o que o app
+    # mostra no topo em vez do clinicId.
     if args.table_name:
-        ClinicaRepository(table_name=args.table_name, ddb=boto3.resource("dynamodb", region_name=regiao)).set_nome(
-            res["clinic_id"], args.clinica
+        repo = ClinicaRepository(
+            table_name=args.table_name, ddb=boto3.resource("dynamodb", region_name=regiao)
         )
+        repo.set_nome(res["clinic_id"], args.clinica)
+        repo.set_membro(res["clinic_id"], res["email"], nome, ROLE_ADMIN)
 
     print("Clínica criada com sucesso.")
     print(f"  Clínica:          {args.clinica}")
     print(f"  clinicId:         {res['clinic_id']}")
+    print(f"  Admin (nome):     {nome}")
     print(f"  Admin (e-mail):   {res['email']}")
     print(f"  Senha temporária: {res['senha_temporaria']}")
     print()

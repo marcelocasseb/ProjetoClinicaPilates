@@ -32,7 +32,7 @@ def test_criar_clinica_com_admin_carimba_clinicid_e_role():
     pool_id = _criar_pool(cognito)
 
     res = cognito_admin.criar_clinica_com_admin(
-        "dono@zen.com", user_pool_id=pool_id, client=cognito
+        "dono@zen.com", nome="Ana Souza", user_pool_id=pool_id, client=cognito
     )
 
     assert res["clinic_id"].startswith("clinic-")
@@ -42,6 +42,7 @@ def test_criar_clinica_com_admin_carimba_clinicid_e_role():
     attrs = _atributos(cognito, pool_id, "dono@zen.com")
     assert attrs["custom:clinicId"] == res["clinic_id"]
     assert attrs["custom:role"] == cognito_admin.ROLE_ADMIN
+    assert attrs["name"] == "Ana Souza"
 
 
 @mock_aws
@@ -53,6 +54,7 @@ def test_criar_usuario_membro_usa_clinicid_dado():
         "membro@zen.com",
         "clinic-abc",
         cognito_admin.ROLE_MEMBRO,
+        nome="Bia Lima",
         user_pool_id=pool_id,
         client=cognito,
     )
@@ -61,6 +63,8 @@ def test_criar_usuario_membro_usa_clinicid_dado():
     attrs = _atributos(cognito, pool_id, "membro@zen.com")
     assert attrs["custom:clinicId"] == "clinic-abc"
     assert attrs["custom:role"] == cognito_admin.ROLE_MEMBRO
+    assert attrs["name"] == "Bia Lima"
+    assert res["nome"] == "Bia Lima"
 
 
 @mock_aws
@@ -70,13 +74,13 @@ def test_email_duplicado_levanta_erro_claro():
 
     cognito_admin.criar_usuario(
         "dup@zen.com", "clinic-x", cognito_admin.ROLE_MEMBRO,
-        user_pool_id=pool_id, client=cognito,
+        nome="X", user_pool_id=pool_id, client=cognito,
     )
 
     with pytest.raises(cognito_admin.EmailJaExiste):
         cognito_admin.criar_usuario(
             "dup@zen.com", "clinic-x", cognito_admin.ROLE_MEMBRO,
-            user_pool_id=pool_id, client=cognito,
+            nome="X", user_pool_id=pool_id, client=cognito,
         )
 
 

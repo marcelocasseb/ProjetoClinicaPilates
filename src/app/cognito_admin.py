@@ -46,11 +46,15 @@ def criar_usuario(
     clinic_id: str,
     role: str,
     *,
+    nome: str,
     user_pool_id: str,
     client=None,
     enviar_email: bool = False,
 ) -> dict:
-    """Cria um usuário carimbando clínica e papel; devolve `{email, senha_temporaria}`.
+    """Cria um usuário carimbando clínica e papel; devolve `{nome, email, senha_temporaria}`.
+
+    `nome` vai no atributo padrão `name` — o pool já o expõe em Read/WriteAttributes,
+    então ele chega no idToken sem mudança de infra.
 
     `client` permite injetar um cliente boto3 (testes com moto). Levanta
     `EmailJaExiste` se o e-mail já estiver no pool.
@@ -69,6 +73,7 @@ def criar_usuario(
         UserAttributes=[
             {"Name": "email", "Value": email},
             {"Name": "email_verified", "Value": "true"},
+            {"Name": "name", "Value": nome},
             {"Name": "custom:clinicId", "Value": clinic_id},
             {"Name": "custom:role", "Value": role},
         ],
@@ -82,12 +87,13 @@ def criar_usuario(
     except cognito.exceptions.UsernameExistsException as exc:
         raise EmailJaExiste(f"O e-mail {email} já está cadastrado.") from exc
 
-    return {"email": email, "senha_temporaria": senha}
+    return {"nome": nome, "email": email, "senha_temporaria": senha}
 
 
 def criar_clinica_com_admin(
     email: str,
     *,
+    nome: str,
     user_pool_id: str,
     client=None,
     clinic_id: Optional[str] = None,
@@ -104,6 +110,7 @@ def criar_clinica_com_admin(
         email,
         novo_clinic_id,
         ROLE_ADMIN,
+        nome=nome,
         user_pool_id=user_pool_id,
         client=client,
         enviar_email=enviar_email,

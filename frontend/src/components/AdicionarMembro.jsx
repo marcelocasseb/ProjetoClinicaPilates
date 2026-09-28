@@ -5,6 +5,7 @@ import { membrosApi } from "../api";
 // clínica do token do admin (o front não envia clinicId). A senha temporária é
 // exibida ao admin para repasse fora de banda (D2) — o Cognito não manda e-mail.
 export default function AdicionarMembro({ onFechar }) {
+  const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [erro, setErro] = useState("");
   const [carregando, setCarregando] = useState(false);
@@ -15,7 +16,10 @@ export default function AdicionarMembro({ onFechar }) {
     setErro("");
     setCarregando(true);
     try {
-      const res = await membrosApi.create({ email: email.trim().toLowerCase() });
+      const res = await membrosApi.create({
+        nome: nome.trim(),
+        email: email.trim().toLowerCase(),
+      });
       setCriado(res);
     } catch (err) {
       setErro(err.message || "Não foi possível criar o membro.");
@@ -32,8 +36,17 @@ export default function AdicionarMembro({ onFechar }) {
         {!criado ? (
           <form onSubmit={criar}>
             <p className="muted">
-              Informe o e-mail. Ele nasce na sua clínica e define a senha no 1º acesso.
+              Informe o nome e o e-mail. Ele nasce na sua clínica e define a senha no 1º acesso.
             </p>
+            <input
+              type="text"
+              placeholder="Nome completo"
+              value={nome}
+              onChange={(e) => setNome(e.target.value)}
+              maxLength={80}
+              autoFocus
+              required
+            />
             <input
               type="email"
               placeholder="E-mail do membro"
@@ -54,7 +67,7 @@ export default function AdicionarMembro({ onFechar }) {
         ) : (
           <div>
             <p>
-              Membro <strong>{criado.email}</strong> criado. Repasse a senha temporária
+              Membro <strong>{criado.nome}</strong> ({criado.email}) criado. Repasse a senha temporária
               (o sistema não envia e-mail):
             </p>
             <p className="senha-temp">{criado.senha_temporaria}</p>
