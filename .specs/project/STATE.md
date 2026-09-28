@@ -57,10 +57,11 @@ Registro de Sessões concluído (back + front no ar), **aprovado no UAT (2026-07
 - Template: `frontend-infra.yaml` (CloudFormation puro, sem Docker/SAM)
 - **Publicar/atualizar o site** (sem Docker) — ⚠️ headers de cache IMPORTAM (senão o navegador segura um `index.html` velho apontando pra JS antigo → "não atualiza"):
   1. `cd frontend; npm run build`
-  2. assets com hash = imutáveis (cache longo), **exceto** o index.html:
-     `aws s3 sync frontend/dist s3://clinica-pilates-frontend-sitebucket-n6oomystbesc --delete --exclude "index.html" --cache-control "public, max-age=31536000, immutable"`
-  3. index.html sempre revalidado:
+  2. assets com hash = imutáveis (cache longo), **exceto** o index.html e o version.json:
+     `aws s3 sync frontend/dist s3://clinica-pilates-frontend-sitebucket-n6oomystbesc --delete --exclude "index.html" --exclude "version.json" --cache-control "public, max-age=31536000, immutable"`
+  3. index.html e version.json sempre revalidados (o version.json é o que as abas abertas consultam para mostrar "Nova versão disponível — Atualizar"; com cache longo o aviso nunca apareceria):
      `aws s3 cp frontend/dist/index.html s3://clinica-pilates-frontend-sitebucket-n6oomystbesc/index.html --cache-control "no-cache, must-revalidate" --content-type "text/html"`
+     `aws s3 cp frontend/dist/version.json s3://clinica-pilates-frontend-sitebucket-n6oomystbesc/version.json --cache-control "no-cache, must-revalidate" --content-type "application/json"`
   4. `aws cloudfront create-invalidation --distribution-id EGYNGZONKGVLT --paths "/*"` (limpa o cache do CDN)
 - Custo: dentro do free tier (~$0). Budget de $5/mês criado (alerta e-mail em 80%/100%).
 - ⚠️ Link ABERTO (sem login ainda) — dados de demo Zen/Corpo semeados. Autenticação real = M3 (Cognito).

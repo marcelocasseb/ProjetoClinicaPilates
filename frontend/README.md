@@ -44,7 +44,9 @@ Faça login com um usuário Cognito de verdade.
 
 ```bash
 npm run build
-aws s3 sync dist s3://clinica-pilates-frontend-sitebucket-n6oomystbesc --delete
+aws s3 sync dist s3://clinica-pilates-frontend-sitebucket-n6oomystbesc --delete --exclude "index.html" --exclude "version.json" --cache-control "public, max-age=31536000, immutable"
+aws s3 cp dist/index.html s3://clinica-pilates-frontend-sitebucket-n6oomystbesc/index.html --cache-control "no-cache, must-revalidate" --content-type "text/html"
+aws s3 cp dist/version.json s3://clinica-pilates-frontend-sitebucket-n6oomystbesc/version.json --cache-control "no-cache, must-revalidate" --content-type "application/json"
 aws cloudfront create-invalidation --distribution-id EGYNGZONKGVLT --paths "/*"
 ```
 
