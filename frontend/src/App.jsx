@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import Login from "./components/Login";
+import Inicio from "./components/Inicio";
 import Pacientes from "./components/Pacientes";
 import Aparelhos from "./components/Aparelhos";
 import Pilates from "./components/Pilates";
@@ -26,7 +27,8 @@ function clinicDasClaims(claims) {
 export default function App() {
   const [clinic, setClinic] = useState(null);
   const [clinicNome, setClinicNome] = useState(null); // nome de exibição (do backend)
-  const [aba, setAba] = useState("pacientes");
+  const [aba, setAba] = useState("inicio");
+  const [secaoFin, setSecaoFin] = useState("caixa"); // sub-aba ao chegar pelo Início
   const [mostrarMembro, setMostrarMembro] = useState(false);
   const [sessaoCaiu, setSessaoCaiu] = useState(false); // modal de re-login por cima da tela
 
@@ -78,6 +80,19 @@ export default function App() {
     sair();
     setClinic(null);
     setClinicNome(null);
+    setAba("inicio");
+  }
+
+  // Atalhos da tela inicial. "financeiro" vindo do Início abre direto nas
+  // mensalidades (é o que os cards de vencimento mostram).
+  function navegar(destino) {
+    if (destino === "financeiro") setSecaoFin("mensalidades");
+    setAba(destino);
+  }
+
+  function abrirAba(destino) {
+    if (destino === "financeiro") setSecaoFin("caixa");
+    setAba(destino);
   }
 
   if (!clinic) return <Login onLogin={aoLogar} />;
@@ -109,6 +124,9 @@ export default function App() {
       </header>
 
       <nav className="tabs">
+        <button className={aba === "inicio" ? "tab on" : "tab"} onClick={() => abrirAba("inicio")}>
+          Início
+        </button>
         <button className={aba === "pacientes" ? "tab on" : "tab"} onClick={() => setAba("pacientes")}>
           Pacientes
         </button>
@@ -126,7 +144,7 @@ export default function App() {
         {isAdmin && (
           <button
             className={aba === "financeiro" ? "tab on" : "tab"}
-            onClick={() => setAba("financeiro")}
+            onClick={() => abrirAba("financeiro")}
           >
             Financeiro
           </button>
@@ -134,11 +152,12 @@ export default function App() {
       </nav>
 
       <main className="content">
+        {aba === "inicio" && <Inicio clinic={clinic} onNavegar={navegar} />}
         {aba === "pacientes" && <Pacientes clinic={clinic} />}
         {aba === "aparelhos" && <Aparelhos clinic={clinic} />}
         {aba === "pilates" && <Pilates clinic={clinic} />}
         {aba === "escala" && <Escala clinic={clinic} />}
-        {aba === "financeiro" && isAdmin && <Financeiro clinic={clinic} />}
+        {aba === "financeiro" && isAdmin && <Financeiro key={secaoFin} clinic={clinic} secaoInicial={secaoFin} />}
       </main>
 
       {mostrarMembro && <AdicionarMembro onFechar={() => setMostrarMembro(false)} />}

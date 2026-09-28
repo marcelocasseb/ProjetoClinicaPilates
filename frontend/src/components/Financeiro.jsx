@@ -44,10 +44,10 @@ function formBranco(mes) {
   };
 }
 
-export default function Financeiro({ clinic }) {
+export default function Financeiro({ clinic, secaoInicial = "caixa" }) {
   // O mês é estado do SHELL, não de cada sub-tela: trocar de "Caixa" para
   // "Mensalidades" mantém o mês que a pessoa estava olhando.
-  const [secao, setSecao] = useState("caixa");
+  const [secao, setSecao] = useState(secaoInicial);
   const [mes, setMes] = useState(mesAtual());
   const [caixa, setCaixa] = useState(CAIXA_VAZIO);
   const [carregando, setCarregando] = useState(true);
