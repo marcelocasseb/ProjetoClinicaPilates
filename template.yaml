@@ -65,6 +65,16 @@ Resources:
       ExplicitAuthFlows:
         - ALLOW_USER_PASSWORD_AUTH     # login email+senha via fetch puro (sem lib no front)
         - ALLOW_REFRESH_TOKEN_AUTH
+      # Sessão de no máximo 24h: o idToken (1h) é renovado em silêncio pelo front,
+      # mas o refreshToken vence 1 dia após o login com senha — aí pede login de novo.
+      # (O Cognito não emite refreshToken novo na renovação, então o prazo não estica.)
+      RefreshTokenValidity: 1
+      IdTokenValidity: 1
+      AccessTokenValidity: 1
+      TokenValidityUnits:
+        RefreshToken: days
+        IdToken: hours
+        AccessToken: hours
       # O usuário lê a própria clínica/papel (viajam no idToken)...
       ReadAttributes:
         - email

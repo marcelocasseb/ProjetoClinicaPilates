@@ -79,7 +79,8 @@ export async function definirNovaSenha(email, session, novaSenha) {
 // Renova o idToken com o refreshToken guardado (fluxo REFRESH_TOKEN_AUTH, já
 // habilitado no App Client). O idToken do Cognito vale 1 hora — sem esta renovação
 // o usuário era expulso a cada hora exata de uso, perdendo o que estava digitando.
-// O refreshToken vale 30 dias, então na prática a sessão deixa de cair no expediente.
+// O refreshToken vale 24h (template.yaml): a sessão não cai no expediente, mas o
+// login com senha é pedido de novo uma vez por dia.
 // Retorna as claims novas, ou `null` se não deu (refresh vencido/revogado).
 export async function renovarSessao() {
   const s = getSessao();
