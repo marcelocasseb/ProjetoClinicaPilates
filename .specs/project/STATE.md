@@ -55,6 +55,7 @@ Registro de Sessões concluído (back + front no ar), **aprovado no UAT (2026-07
 - Bucket S3 (privado): `clinica-pilates-frontend-sitebucket-n6oomystbesc`
 - CloudFront DistributionId: `EGYNGZONKGVLT` (OAC, HTTPS, PriceClass_All)
 - Template: `frontend-infra.yaml` (CloudFormation puro, sem Docker/SAM)
+- **Deploy em 1 comando (preferir):** `powershell -ExecutionPolicy Bypass -File scripts\deploy-front.ps1` (front: build + upload com os headers certos + invalidação + confere `version.json` no ar) e `scripts\deploy-back.ps1` (backend sem Docker: copia `src/app` para `.aws-sam/build`, change set, aplica, confere `/health`; `-SoMostrar` só cria o change set). Os passos manuais abaixo são o que os scripts fazem.
 - **Publicar/atualizar o site** (sem Docker) — ⚠️ headers de cache IMPORTAM (senão o navegador segura um `index.html` velho apontando pra JS antigo → "não atualiza"):
   1. `cd frontend; npm run build`
   2. assets com hash = imutáveis (cache longo), **exceto** o index.html e o version.json:

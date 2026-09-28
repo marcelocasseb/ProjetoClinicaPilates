@@ -74,7 +74,7 @@ flowchart LR
     cf --> user(["👤 Usuário"])
 ```
 
-Comandos (também no `STATE.md`):
+Em um comando: `powershell -ExecutionPolicy Bypass -File scripts\deploy-front.ps1` (backend: `scripts\deploy-back.ps1`, sem Docker enquanto `src/requirements.txt` não mudar). Os passos que o script faz (também no `STATE.md`):
 ```bash
 cd frontend
 npm run build

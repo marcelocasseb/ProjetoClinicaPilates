@@ -42,6 +42,9 @@ Faça login com um usuário Cognito de verdade.
 
 ## Publicar
 
+Na raiz do projeto: `powershell -ExecutionPolicy Bypass -File scripts\deploy-front.ps1`
+(faz os passos abaixo e confere a versão no ar).
+
 ```bash
 npm run build
 aws s3 sync dist s3://clinica-pilates-frontend-sitebucket-n6oomystbesc --delete --exclude "index.html" --exclude "version.json" --cache-control "public, max-age=31536000, immutable"
