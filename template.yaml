@@ -114,6 +114,17 @@ Resources:
               audience:
                 - !Ref ClinicaUserPoolClient
         DefaultAuthorizer: CognitoJwt
+      # Log de acesso (rastreio): quem (sub/email do JWT), quando, rota e status de
+      # cada chamada. Não guarda o corpo — só responde "quem mexeu e quando".
+      AccessLogSettings:
+        DestinationArn: !GetAtt ClinicaApiAccessLogs.Arn
+        Format: '{"requestId":"$context.requestId","time":"$context.requestTime","method":"$context.httpMethod","path":"$context.path","routeKey":"$context.routeKey","status":"$context.status","sub":"$context.authorizer.claims.sub","email":"$context.authorizer.claims.email","ip":"$context.identity.sourceIp","latencyMs":"$context.responseLatency"}'
+
+  ClinicaApiAccessLogs:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /clinica-pilates/api-access
+      RetentionInDays: 365
 
   # --- S3: imagens dos pacientes (feature imagens-paciente / IMG-08) ---
   # Bucket PRIVADO. O binário nunca passa pela Lambda: o navegador sobe/baixa
@@ -227,6 +238,9 @@ Resources:
     Type: AWS::DynamoDB::Table
     Properties:
       BillingMode: PAY_PER_REQUEST
+      # Backup contínuo: restaura a tabela para qualquer segundo dos últimos 35 dias.
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
       AttributeDefinitions:
         - AttributeName: PK
           AttributeType: S
