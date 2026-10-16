@@ -43,7 +43,7 @@ da API em `/clinica-pilates/api-access`, guardado por 1 ano.
   - [src/app/repository_aparelho.py](src/app/repository_aparelho.py)
   - [src/app/repository_clinica.py](src/app/repository_clinica.py): `list_membros`
 - **Já paginam** (usar como modelo): `repository_escala.py`, `repository_financeiro.py`,
-  `repository_plano.py`.
+  `repository_plano.py`, `repository_agenda.py`, `repository_profissional.py`.
 - **Depois:** se alguma clínica passar de alguns milhares de pacientes, avaliar paginação também
   na tela (carregar aos poucos) em vez de trazer tudo.
 
@@ -158,6 +158,49 @@ Com mais clínicas, deixam de ser opcionais:
   como **controladora** dos dados;
 - criptografia: a tabela e o bucket já são criptografados pela AWS. Conferir se basta ou se vale
   chave própria (KMS).
+
+---
+
+## 6. Banco de dados: DynamoDB ou relacional? (análise de 16/10/2026)
+
+Tudo fica numa **tabela única** do DynamoDB, separada por prefixos na chave (`CLIENT#`, `ESCALA#`,
+`AGENDA#`, `PROFISSIONAL#`, `FIN#`...). **Decisão: não migrar agora.**
+
+### Por que o DynamoDB ainda serve
+- **Custo quase zero** no volume atual; um relacional na AWS (RDS/Aurora) custa no mínimo uns
+  US$ 15 a 50 por mês, mesmo parado.
+- **Nada para administrar.** Lambda + relacional exige VPC e gerenciador de conexões (RDS Proxy),
+  com mais custo e mais coisas que podem quebrar.
+- **As telas atuais têm consultas previsíveis** ("agenda da semana", "caixa do mês", "escala"),
+  cada uma resolvida com uma Query rápida.
+- **Backup contínuo de 35 dias** já ativo.
+
+### Onde ele já cobra o preço
+- **Sem join:** nomes de paciente e profissional são cruzados no código (o router busca a lista
+  e monta o resultado).
+- **Relatórios cruzados são difíceis:** "quanto cada profissional faturou", "quem mais faltou",
+  "ocupação por horário" não têm consulta pronta; cada pergunta nova pede um índice novo (GSI) ou
+  ler tudo e somar no código.
+- **Busca flexível limitada:** parte do nome, vários filtros, ordenações diferentes.
+
+### Sinais de que chegou a hora de migrar
+1. Relatórios e painéis cruzando agenda, profissionais e financeiro com filtros variados.
+2. Muitas clínicas e volume grande, com consultas de análise lentas ou caras.
+3. Integrações que esperam SQL (ERP, nota fiscal, BI, contabilidade).
+
+**Destino, se migrar:** PostgreSQL sem servidor (Neon, Supabase ou Aurora Serverless) para manter
+o custo baixo. Os repositórios (`src/app/repository_*.py`) já isolam o banco: a migração é
+trabalhosa, mas organizada (trocar a implementação de cada repositório + script de cópia dos dados).
+
+### Tela de relatórios (próximo passo planejado)
+Antes de migrar o banco por causa de relatórios, avaliar nesta ordem:
+1. **Relatórios simples no próprio backend:** para um período curto (um mês) e uma clínica, ler
+   os itens do período (Query por prefixo, já paginada) e somar em Python. Atende bem o volume
+   atual: faturamento por profissional, por forma de pagamento, marcações e pagos x não pagos.
+2. **Exportação para análise:** export diário da tabela para o S3 (Export to S3 do DynamoDB, que
+   exige o PITR já ativo) e consultas SQL pelo Athena. Custa centavos e não muda o banco do sistema.
+3. **Migrar para PostgreSQL** só se os relatórios virarem o centro do produto (filtros livres,
+   muitos meses, muitas clínicas).
 
 ---
 
