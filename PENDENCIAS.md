@@ -202,6 +202,34 @@ Antes de migrar o banco por causa de relatórios, avaliar nesta ordem:
 3. **Migrar para PostgreSQL** só se os relatórios virarem o centro do produto (filtros livres,
    muitos meses, muitas clínicas).
 
+### Relatórios pedidos (16/10/2026) e o que falta decidir
+| Relatório | Situação |
+|---|---|
+| Fluxo de caixa em PDF (um ou vários meses) | Viável já: o caixa é particionado por mês; PDF gerado no navegador |
+| Relação de pacientes da clínica (PDF/planilha) | Viável, mas antes corrigir a paginação de `list_ativos` (item 1.3) |
+| Atendimentos por profissional no mês | Viável, depende das decisões abaixo |
+| Pacientes que passaram na semana | Viável, depende das decisões abaixo |
+
+**Decidido:** os relatórios de atendimento incluem **Agenda e Pilates** (aulas registradas).
+
+**Decidir quando formos fazer:**
+1. **Retenção da Agenda (hoje 4 meses, via TTL):** relatórios de histórico longo perdem os dados.
+   Opções: aumentar a retenção ou gravar um **resumo mensal permanente** antes de expirar.
+2. **Comparecimento:** a Agenda sabe quem foi *marcado*, não quem *compareceu*. Adicionar status
+   por marcação (**Compareceu / Faltou / Desmarcou**); sem isso, falta conta como atendimento.
+   De quebra, gera o relatório de faltas.
+3. **"Por clínicas":** cada clínica vendo os seus pacientes (simples) ou o dono do sistema vendo
+   todas juntas (exige um perfil "super admin" novo e cuidado com LGPD; hoje o isolamento por
+   clínica é proposital).
+4. **Aulas do Pilates por data/profissional:** as sessões (`SESSION#`) ficam na partição de cada
+   paciente, então somar por período exige ler paciente a paciente. Solução: indexar as sessões
+   por mês no **GSI1 que já existe** (esparso, hoje só usado pelas mensalidades), com
+   `GSI1PK = CLINIC#<id>#SESSAO#<AAAA-MM>` e `GSI1SK = <data>#<id>`, gravado no create/update de
+   `repository_sessao.py` + um script único que preenche as sessões antigas. Não precisa de índice
+   novo nem mexe na tabela. Atenção: o `profissional` da sessão é **texto livre** (diferente do
+   cadastro de profissionais da Agenda) — decidir se a aula passa a escolher do cadastro, senão
+   "Ana" e "Dra. Ana" contam como pessoas diferentes.
+
 ---
 
 ## Ordem sugerida
