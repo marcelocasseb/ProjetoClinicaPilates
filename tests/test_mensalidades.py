@@ -83,7 +83,7 @@ def test_alunos_ordenados_por_nome(dynamo_table, as_user):
     as_user(ADMIN)
     for nome in ("Zeca", "ana", "Bruno"):
         _aluno(nome)
-    assert [a["nome"] for a in _mensalidades()["alunos"]] == ["ana", "Bruno", "Zeca"]
+    assert [a["nome"] for a in _mensalidades()["alunos"]] == ["Ana", "Bruno", "Zeca"]
 
 
 def test_aluno_removido_some_da_lista(dynamo_table, as_user):

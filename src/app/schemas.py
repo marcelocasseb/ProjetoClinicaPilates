@@ -17,6 +17,8 @@ from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, field_validator, model_validator
 
+from app import normaliza
+
 _EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 _DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
@@ -55,6 +57,18 @@ class Endereco(BaseModel):
             return v
         v = v.strip()
         return v or None
+
+    @field_validator("logradouro", "bairro", "cidade")
+    @classmethod
+    def _padroniza_nome_de_lugar(cls, v):
+        """`"RUA DAS FLORES"` → `"Rua das Flores"`; `"BELÉM"` → `"Belém"`."""
+        return normaliza.nome_proprio(v)
+
+    @field_validator("numero", "complemento")
+    @classmethod
+    def _padroniza_espacos(cls, v):
+        """Número/complemento são códigos ("AP 12B"): só os espaços são arrumados."""
+        return normaliza.espacos(v)
 
     @field_validator("cep")
     @classmethod
@@ -105,8 +119,14 @@ class PacienteBase(BaseModel):
 
     @field_validator("nome")
     @classmethod
-    def _trim_nome(cls, v):
-        return v.strip()
+    def _padroniza_nome(cls, v):
+        """`"MARIA  da silva"` → `"Maria da Silva"` (ver app/normaliza.py)."""
+        return normaliza.nome_proprio(v)
+
+    @field_validator("telefone")
+    @classmethod
+    def _padroniza_telefone(cls, v):
+        return normaliza.telefone(v)
 
     @field_validator("endereco", mode="before")
     @classmethod
@@ -157,7 +177,7 @@ class PacienteBase(BaseModel):
             return None
         if not _EMAIL_RE.match(v):
             raise ValueError("email inválido")
-        return v
+        return normaliza.email(v)
 
 
 class PacienteCreate(PacienteBase):

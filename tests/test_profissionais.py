@@ -27,7 +27,7 @@ def test_criar_e_listar_em_ordem_alfabetica(dynamo_table):
     assert _prof("Paula", telefone=" (91) 98888-0000 ").status_code == 201
     assert _prof("ana").status_code == 201
     lista = client.get("/profissionais").json()
-    assert [p["nome"] for p in lista] == ["ana", "Paula"]
+    assert [p["nome"] for p in lista] == ["Ana", "Paula"]
     assert lista[1]["telefone"] == "(91) 98888-0000"
 
 

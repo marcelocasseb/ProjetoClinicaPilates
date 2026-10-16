@@ -8,6 +8,8 @@ from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, field_validator, model_validator
 
+from app import normaliza
+
 NOME_MAX = 120
 TELEFONE_MAX = 30
 
@@ -32,7 +34,7 @@ class ProfissionalBase(BaseModel):
     @field_validator("nome")
     @classmethod
     def _valida_nome(cls, v):
-        v = v.strip()
+        v = normaliza.nome_proprio(v)
         if len(v) > NOME_MAX:
             raise ValueError(f"nome deve ter no máximo {NOME_MAX} caracteres")
         return v
@@ -45,7 +47,7 @@ class ProfissionalBase(BaseModel):
         v = v.strip()
         if len(v) > TELEFONE_MAX:
             raise ValueError(f"telefone deve ter no máximo {TELEFONE_MAX} caracteres")
-        return v or None
+        return normaliza.telefone(v) or None
 
 
 class ProfissionalOut(BaseModel):

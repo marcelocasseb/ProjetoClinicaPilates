@@ -74,13 +74,19 @@ function quandoFalado(data, hoje) {
   return `${artigo} ${nome}, ${dd}/${mm}`;
 }
 
-function linkWhats(a, hoje) {
+// "Olá, Nayara! Somos da Clínica Zen. Podemos confirmar sua presença amanhã às
+// 10h00 com o profissional Dr. Paulo?" — clínica e profissional entram só se houver.
+function linkWhats(a, hoje, clinica) {
   const numero = numeroWhats(a.telefone);
   if (!numero) return null;
-  const primeiro = (a.nome || "").trim().split(/\s+/)[0];
+  const nome = (a.nome || "").trim().split(/\s+/)[0];
+  const primeiro = nome.charAt(0).toUpperCase() + nome.slice(1);
   const texto =
-    `Olá, ${primeiro}! Podemos confirmar sua presença ${quandoFalado(a.data, hoje)} ` +
-    `às ${horaFalada(a.hora)}? (Responda sim ou não)`;
+    `Olá, ${primeiro}!` +
+    (clinica ? ` Somos da ${clinica}.` : "") +
+    ` Podemos confirmar sua presença ${quandoFalado(a.data, hoje)} às ${horaFalada(a.hora)}` +
+    (a.profissional ? ` com o profissional ${a.profissional}` : "") +
+    "?";
   return `https://wa.me/${numero}?text=${encodeURIComponent(texto)}`;
 }
 
@@ -90,7 +96,7 @@ const IconeWhats = (
   </svg>
 );
 
-export default function Agenda({ clinic, onNavegar }) {
+export default function Agenda({ clinic, clinicaNome, onNavegar }) {
   const hoje = hojeISO();
   const [dia, setDia] = useState(hoje);
   const semana = segundaDe(dia);
@@ -448,10 +454,10 @@ export default function Agenda({ clinic, onNavegar }) {
                               R$
                             </button>
                           )}
-                          {linkWhats(a, hoje) ? (
+                          {linkWhats(a, hoje, clinicaNome) ? (
                             <a
                               className="agenda-whats"
-                              href={linkWhats(a, hoje)}
+                              href={linkWhats(a, hoje, clinicaNome)}
                               target="_blank"
                               rel="noopener noreferrer"
                               title={`Enviar lembrete no WhatsApp para ${a.nome}`}

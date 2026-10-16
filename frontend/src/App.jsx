@@ -216,7 +216,7 @@ export default function App() {
       <main className="content">
         {aba === "inicio" && <Inicio clinic={clinic} onNavegar={navegar} />}
         {aba === "pacientes" && <Pacientes clinic={clinic} />}
-        {aba === "agenda" && <Agenda clinic={clinic} onNavegar={setAba} />}
+        {aba === "agenda" && <Agenda clinic={clinic} clinicaNome={clinicNome} onNavegar={setAba} />}
         {aba === "profissionais" && <Profissionais clinic={clinic} />}
         {aba === "aparelhos" && <Aparelhos clinic={clinic} />}
         {aba === "pilates" && <Pilates clinic={clinic} />}

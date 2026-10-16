@@ -23,6 +23,7 @@ from typing import Any, Optional
 
 from pydantic import BaseModel, ConfigDict, field_validator, model_validator
 
+from app import normaliza
 from app.schemas_escala import _RE_HORA
 
 _RE_DATA = re.compile(r"^\d{4}-\d{2}-\d{2}$")
@@ -83,6 +84,16 @@ class AgendaCreate(BaseModel):
     @classmethod
     def _vazio_para_none(cls, v):
         return _texto_ou_none(v)
+
+    @field_validator("nome")
+    @classmethod
+    def _padroniza_nome(cls, v):
+        return normaliza.nome_proprio(v)
+
+    @field_validator("telefone")
+    @classmethod
+    def _padroniza_telefone(cls, v):
+        return normaliza.telefone(v)
 
     @model_validator(mode="after")
     def _paciente_ou_nome(self):

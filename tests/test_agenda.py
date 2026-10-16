@@ -68,7 +68,7 @@ def test_agendar_pessoa_nova(dynamo_table):
     assert resp.status_code == 201
     body = resp.json()
     assert body["nome"] == "João Experimental"
-    assert body["telefone"] == "91 98888-7777"
+    assert body["telefone"] == "(91) 98888-7777"
     assert body["novo"] is True
     assert body["pacienteId"] is None
 
@@ -110,10 +110,10 @@ def test_listar_filtra_periodo_e_ordena(dynamo_table):
     _agendar(nome="Zé", data="2026-10-20", hora="09:00")
     _agendar(nome="Ana", data="2026-10-20", hora="09:00")
     _agendar(nome="Cedo", data="2026-10-19", hora="06:00")
-    _agendar(nome="Último dia", data="2026-10-25", hora="21:00")
+    _agendar(nome="Último Dia", data="2026-10-25", hora="21:00")
     _agendar(nome="Fora depois", data="2026-10-26")
     nomes = [a["nome"] for a in _listar().json()]
-    assert nomes == ["Cedo", "Ana", "Zé", "Último dia"]
+    assert nomes == ["Cedo", "Ana", "Zé", "Último Dia"]
 
 
 def test_listar_usa_nome_ao_vivo_e_omite_removidos(dynamo_table):
