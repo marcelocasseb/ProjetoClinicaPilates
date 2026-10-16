@@ -378,7 +378,7 @@ export default function Pilates({ clinic }) {
                   </select>
                   {profissionais.length === 0 && (
                     <small className="muted">
-                      Cadastre os profissionais na Agenda (botão “Profissionais”).
+                      Cadastre os profissionais em Parametrização → Profissionais.
                     </small>
                   )}
                 </div>

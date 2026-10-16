@@ -1359,9 +1359,6 @@ textarea.obs {
   opacity: 0.45;
   cursor: not-allowed;
 }
-.agenda-gerir-prof {
-  margin-top: 10px;
-}
 .agenda-sem-prof {
   margin: 0;
   font-size: 13px;
@@ -1388,36 +1385,10 @@ textarea.obs {
   background: rgba(184, 147, 94, 0.14);
   font-weight: 600;
 }
-/* Cadastro de profissionais */
-.agenda-prof-cadastro {
-  list-style: none;
-  margin: 4px 0 8px;
-  padding: 0;
-  max-height: 240px;
-  overflow-y: auto;
-}
-.agenda-prof-cadastro li {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 4px;
-  border-bottom: 1px solid var(--border);
-}
-.agenda-prof-cadastro li.editando {
-  background: rgba(184, 147, 94, 0.08);
-}
-.agenda-prof-cadastro li > span {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-}
-.agenda-prof-cadastro .btn {
-  padding: 6px 10px;
+/* Parametrização → Profissionais */
+.prof-dica {
+  margin: 14px 0 0;
   font-size: 13px;
-}
-.agenda-prof-tel {
-  margin-top: 8px;
 }
 .btn.danger-ghost {
   margin-right: auto;

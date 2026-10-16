@@ -90,7 +90,7 @@ const IconeWhats = (
   </svg>
 );
 
-export default function Agenda({ clinic }) {
+export default function Agenda({ clinic, onNavegar }) {
   const hoje = hojeISO();
   const [dia, setDia] = useState(hoje);
   const semana = segundaDe(dia);
@@ -117,13 +117,11 @@ export default function Agenda({ clinic }) {
   const [forma, setForma] = useState("");
   const [verPago, setVerPago] = useState(null); // item do modal "Pago"
 
-  // Profissionais: escolhido na marcação (opcional), trocado depois pela linha, e
-  // cadastrados num modal próprio ("Profissionais").
+  // Profissionais: escolhido na marcação (opcional) e trocado depois pela linha. O
+  // cadastro fica em Parametrização → Profissionais.
   const [profissionais, setProfissionais] = useState([]);
   const [profEscolhido, setProfEscolhido] = useState("");
   const [trocarProf, setTrocarProf] = useState(null); // item do modal "Profissional"
-  const [gerirProfs, setGerirProfs] = useState(false);
-  const [formProf, setFormProf] = useState({ id: null, nome: "", telefone: "" });
 
   // Pacientes e profissionais uma vez; a semana a cada troca de semana.
   useEffect(() => {
@@ -240,41 +238,12 @@ export default function Agenda({ clinic }) {
     }
   }
 
-  async function salvarCadastroProf() {
-    setSalvando(true);
-    setErro("");
-    const dados = { nome: formProf.nome, telefone: formProf.telefone };
-    try {
-      if (formProf.id) {
-        const p = await profissionaisApi.update(clinic.id, formProf.id, dados);
-        setProfissionais((atual) => atual.map((x) => (x.id === p.id ? p : x)));
-        // O nome novo aparece na agenda já carregada sem precisar recarregar.
-        setItens((atual) => atual.map((x) => (x.profissionalId === p.id ? { ...x, profissional: p.nome } : x)));
-      } else {
-        const p = await profissionaisApi.create(clinic.id, dados);
-        setProfissionais((atual) =>
-          [...atual, p].sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"))
-        );
-      }
-      setFormProf({ id: null, nome: "", telefone: "" });
-    } catch (e) {
-      setErro(e.message);
-    } finally {
-      setSalvando(false);
-    }
-  }
-
-  async function removerProf(p) {
-    if (!confirm(`Remover ${p.nome} da lista de profissionais? As marcações antigas continuam mostrando o nome.`)) return;
-    setErro("");
-    try {
-      await profissionaisApi.remove(clinic.id, p.id);
-      setProfissionais((atual) => atual.filter((x) => x.id !== p.id));
-      if (formProf.id === p.id) setFormProf({ id: null, nome: "", telefone: "" });
-    } catch (e) {
-      setErro(e.message);
-    }
-  }
+  // Atalho para o cadastro quando ainda não há profissionais.
+  const linkCadastroProf = (
+    <button type="button" className="link" onClick={() => onNavegar?.("profissionais")}>
+      Parametrização → Profissionais
+    </button>
+  );
 
   function abrirReceber(a) {
     setErro("");
@@ -530,17 +499,6 @@ export default function Agenda({ clinic }) {
           <span className="agenda-selo-novo">novo</span>; toque no nome para cadastrar. O ícone
           do WhatsApp abre a mensagem de confirmação pronta.
         </p>
-        <button
-          type="button"
-          className="btn ghost agenda-gerir-prof"
-          onClick={() => {
-            setErro("");
-            setFormProf({ id: null, nome: "", telefone: "" });
-            setGerirProfs(true);
-          }}
-        >
-          Profissionais ({profissionais.length})
-        </button>
       </div>
 
       {novoEm && (
@@ -605,7 +563,7 @@ export default function Agenda({ clinic }) {
               </select>
             ) : (
               <p className="muted agenda-sem-prof">
-                Nenhum profissional cadastrado. Cadastre no botão “Profissionais”, abaixo da agenda.
+                Nenhum profissional cadastrado. Cadastre em {linkCadastroProf}.
               </p>
             )}
 
@@ -718,9 +676,7 @@ export default function Agenda({ clinic }) {
             </p>
             {erro && <div className="erro">{erro}</div>}
             {profissionais.length === 0 ? (
-              <p className="muted">
-                Nenhum profissional cadastrado. Use o botão “Profissionais”, abaixo da agenda.
-              </p>
+              <p className="muted">Nenhum profissional cadastrado. Cadastre em {linkCadastroProf}.</p>
             ) : (
               <div className="agenda-prof-lista">
                 {profissionais.map((p) => (
@@ -751,62 +707,6 @@ export default function Agenda({ clinic }) {
         </div>
       )}
 
-      {gerirProfs && (
-        <div className="modal-overlay" onClick={() => setGerirProfs(false)}>
-          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
-            <h2>Profissionais</h2>
-            {erro && <div className="erro">{erro}</div>}
-
-            {profissionais.length === 0 ? (
-              <p className="muted">Nenhum profissional cadastrado ainda.</p>
-            ) : (
-              <ul className="agenda-prof-cadastro">
-                {profissionais.map((p) => (
-                  <li key={p.id} className={formProf.id === p.id ? "editando" : ""}>
-                    <span>
-                      <strong>{p.nome}</strong>
-                      {p.telefone && <small className="muted">{p.telefone}</small>}
-                    </span>
-                    <button type="button" className="btn ghost"
-                      onClick={() => setFormProf({ id: p.id, nome: p.nome, telefone: p.telefone || "" })}>
-                      Editar
-                    </button>
-                    <button type="button" className="btn danger-ghost" onClick={() => removerProf(p)}>
-                      Remover
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-
-            <label className="escala-label">
-              {formProf.id ? "Editar profissional" : "Novo profissional"}
-            </label>
-            <input className="escala-select" value={formProf.nome} maxLength={120}
-              placeholder="Nome (ex.: Dra. Ana Lima)"
-              onChange={(e) => setFormProf((f) => ({ ...f, nome: e.target.value }))} />
-            <input className="escala-select agenda-prof-tel" value={formProf.telefone} inputMode="tel"
-              placeholder="Telefone (opcional)"
-              onChange={(e) => setFormProf((f) => ({ ...f, telefone: maskTelefone(e.target.value) }))} />
-
-            <div className="modal-actions">
-              {formProf.id && (
-                <button type="button" className="btn ghost"
-                  onClick={() => setFormProf({ id: null, nome: "", telefone: "" })}>
-                  Cancelar edição
-                </button>
-              )}
-              <button type="button" className="btn" onClick={() => setGerirProfs(false)}>
-                Fechar
-              </button>
-              <button type="button" className="btn primary"
-                disabled={!formProf.nome.trim() || salvando} onClick={salvarCadastroProf}>
-                {salvando ? "Salvando…" : formProf.id ? "Salvar" : "Adicionar"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

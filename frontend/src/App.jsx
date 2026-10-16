@@ -4,6 +4,7 @@ import Inicio from "./components/Inicio";
 import Pacientes from "./components/Pacientes";
 import Agenda from "./components/Agenda";
 import Aparelhos from "./components/Aparelhos";
+import Profissionais from "./components/Profissionais";
 import Pilates from "./components/Pilates";
 import Escala from "./components/Escala";
 import Financeiro from "./components/Financeiro";
@@ -25,12 +26,64 @@ function clinicDasClaims(claims) {
   };
 }
 
-// Telas agrupadas sob a aba "Pilates" (abrem por uma lista suspensa).
+// Telas agrupadas em abas com lista suspensa.
 const ABAS_PILATES = [
   { id: "pilates", rotulo: "Pilates" },
   { id: "aparelhos", rotulo: "Aparelhos" },
   { id: "escala", rotulo: "Escala" },
 ];
+const ABAS_PARAMETRIZACAO = [{ id: "profissionais", rotulo: "Profissionais" }];
+
+// Aba que abre uma lista suspensa com as telas do grupo. Fica destacada quando a
+// tela aberta é de dentro dela; fecha ao escolher, clicar fora ou apertar Esc.
+function MenuSuspenso({ rotulo, abas, aba, onEscolher }) {
+  const [aberto, setAberto] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    if (!aberto) return;
+    const fora = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) setAberto(false);
+    };
+    const esc = (e) => e.key === "Escape" && setAberto(false);
+    document.addEventListener("mousedown", fora);
+    document.addEventListener("keydown", esc);
+    return () => {
+      document.removeEventListener("mousedown", fora);
+      document.removeEventListener("keydown", esc);
+    };
+  }, [aberto]);
+
+  return (
+    <div className="tab-menu" ref={ref}>
+      <button
+        className={abas.some((a) => a.id === aba) ? "tab on" : "tab"}
+        aria-haspopup="menu"
+        aria-expanded={aberto}
+        onClick={() => setAberto((v) => !v)}
+      >
+        {rotulo} <span className="tab-seta">▾</span>
+      </button>
+      {aberto && (
+        <div className="tab-dropdown" role="menu">
+          {abas.map((a) => (
+            <button
+              key={a.id}
+              role="menuitem"
+              className={aba === a.id ? "tab-opcao on" : "tab-opcao"}
+              onClick={() => {
+                onEscolher(a.id);
+                setAberto(false);
+              }}
+            >
+              {a.rotulo}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function App() {
   const [clinic, setClinic] = useState(null);
@@ -39,23 +92,6 @@ export default function App() {
   const [secaoFin, setSecaoFin] = useState("caixa"); // sub-aba ao chegar pelo Início
   const [mostrarMembro, setMostrarMembro] = useState(false);
   const [sessaoCaiu, setSessaoCaiu] = useState(false); // modal de re-login por cima da tela
-  const [menuPilates, setMenuPilates] = useState(false); // lista suspensa da aba Pilates
-  const menuRef = useRef(null);
-
-  // Fecha a lista suspensa ao clicar fora dela ou apertar Esc.
-  useEffect(() => {
-    if (!menuPilates) return;
-    const fora = (e) => {
-      if (menuRef.current && !menuRef.current.contains(e.target)) setMenuPilates(false);
-    };
-    const esc = (e) => e.key === "Escape" && setMenuPilates(false);
-    document.addEventListener("mousedown", fora);
-    document.addEventListener("keydown", esc);
-    return () => {
-      document.removeEventListener("mousedown", fora);
-      document.removeEventListener("keydown", esc);
-    };
-  }, [menuPilates]);
 
   // Restaura a sessão do token guardado (não relogar a cada refresh).
   useEffect(() => {
@@ -158,33 +194,7 @@ export default function App() {
         <button className={aba === "agenda" ? "tab on" : "tab"} onClick={() => setAba("agenda")}>
           Agenda
         </button>
-        <div className="tab-menu" ref={menuRef}>
-          <button
-            className={ABAS_PILATES.some((a) => a.id === aba) ? "tab on" : "tab"}
-            aria-haspopup="menu"
-            aria-expanded={menuPilates}
-            onClick={() => setMenuPilates((v) => !v)}
-          >
-            Pilates <span className="tab-seta">▾</span>
-          </button>
-          {menuPilates && (
-            <div className="tab-dropdown" role="menu">
-              {ABAS_PILATES.map((a) => (
-                <button
-                  key={a.id}
-                  role="menuitem"
-                  className={aba === a.id ? "tab-opcao on" : "tab-opcao"}
-                  onClick={() => {
-                    setAba(a.id);
-                    setMenuPilates(false);
-                  }}
-                >
-                  {a.rotulo}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
+        <MenuSuspenso rotulo="Pilates" abas={ABAS_PILATES} aba={aba} onEscolher={setAba} />
         {/* Financeiro é só de admin (FIN-06). Esconder a aba é higiene de UI — quem
             garante mesmo é o backend, que devolve 403 para quem não é admin. */}
         {isAdmin && (
@@ -195,12 +205,19 @@ export default function App() {
             Financeiro
           </button>
         )}
+        <MenuSuspenso
+          rotulo="Parametrização"
+          abas={ABAS_PARAMETRIZACAO}
+          aba={aba}
+          onEscolher={setAba}
+        />
       </nav>
 
       <main className="content">
         {aba === "inicio" && <Inicio clinic={clinic} onNavegar={navegar} />}
         {aba === "pacientes" && <Pacientes clinic={clinic} />}
-        {aba === "agenda" && <Agenda clinic={clinic} />}
+        {aba === "agenda" && <Agenda clinic={clinic} onNavegar={setAba} />}
+        {aba === "profissionais" && <Profissionais clinic={clinic} />}
         {aba === "aparelhos" && <Aparelhos clinic={clinic} />}
         {aba === "pilates" && <Pilates clinic={clinic} />}
         {aba === "escala" && <Escala clinic={clinic} />}
