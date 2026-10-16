@@ -27,6 +27,8 @@ const chave = (dia, hora) => `${dia}|${hora}`;
 // Dia da semana de hoje no padrão ISO (1 = segunda … 7 = domingo).
 const hojeISO = () => ((new Date().getDay() + 6) % 7) + 1;
 
+const plural = (n, um, varios) => `${n} ${n === 1 ? um : varios}`;
+
 // Distância mínima (px) do arraste lateral para trocar de dia na versão celular.
 const SWIPE_MIN = 60;
 
@@ -103,6 +105,13 @@ export default function Escala({ clinic }) {
     const conta = {};
     for (const m of matriculas) conta[m.dia] = (conta[m.dia] || 0) + 1;
     return conta;
+  }, [matriculas]);
+
+  // Pessoas distintas por dia (quem faz 2 horários no mesmo dia conta 1 vez).
+  const alunosPorDia = useMemo(() => {
+    const sets = {};
+    for (const m of matriculas) (sets[m.dia] ||= new Set()).add(m.pacienteId);
+    return Object.fromEntries(Object.entries(sets).map(([d, s]) => [d, s.size]));
   }, [matriculas]);
 
   const alunosOrdenados = useMemo(
@@ -296,8 +305,8 @@ export default function Escala({ clinic }) {
                 <strong>{diaCelInfo?.nome}</strong>
                 {diaCel === hoje && <span className="escala-hoje">hoje</span>}
                 <span className="muted">
-                  {totalPorDia[diaCel] || 0}{" "}
-                  {(totalPorDia[diaCel] || 0) === 1 ? "aluno" : "alunos"}
+                  {plural(alunosPorDia[diaCel] || 0, "aluno", "alunos")} ·{" "}
+                  {plural(totalPorDia[diaCel] || 0, "aula", "aulas")}
                 </span>
               </div>
 

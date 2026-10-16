@@ -1139,7 +1139,7 @@ textarea.obs {
 }
 .escala-slot {
   display: flex;
-  align-items: center;
+  align-items: flex-start; /* com vários alunos o horário fica no topo, não no meio */
   gap: 12px;
   padding: 8px 8px 8px 12px;
   border: 1px solid var(--border);
@@ -1153,6 +1153,7 @@ textarea.obs {
 .escala-slot-hora {
   flex: none;
   width: 46px;
+  line-height: 38px; /* altura do chip (36 + borda): fica alinhado ao 1º nome */
   font-weight: 700;
   font-size: 14px;
   color: var(--muted);
@@ -1161,6 +1162,7 @@ textarea.obs {
   color: var(--text);
 }
 .escala-slot-alunos {
+  align-self: center; /* "Livre" fica centralizado no cartão vazio */
   flex: 1;
   min-width: 0;
   display: flex;
@@ -1181,7 +1183,6 @@ textarea.obs {
 }
 .escala-slot-add {
   flex: none;
-  align-self: flex-start;
   width: 36px;
   height: 36px;
   border: 1px dashed var(--border);
