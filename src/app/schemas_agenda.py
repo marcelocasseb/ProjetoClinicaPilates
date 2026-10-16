@@ -67,6 +67,7 @@ class AgendaCreate(BaseModel):
     pacienteId: Optional[str] = None
     nome: Optional[str] = None
     telefone: Optional[str] = None
+    profissionalId: Optional[str] = None  # opcional; conferido no router (404)
 
     @field_validator("data", mode="before")
     @classmethod
@@ -78,7 +79,7 @@ class AgendaCreate(BaseModel):
     def _valida_hora(cls, v):
         return valida_hora(v)
 
-    @field_validator("pacienteId", "nome", "telefone", mode="before")
+    @field_validator("pacienteId", "nome", "telefone", "profissionalId", mode="before")
     @classmethod
     def _vazio_para_none(cls, v):
         return _texto_ou_none(v)
@@ -111,6 +112,19 @@ class AgendaVincular(BaseModel):
         if not isinstance(v, str) or not v.strip():
             raise ValueError("pacienteId é obrigatório")
         return v.strip()
+
+
+class AgendaProfissional(BaseModel):
+    """Payload de `PUT /agenda/{data}/{hora}/{id}/profissional`. `null` tira o profissional."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    profissionalId: Optional[str] = None
+
+    @field_validator("profissionalId", mode="before")
+    @classmethod
+    def _vazio_para_none(cls, v):
+        return _texto_ou_none(v)
 
 
 class AgendaPagamento(BaseModel):
@@ -163,5 +177,7 @@ class AgendaOut(BaseModel):
     nome: str
     telefone: Optional[str] = None
     novo: bool
+    profissionalId: Optional[str] = None
+    profissional: Optional[str] = None  # nome de quem atende
     pagamento: Optional[PagamentoOut] = None
     criadoEm: Optional[str] = None

@@ -20,10 +20,12 @@ from app.deps import get_clinic_id
 from app.repository import PacienteRepository
 from app.repository_agenda import AgendaRepository
 from app.repository_financeiro import FinanceiroRepository, mes_da_data
+from app.repository_profissional import ProfissionalRepository
 from app.schemas_agenda import (
     AgendaCreate,
     AgendaOut,
     AgendaPagamento,
+    AgendaProfissional,
     AgendaVincular,
     valida_data,
     valida_hora,
@@ -50,6 +52,10 @@ def get_pacientes(clinic_id: str = Depends(get_clinic_id)) -> PacienteRepository
 # papel). O que continua só de admin é VER o caixa — as rotas de /financeiro.
 def get_financeiro(clinic_id: str = Depends(get_clinic_id)) -> FinanceiroRepository:
     return FinanceiroRepository(clinic_id=clinic_id)
+
+
+def get_profissionais(clinic_id: str = Depends(get_clinic_id)) -> ProfissionalRepository:
+    return ProfissionalRepository(clinic_id=clinic_id)
 
 
 def _validar(fn, valor: str) -> str:
@@ -86,14 +92,40 @@ def _lancamento_do(item: dict, fin: FinanceiroRepository) -> Optional[dict]:
     return fin.get(pag["mes"], pag["lancamentoId"]) if pag else None
 
 
-def _saida(item: dict, nome: str, telefone=None, lanc: Optional[dict] = None) -> dict:
+def _nome_profissional(item: dict, profs: Optional[dict]) -> Optional[str]:
+    """Nome ao vivo do cadastro (quando o mapa veio) ou o snapshot da marcação.
+
+    Profissional removido continua no mapa (`list_todos`) — a marcação antiga segue
+    mostrando quem atendeu.
+    """
+    pid = item.get("profissionalId")
+    if not pid:
+        return None
+    return (profs or {}).get(pid) or item.get("profissionalNome")
+
+
+def _saida(
+    item: dict,
+    nome: str,
+    telefone=None,
+    lanc: Optional[dict] = None,
+    profs: Optional[dict] = None,
+) -> dict:
     return {
         **item,
         "nome": nome,
         "telefone": telefone if item.get("pacienteId") else item.get("telefone"),
         "novo": not item.get("pacienteId"),
         "pagamento": _pagamento_vivo(item, lanc),
+        "profissional": _nome_profissional(item, profs),
     }
+
+
+def _profissional_ativo(profissionais: ProfissionalRepository, profissional_id: str) -> dict:
+    prof = profissionais.get(profissional_id)
+    if prof is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Profissional não encontrado")
+    return prof
 
 
 def _buscar(repo: AgendaRepository, data: str, hora: str, agenda_id: str) -> dict:
@@ -110,6 +142,7 @@ def listar_agenda(
     repo: AgendaRepository = Depends(get_repository),
     pacientes: PacienteRepository = Depends(get_pacientes),
     fin: FinanceiroRepository = Depends(get_financeiro),
+    profissionais: ProfissionalRepository = Depends(get_profissionais),
 ) -> list[dict]:
     """Agendamentos de `de` a `ate` (inclusive), ordenados por data → hora → nome.
 
@@ -131,17 +164,20 @@ def listar_agenda(
 
     meses = {i["pagamento"]["mes"] for i in itens if i.get("pagamento")}
     lancs = {l["id"]: l for mes in meses for l in fin.list_mes(mes)}
+    profs = {}
+    if any(i.get("profissionalId") for i in itens):
+        profs = {p["id"]: p.get("nome") for p in profissionais.list_todos()}
 
     saida = []
     for i in itens:
         pid = i.get("pacienteId")
         lanc = lancs.get((i.get("pagamento") or {}).get("lancamentoId"))
         if pid is None:
-            saida.append(_saida(i, i.get("nome") or "", lanc=lanc))
+            saida.append(_saida(i, i.get("nome") or "", lanc=lanc, profs=profs))
         elif pid in ativos:
             p = ativos[pid]
             nome = p.get("nome") or i.get("nome") or ""
-            saida.append(_saida(i, nome, p.get("telefone"), lanc))
+            saida.append(_saida(i, nome, p.get("telefone"), lanc, profs))
     saida.sort(key=lambda a: (a["data"], a["hora"], a["nome"].lower()))
     return saida
 
@@ -151,12 +187,20 @@ def agendar(
     payload: AgendaCreate,
     repo: AgendaRepository = Depends(get_repository),
     pacientes: PacienteRepository = Depends(get_pacientes),
+    profissionais: ProfissionalRepository = Depends(get_profissionais),
 ) -> dict:
     """Marca um paciente cadastrado ou uma pessoa nova numa data+hora.
 
-    `404` se o paciente não existe/foi removido/é de outra clínica; `409` se ele já
-    está marcado nesse mesmo dia e horário.
+    `404` se o paciente (ou o profissional, quando informado) não existe/foi removido/é
+    de outra clínica; `409` se o paciente já está marcado nesse mesmo dia e horário.
+    Profissional com outra pessoa no mesmo horário NÃO é erro (atendimento em grupo):
+    o aviso é dado pela tela, que já tem o dia inteiro carregado.
     """
+    prof = None
+    if payload.profissionalId:
+        prof = _profissional_ativo(profissionais, payload.profissionalId)
+    prof_args = (prof["id"], prof.get("nome")) if prof else (None, None)
+
     if payload.pacienteId:
         paciente = pacientes.get(payload.pacienteId)
         if paciente is None:
@@ -166,11 +210,39 @@ def agendar(
                 status_code=status.HTTP_409_CONFLICT, detail="Este aluno já está marcado neste horário"
             )
         nome = paciente.get("nome") or ""
-        criado = repo.create(payload.data, payload.hora, payload.pacienteId, nome, None)
+        criado = repo.create(payload.data, payload.hora, payload.pacienteId, nome, None, *prof_args)
         return _saida(criado, nome, paciente.get("telefone"))
 
-    criado = repo.create(payload.data, payload.hora, None, payload.nome, payload.telefone)
+    criado = repo.create(payload.data, payload.hora, None, payload.nome, payload.telefone, *prof_args)
     return _saida(criado, payload.nome)
+
+
+@router.put("/{data}/{hora}/{agenda_id}/profissional", response_model=AgendaOut)
+def definir_profissional(
+    data: str,
+    hora: str,
+    agenda_id: str,
+    payload: AgendaProfissional,
+    repo: AgendaRepository = Depends(get_repository),
+    pacientes: PacienteRepository = Depends(get_pacientes),
+    fin: FinanceiroRepository = Depends(get_financeiro),
+    profissionais: ProfissionalRepository = Depends(get_profissionais),
+) -> dict:
+    """Define, troca ou tira (`profissionalId: null`) o profissional da marcação."""
+    data = _validar(valida_data, data)
+    hora = _validar(valida_hora, hora)
+    _buscar(repo, data, hora, agenda_id)
+    prof = _profissional_ativo(profissionais, payload.profissionalId) if payload.profissionalId else None
+    item = repo.set_profissional(
+        data, hora, agenda_id, prof["id"] if prof else None, prof.get("nome") if prof else None
+    )
+    if item is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Agendamento não encontrado")
+    lanc = _lancamento_do(item, fin)
+    if item.get("pacienteId"):
+        p = pacientes.get(item["pacienteId"]) or {}
+        return _saida(item, p.get("nome") or item.get("nome") or "", p.get("telefone"), lanc)
+    return _saida(item, item.get("nome") or "", lanc=lanc)
 
 
 @router.put("/{data}/{hora}/{agenda_id}", response_model=AgendaOut)

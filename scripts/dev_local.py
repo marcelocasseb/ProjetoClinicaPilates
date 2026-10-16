@@ -129,15 +129,24 @@ def popular(app):
     def dia(n):
         return (segunda + timedelta(days=n)).isoformat()
 
+    profs = {
+        n: ok(c.post("/profissionais", json={"nome": n, "telefone": t}))["id"]
+        for n, t in [("Dra. Ana Lima", "(91) 98000-0001"), ("Dr. Paulo Reis", ""), ("Carla Nunes", "")]
+    }
+    ana, paulo = profs["Dra. Ana Lima"], profs["Dr. Paulo Reis"]
+    amanha = (hoje + timedelta(days=1)).isoformat()
+
     marcacoes = [
-        (dia(0), "07:00", {"pacienteId": ids["João Pedro Costa"]}),
-        (dia(0), "07:00", {"nome": "Ana Clara", "telefone": "(91) 99000-1111"}),
-        (dia(1), "18:00", {"pacienteId": ids["Beatriz Santos"]}),
+        (dia(0), "07:00", {"pacienteId": ids["João Pedro Costa"], "profissionalId": ana}),
+        (dia(0), "07:00", {"nome": "Ana Clara", "telefone": "(91) 99000-1111", "profissionalId": paulo}),
+        (dia(1), "18:00", {"pacienteId": ids["Beatriz Santos"], "profissionalId": ana}),
         (dia(2), "09:00", {"nome": "Roberto Dias", "telefone": "(91) 99000-2222"}),
-        (dia(3), "18:00", {"pacienteId": ids["Carlos Mendes"]}),
-        (hoje.isoformat(), "10:00", {"pacienteId": ids["Fernanda Rocha"]}),
-        (hoje.isoformat(), "10:00", {"nome": "Juliana Martins"}),
+        (dia(3), "18:00", {"pacienteId": ids["Carlos Mendes"], "profissionalId": paulo}),
+        (hoje.isoformat(), "10:00", {"pacienteId": ids["Fernanda Rocha"], "profissionalId": ana}),
+        (hoje.isoformat(), "10:00", {"nome": "Juliana Martins", "profissionalId": paulo}),
         (hoje.isoformat(), "17:00", {"pacienteId": ids["Lucas Oliveira"]}),
+        (amanha, "06:00", {"pacienteId": ids["Beatriz Santos"], "profissionalId": ana}),
+        (amanha, "06:00", {"pacienteId": ids["Mariana Alves"], "profissionalId": paulo}),
         (dia(7), "08:00", {"pacienteId": ids["Patrícia Souza"]}),
     ]
     criados = [ok(c.post("/agenda", json={"data": d, "hora": h, **q})) for d, h, q in marcacoes]

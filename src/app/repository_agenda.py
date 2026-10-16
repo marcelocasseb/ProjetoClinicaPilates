@@ -116,6 +116,8 @@ class AgendaRepository:
         paciente_id: Optional[str],
         nome: str,
         telefone: Optional[str],
+        profissional_id: Optional[str] = None,
+        profissional_nome: Optional[str] = None,
     ) -> dict:
         """Marca alguém na data+hora. `nome` é snapshot (cadastrado) ou o nome digitado (novo)."""
         agenda_id = str(uuid.uuid4())
@@ -133,6 +135,9 @@ class AgendaRepository:
             item["pacienteId"] = paciente_id
         if telefone:
             item["telefone"] = telefone
+        if profissional_id:
+            item["profissionalId"] = profissional_id
+            item["profissionalNome"] = profissional_nome or ""  # snapshot (fallback)
         self._table.put_item(Item=item)
         return _para_agenda(item)
 
@@ -159,6 +164,31 @@ class AgendaRepository:
         if item is None or _vencido(item, int(time.time())):
             return None
         return _para_agenda(item)
+
+    def set_profissional(
+        self, data: str, hora: str, agenda_id: str, profissional_id: Optional[str], nome: Optional[str]
+    ) -> Optional[dict]:
+        """Define/troca o profissional, ou tira quando `profissional_id` é `None`.
+        `None` se a marcação não existe."""
+        if profissional_id:
+            kwargs = {
+                "UpdateExpression": "SET profissionalId = :p, profissionalNome = :n",
+                "ExpressionAttributeValues": {":p": profissional_id, ":n": nome or ""},
+            }
+        else:
+            kwargs = {"UpdateExpression": "REMOVE profissionalId, profissionalNome"}
+        try:
+            resp = self._table.update_item(
+                Key=self._key(data, hora, agenda_id),
+                ConditionExpression="attribute_exists(PK)",
+                ReturnValues="ALL_NEW",
+                **kwargs,
+            )
+        except ClientError as e:
+            if e.response.get("Error", {}).get("Code") == _CONDICAO_FALHOU:
+                return None
+            raise
+        return _para_agenda(resp["Attributes"])
 
     def set_pagamento(
         self, data: str, hora: str, agenda_id: str, pagamento: dict, antigo: Optional[str]

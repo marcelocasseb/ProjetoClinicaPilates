@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { agendaApi, pacientesApi } from "../api";
+import { agendaApi, pacientesApi, profissionaisApi } from "../api";
 import {
   FORMAS_PAGAMENTO,
   brParaCentavos,
@@ -46,6 +46,50 @@ function tituloSemana(ini) {
   return `${a.getDate()} de ${MESES[a.getMonth()]} a ${b.getDate()} de ${MESES[b.getMonth()]}`;
 }
 
+// --- Lembrete por WhatsApp -------------------------------------------------
+// O link wa.me abre o WhatsApp (app no celular; Desktop ou Web no computador) com a
+// mensagem pronta para o número; quem envia é o WhatsApp logado ali — de preferência
+// o da clínica. Nada passa pelo nosso servidor.
+
+// "(91) 98111-1111" -> "5591981111111". Sem DDD+número (10/11 dígitos) não há link.
+function numeroWhats(telefone) {
+  const d = (telefone || "").replace(/\D/g, "");
+  if (d.length === 10 || d.length === 11) return `55${d}`;
+  if ((d.length === 12 || d.length === 13) && d.startsWith("55")) return d;
+  return null;
+}
+
+// "06:00" -> "6h00"; "18:30" -> "18h30".
+const horaFalada = (hhmm) => `${Number(hhmm.slice(0, 2))}h${hhmm.slice(3)}`;
+
+// "hoje", "amanhã" ou "na quarta, 22/10" / "no sábado, 25/10".
+function quandoFalado(data, hoje) {
+  if (data === hoje) return "hoje";
+  if (data === somaDias(hoje, 1)) return "amanhã";
+  const dt = paraDate(data);
+  const nome = DIAS[(dt.getDay() + 6) % 7].nome.toLowerCase();
+  const artigo = nome === "sábado" || nome === "domingo" ? "no" : "na";
+  const dd = String(dt.getDate()).padStart(2, "0");
+  const mm = String(dt.getMonth() + 1).padStart(2, "0");
+  return `${artigo} ${nome}, ${dd}/${mm}`;
+}
+
+function linkWhats(a, hoje) {
+  const numero = numeroWhats(a.telefone);
+  if (!numero) return null;
+  const primeiro = (a.nome || "").trim().split(/\s+/)[0];
+  const texto =
+    `Olá, ${primeiro}! Podemos confirmar sua presença ${quandoFalado(a.data, hoje)} ` +
+    `às ${horaFalada(a.hora)}? (Responda sim ou não)`;
+  return `https://wa.me/${numero}?text=${encodeURIComponent(texto)}`;
+}
+
+const IconeWhats = (
+  <svg viewBox="0 0 24 24" aria-hidden="true" width="15" height="15" fill="currentColor">
+    <path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.8 11.9 11.9 0 0 0 4.6 4c1.7.7 2.4.8 3.2.7.5-.1 1.5-.6 1.8-1.2.2-.6.2-1.1.1-1.2l-.4-.3z" />
+  </svg>
+);
+
 export default function Agenda({ clinic }) {
   const hoje = hojeISO();
   const [dia, setDia] = useState(hoje);
@@ -73,9 +117,18 @@ export default function Agenda({ clinic }) {
   const [forma, setForma] = useState("");
   const [verPago, setVerPago] = useState(null); // item do modal "Pago"
 
-  // Pacientes uma vez; a semana a cada troca de semana.
+  // Profissionais: escolhido na marcação (opcional), trocado depois pela linha, e
+  // cadastrados num modal próprio ("Profissionais").
+  const [profissionais, setProfissionais] = useState([]);
+  const [profEscolhido, setProfEscolhido] = useState("");
+  const [trocarProf, setTrocarProf] = useState(null); // item do modal "Profissional"
+  const [gerirProfs, setGerirProfs] = useState(false);
+  const [formProf, setFormProf] = useState({ id: null, nome: "", telefone: "" });
+
+  // Pacientes e profissionais uma vez; a semana a cada troca de semana.
   useEffect(() => {
     pacientesApi.list(clinic.id).then(setPacientes).catch(() => {});
+    profissionaisApi.list(clinic.id).then(setProfissionais).catch(() => {});
   }, [clinic.id]);
 
   async function carregar() {
@@ -132,15 +185,32 @@ export default function Agenda({ clinic }) {
     setEscolhido("");
     setNomeNovo("");
     setTelNovo("");
+    setProfEscolhido("");
     setModo(pacientes.length ? "cadastrado" : "novo");
     setNovoEm(hora);
   }
 
+  // Aviso (não bloqueio) quando o profissional já tem alguém no horário: pode ser
+  // atendimento em grupo, ou pode ser engano — quem decide é a recepção.
+  function confirmaConflito(profissionalId, hora, ignorarId) {
+    if (!profissionalId) return true;
+    const outros = (porHora.get(hora) || []).filter(
+      (x) => x.profissionalId === profissionalId && x.id !== ignorarId
+    );
+    if (!outros.length) return true;
+    const prof = profissionais.find((p) => p.id === profissionalId)?.nome || "Este profissional";
+    return confirm(
+      `${prof} já tem ${outros.map((x) => x.nome).join(", ")} às ${hora}. Marcar mesmo assim?`
+    );
+  }
+
   async function marcar() {
+    if (!confirmaConflito(profEscolhido, novoEm)) return;
+    const base = { data: dia, hora: novoEm, profissionalId: profEscolhido };
     const corpo =
       modo === "cadastrado"
-        ? { data: dia, hora: novoEm, pacienteId: escolhido }
-        : { data: dia, hora: novoEm, nome: nomeNovo, telefone: telNovo };
+        ? { ...base, pacienteId: escolhido }
+        : { ...base, nome: nomeNovo, telefone: telNovo };
     setSalvando(true);
     setErro("");
     try {
@@ -155,6 +225,56 @@ export default function Agenda({ clinic }) {
   }
 
   const trocar = (novo) => setItens((atual) => atual.map((x) => (x.id === novo.id ? novo : x)));
+
+  async function salvarProfissionalDaMarcacao(profissionalId) {
+    if (!confirmaConflito(profissionalId, trocarProf.hora, trocarProf.id)) return;
+    setSalvando(true);
+    setErro("");
+    try {
+      trocar(await agendaApi.definirProfissional(clinic.id, trocarProf, profissionalId || null));
+      setTrocarProf(null);
+    } catch (e) {
+      setErro(e.message);
+    } finally {
+      setSalvando(false);
+    }
+  }
+
+  async function salvarCadastroProf() {
+    setSalvando(true);
+    setErro("");
+    const dados = { nome: formProf.nome, telefone: formProf.telefone };
+    try {
+      if (formProf.id) {
+        const p = await profissionaisApi.update(clinic.id, formProf.id, dados);
+        setProfissionais((atual) => atual.map((x) => (x.id === p.id ? p : x)));
+        // O nome novo aparece na agenda já carregada sem precisar recarregar.
+        setItens((atual) => atual.map((x) => (x.profissionalId === p.id ? { ...x, profissional: p.nome } : x)));
+      } else {
+        const p = await profissionaisApi.create(clinic.id, dados);
+        setProfissionais((atual) =>
+          [...atual, p].sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"))
+        );
+      }
+      setFormProf({ id: null, nome: "", telefone: "" });
+    } catch (e) {
+      setErro(e.message);
+    } finally {
+      setSalvando(false);
+    }
+  }
+
+  async function removerProf(p) {
+    if (!confirm(`Remover ${p.nome} da lista de profissionais? As marcações antigas continuam mostrando o nome.`)) return;
+    setErro("");
+    try {
+      await profissionaisApi.remove(clinic.id, p.id);
+      setProfissionais((atual) => atual.filter((x) => x.id !== p.id));
+      if (formProf.id === p.id) setFormProf({ id: null, nome: "", telefone: "" });
+    } catch (e) {
+      setErro(e.message);
+    }
+  }
 
   function abrirReceber(a) {
     setErro("");
@@ -306,22 +426,35 @@ export default function Agenda({ clinic }) {
                   <div className="escala-slot-alunos">
                     {lista.length ? (
                       lista.map((a) => (
-                        <span key={a.id} className={a.novo ? "aluno-chip novo" : "aluno-chip"}>
-                          {a.novo ? (
+                        <span key={a.id} className={a.novo ? "aluno-chip agenda-chip novo" : "aluno-chip agenda-chip"}>
+                          <span className="agenda-pessoa">
+                            {a.novo ? (
+                              <button
+                                type="button"
+                                className="aluno-nome agenda-nome-btn"
+                                title="Pessoa sem cadastro — toque para cadastrar"
+                                onClick={() => {
+                                  setErro("");
+                                  setDetalhe(a);
+                                }}
+                              >
+                                {a.nome}
+                              </button>
+                            ) : (
+                              <span className="aluno-nome" title={a.nome}>{a.nome}</span>
+                            )}
                             <button
                               type="button"
-                              className="aluno-nome agenda-nome-btn"
-                              title="Pessoa sem cadastro — toque para cadastrar"
+                              className={a.profissional ? "agenda-prof" : "agenda-prof vazio"}
+                              title="Escolher ou trocar o profissional"
                               onClick={() => {
                                 setErro("");
-                                setDetalhe(a);
+                                setTrocarProf(a);
                               }}
                             >
-                              {a.nome}
+                              {a.profissional || "+ profissional"}
                             </button>
-                          ) : (
-                            <span className="aluno-nome" title={a.nome}>{a.nome}</span>
-                          )}
+                          </span>
                           {a.novo && <span className="agenda-selo-novo">novo</span>}
                           {a.pagamento ? (
                             <button
@@ -345,6 +478,25 @@ export default function Agenda({ clinic }) {
                             >
                               R$
                             </button>
+                          )}
+                          {linkWhats(a, hoje) ? (
+                            <a
+                              className="agenda-whats"
+                              href={linkWhats(a, hoje)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              title={`Enviar lembrete no WhatsApp para ${a.nome}`}
+                              aria-label={`Enviar lembrete no WhatsApp para ${a.nome}`}
+                            >
+                              {IconeWhats}
+                            </a>
+                          ) : (
+                            <span
+                              className="agenda-whats off"
+                              title="Sem telefone válido (com DDD) para o WhatsApp"
+                            >
+                              {IconeWhats}
+                            </span>
                           )}
                           <button
                             type="button"
@@ -375,8 +527,20 @@ export default function Agenda({ clinic }) {
         )}
         <p className="muted escala-dica-cel agenda-dica">
           Toque em <strong>+</strong> para marcar. Quem ainda não tem cadastro aparece como{" "}
-          <span className="agenda-selo-novo">novo</span>; toque no nome para cadastrar.
+          <span className="agenda-selo-novo">novo</span>; toque no nome para cadastrar. O ícone
+          do WhatsApp abre a mensagem de confirmação pronta.
         </p>
+        <button
+          type="button"
+          className="btn ghost agenda-gerir-prof"
+          onClick={() => {
+            setErro("");
+            setFormProf({ id: null, nome: "", telefone: "" });
+            setGerirProfs(true);
+          }}
+        >
+          Profissionais ({profissionais.length})
+        </button>
       </div>
 
       {novoEm && (
@@ -428,6 +592,21 @@ export default function Agenda({ clinic }) {
                   placeholder="(00) 00000-0000"
                   onChange={(e) => setTelNovo(maskTelefone(e.target.value))} />
               </>
+            )}
+
+            <label className="escala-label">Profissional (opcional)</label>
+            {profissionais.length ? (
+              <select className="escala-select" value={profEscolhido}
+                onChange={(e) => setProfEscolhido(e.target.value)}>
+                <option value="">— sem profissional —</option>
+                {profissionais.map((p) => (
+                  <option key={p.id} value={p.id}>{p.nome}</option>
+                ))}
+              </select>
+            ) : (
+              <p className="muted agenda-sem-prof">
+                Nenhum profissional cadastrado. Cadastre no botão “Profissionais”, abaixo da agenda.
+              </p>
             )}
 
             <div className="modal-actions">
@@ -524,6 +703,105 @@ export default function Agenda({ clinic }) {
               </button>
               <button type="button" className="btn" onClick={() => setVerPago(null)}>
                 Fechar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {trocarProf && (
+        <div className="modal-overlay" onClick={() => setTrocarProf(null)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <h2>Profissional — {trocarProf.nome}</h2>
+            <p className="muted">
+              {formatDataBR(trocarProf.data).slice(0, 5)} às {trocarProf.hora}
+            </p>
+            {erro && <div className="erro">{erro}</div>}
+            {profissionais.length === 0 ? (
+              <p className="muted">
+                Nenhum profissional cadastrado. Use o botão “Profissionais”, abaixo da agenda.
+              </p>
+            ) : (
+              <div className="agenda-prof-lista">
+                {profissionais.map((p) => (
+                  <button
+                    key={p.id}
+                    type="button"
+                    className={p.id === trocarProf.profissionalId ? "on" : ""}
+                    disabled={salvando}
+                    onClick={() => salvarProfissionalDaMarcacao(p.id)}
+                  >
+                    {p.nome}
+                  </button>
+                ))}
+              </div>
+            )}
+            <div className="modal-actions">
+              {trocarProf.profissionalId && (
+                <button type="button" className="btn danger-ghost" disabled={salvando}
+                  onClick={() => salvarProfissionalDaMarcacao(null)}>
+                  Tirar profissional
+                </button>
+              )}
+              <button type="button" className="btn" onClick={() => setTrocarProf(null)}>
+                Fechar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {gerirProfs && (
+        <div className="modal-overlay" onClick={() => setGerirProfs(false)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <h2>Profissionais</h2>
+            {erro && <div className="erro">{erro}</div>}
+
+            {profissionais.length === 0 ? (
+              <p className="muted">Nenhum profissional cadastrado ainda.</p>
+            ) : (
+              <ul className="agenda-prof-cadastro">
+                {profissionais.map((p) => (
+                  <li key={p.id} className={formProf.id === p.id ? "editando" : ""}>
+                    <span>
+                      <strong>{p.nome}</strong>
+                      {p.telefone && <small className="muted">{p.telefone}</small>}
+                    </span>
+                    <button type="button" className="btn ghost"
+                      onClick={() => setFormProf({ id: p.id, nome: p.nome, telefone: p.telefone || "" })}>
+                      Editar
+                    </button>
+                    <button type="button" className="btn danger-ghost" onClick={() => removerProf(p)}>
+                      Remover
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            <label className="escala-label">
+              {formProf.id ? "Editar profissional" : "Novo profissional"}
+            </label>
+            <input className="escala-select" value={formProf.nome} maxLength={120}
+              placeholder="Nome (ex.: Dra. Ana Lima)"
+              onChange={(e) => setFormProf((f) => ({ ...f, nome: e.target.value }))} />
+            <input className="escala-select agenda-prof-tel" value={formProf.telefone} inputMode="tel"
+              placeholder="Telefone (opcional)"
+              onChange={(e) => setFormProf((f) => ({ ...f, telefone: maskTelefone(e.target.value) }))} />
+
+            <div className="modal-actions">
+              {formProf.id && (
+                <button type="button" className="btn ghost"
+                  onClick={() => setFormProf({ id: null, nome: "", telefone: "" })}>
+                  Cancelar edição
+                </button>
+              )}
+              <button type="button" className="btn" onClick={() => setGerirProfs(false)}>
+                Fechar
+              </button>
+              <button type="button" className="btn primary"
+                disabled={!formProf.nome.trim() || salvando} onClick={salvarCadastroProf}>
+                {salvando ? "Salvando…" : formProf.id ? "Salvar" : "Adicionar"}
               </button>
             </div>
           </div>

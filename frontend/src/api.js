@@ -176,6 +176,19 @@ export const agendaApi = {
     request("POST", `/agenda/${a.data}/${encodeURIComponent(a.hora)}/${a.id}/pagamento`, clinic, data),
   desfazerPagamento: (clinic, a) =>
     request("DELETE", `/agenda/${a.data}/${encodeURIComponent(a.hora)}/${a.id}/pagamento`, clinic),
+  // `profissionalId: null` tira o profissional da marcação.
+  definirProfissional: (clinic, a, profissionalId) =>
+    request("PUT", `/agenda/${a.data}/${encodeURIComponent(a.hora)}/${a.id}/profissional`, clinic, {
+      profissionalId,
+    }),
+};
+
+// --- Profissionais (quem atende na Agenda) ---
+export const profissionaisApi = {
+  list: (clinic) => request("GET", "/profissionais", clinic),
+  create: (clinic, data) => request("POST", "/profissionais", clinic, data),
+  update: (clinic, id, data) => request("PUT", `/profissionais/${id}`, clinic, data),
+  remove: (clinic, id) => request("DELETE", `/profissionais/${id}`, clinic),
 };
 
 // --- Financeiro / Fluxo de Caixa (nível clínica, só admin — FIN-01..11) ---
