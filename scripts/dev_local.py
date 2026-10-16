@@ -123,7 +123,7 @@ def popular(app):
         "tipo": "saida", "data": hoje.isoformat(), "valorCentavos": 15000,
         "descricao": "Conta de luz", "formaPagamento": "pix"}))
 
-    # Agenda: semana atual, com cadastrados, pessoas novas e uma aula já paga
+    # Agenda: semana atual, com cadastrados, pessoas novas e um agendamento já pago
     segunda = hoje - timedelta(days=hoje.weekday())
 
     def dia(n):
@@ -131,7 +131,7 @@ def popular(app):
 
     marcacoes = [
         (dia(0), "07:00", {"pacienteId": ids["João Pedro Costa"]}),
-        (dia(0), "07:00", {"nome": "Ana Clara (experimental)", "telefone": "(91) 99000-1111"}),
+        (dia(0), "07:00", {"nome": "Ana Clara", "telefone": "(91) 99000-1111"}),
         (dia(1), "18:00", {"pacienteId": ids["Beatriz Santos"]}),
         (dia(2), "09:00", {"nome": "Roberto Dias", "telefone": "(91) 99000-2222"}),
         (dia(3), "18:00", {"pacienteId": ids["Carlos Mendes"]}),
@@ -143,7 +143,7 @@ def popular(app):
     criados = [ok(c.post("/agenda", json={"data": d, "hora": h, **q})) for d, h, q in marcacoes]
     paga = criados[5]  # Fernanda, hoje 10:00
     ok(c.post(f"/agenda/{paga['data']}/{paga['hora']}/{paga['id']}/pagamento", json={
-        "tipoAula": "reposicao", "valorCentavos": 5000, "formaPagamento": "dinheiro",
+        "valorCentavos": 5000, "formaPagamento": "dinheiro",
         "dataPagamento": hoje.isoformat()}))
 
 

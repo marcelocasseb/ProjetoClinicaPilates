@@ -66,18 +66,16 @@ export default function Agenda({ clinic }) {
   const [detalhe, setDetalhe] = useState(null); // pessoa nova aberta (cadastrar)
   const toqueX = useRef(null);
 
-  // Pagamento da aula: "Receber" lança a entrada no Caixa; "Pago" mostra e desfaz.
-  const [precos, setPrecos] = useState({ aulaAvulsaCentavos: 0, reposicaoCentavos: 0 });
+  // Pagamento do agendamento: "Receber" lança a entrada no Caixa; "Pago" mostra e
+  // desfaz. Sem preço de tabela — a Agenda não é do Pilates, o valor é digitado.
   const [receber, setReceber] = useState(null); // item do modal "Receber"
-  const [tipoAula, setTipoAula] = useState("avulsa");
   const [valorTxt, setValorTxt] = useState("");
   const [forma, setForma] = useState("");
   const [verPago, setVerPago] = useState(null); // item do modal "Pago"
 
-  // Pacientes e preços uma vez; a semana a cada troca de semana.
+  // Pacientes uma vez; a semana a cada troca de semana.
   useEffect(() => {
     pacientesApi.list(clinic.id).then(setPacientes).catch(() => {});
-    agendaApi.precos(clinic.id).then(setPrecos).catch(() => {});
   }, [clinic.id]);
 
   async function carregar() {
@@ -158,20 +156,11 @@ export default function Agenda({ clinic }) {
 
   const trocar = (novo) => setItens((atual) => atual.map((x) => (x.id === novo.id ? novo : x)));
 
-  const precoDe = (tipo) =>
-    tipo === "reposicao" ? precos.reposicaoCentavos : precos.aulaAvulsaCentavos;
-
   function abrirReceber(a) {
     setErro("");
-    setTipoAula("avulsa");
-    setValorTxt(precoDe("avulsa") ? centavosParaBR(precoDe("avulsa")) : "");
+    setValorTxt("");
     setForma("");
     setReceber(a);
-  }
-
-  function trocarTipo(tipo) {
-    setTipoAula(tipo);
-    setValorTxt(precoDe(tipo) ? centavosParaBR(precoDe(tipo)) : "");
   }
 
   async function confirmarReceber() {
@@ -180,7 +169,6 @@ export default function Agenda({ clinic }) {
     try {
       trocar(
         await agendaApi.receber(clinic.id, receber, {
-          tipoAula,
           valorCentavos: brParaCentavos(valorTxt),
           formaPagamento: forma,
           dataPagamento: hojeISO(),
@@ -210,7 +198,7 @@ export default function Agenda({ clinic }) {
 
   async function desmarcar(a) {
     const pergunta = a.pagamento
-      ? `${a.nome} já pagou R$ ${centavosParaBR(a.pagamento.valorCentavos)} por esta aula. ` +
+      ? `${a.nome} já pagou R$ ${centavosParaBR(a.pagamento.valorCentavos)} por este agendamento. ` +
         "Desmarcar também tira essa entrada do Caixa. Continuar?"
       : `Desmarcar ${a.nome} de ${nomeDia.toLowerCase()}, ${a.hora}?`;
     if (!confirm(pergunta)) return;
@@ -351,7 +339,7 @@ export default function Agenda({ clinic }) {
                             <button
                               type="button"
                               className="agenda-receber"
-                              title="Receber pagamento desta aula"
+                              title="Receber pagamento deste agendamento"
                               aria-label={`Receber pagamento de ${a.nome}`}
                               onClick={() => abrirReceber(a)}
                             >
@@ -433,7 +421,7 @@ export default function Agenda({ clinic }) {
               <>
                 <label className="escala-label">Nome</label>
                 <input className="escala-select" value={nomeNovo} maxLength={120} autoFocus
-                  placeholder="Ex.: João (aula experimental)"
+                  placeholder="Ex.: João Silva"
                   onChange={(e) => setNomeNovo(e.target.value)} />
                 <label className="escala-label">Telefone (opcional)</label>
                 <input className="escala-select" value={telNovo} inputMode="tel"
@@ -491,24 +479,13 @@ export default function Agenda({ clinic }) {
           <div className="modal-card" onClick={(e) => e.stopPropagation()}>
             <h2>Receber — {receber.nome}</h2>
             <p className="muted">
-              Aula de {formatDataBR(receber.data).slice(0, 5)} às {receber.hora}. Vai como entrada
-              no Caixa com a data de hoje.
+              Agendamento de {formatDataBR(receber.data).slice(0, 5)} às {receber.hora}. Vai como
+              entrada no Caixa com a data de hoje.
             </p>
             {erro && <div className="erro">{erro}</div>}
 
-            <div className="agenda-modo" role="tablist">
-              <button type="button" role="tab" aria-selected={tipoAula === "avulsa"}
-                className={tipoAula === "avulsa" ? "on" : ""} onClick={() => trocarTipo("avulsa")}>
-                Aula avulsa
-              </button>
-              <button type="button" role="tab" aria-selected={tipoAula === "reposicao"}
-                className={tipoAula === "reposicao" ? "on" : ""} onClick={() => trocarTipo("reposicao")}>
-                Reposição
-              </button>
-            </div>
-
             <label className="escala-label">Valor (R$)</label>
-            <input className="escala-select" value={valorTxt} inputMode="numeric"
+            <input className="escala-select" value={valorTxt} inputMode="numeric" autoFocus
               placeholder="0,00" onChange={(e) => setValorTxt(maskMoeda(e.target.value))} />
             <label className="escala-label">Forma de pagamento</label>
             <select className="escala-select" value={forma} onChange={(e) => setForma(e.target.value)}>
@@ -537,7 +514,6 @@ export default function Agenda({ clinic }) {
             {erro && <div className="erro">{erro}</div>}
             <p className="agenda-pago-valor">R$ {centavosParaBR(verPago.pagamento.valorCentavos)}</p>
             <p className="muted">
-              {verPago.pagamento.tipoAula === "reposicao" ? "Reposição" : "Aula avulsa"} ·{" "}
               {labelForma(verPago.pagamento.formaPagamento)} · recebido em{" "}
               {formatDataBR(verPago.pagamento.dataPagamento)}
             </p>

@@ -172,7 +172,6 @@ export const agendaApi = {
   remover: (clinic, a) =>
     request("DELETE", `/agenda/${a.data}/${encodeURIComponent(a.hora)}/${a.id}`, clinic),
   // "Receber": lança a entrada no Caixa (qualquer papel). Devolve o item com `pagamento`.
-  precos: (clinic) => request("GET", "/agenda/precos", clinic),
   receber: (clinic, a, data) =>
     request("POST", `/agenda/${a.data}/${encodeURIComponent(a.hora)}/${a.id}/pagamento`, clinic, data),
   desfazerPagamento: (clinic, a) =>

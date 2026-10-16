@@ -20,14 +20,11 @@ from app.deps import get_clinic_id
 from app.repository import PacienteRepository
 from app.repository_agenda import AgendaRepository
 from app.repository_financeiro import FinanceiroRepository, mes_da_data
-from app.repository_plano import PlanoRepository
 from app.schemas_agenda import (
-    TIPOS_AULA,
     AgendaCreate,
     AgendaOut,
     AgendaPagamento,
     AgendaVincular,
-    PrecosAgenda,
     valida_data,
     valida_hora,
 )
@@ -38,6 +35,8 @@ router = APIRouter(prefix="/agenda", tags=["agenda"])
 # Período máximo de um GET: folga para um mês inteiro de calendário (6 semanas).
 PERIODO_MAX_DIAS = 62
 
+JA_PAGO = "Este agendamento já está pago"
+
 
 def get_repository(clinic_id: str = Depends(get_clinic_id)) -> AgendaRepository:
     return AgendaRepository(clinic_id=clinic_id)
@@ -47,14 +46,10 @@ def get_pacientes(clinic_id: str = Depends(get_clinic_id)) -> PacienteRepository
     return PacienteRepository(clinic_id=clinic_id)
 
 
-# Caixa e preços SEM `require_admin`: receber a aula é trabalho da recepção (qualquer
+# Caixa SEM `require_admin`: receber o agendamento é trabalho da recepção (qualquer
 # papel). O que continua só de admin é VER o caixa — as rotas de /financeiro.
 def get_financeiro(clinic_id: str = Depends(get_clinic_id)) -> FinanceiroRepository:
     return FinanceiroRepository(clinic_id=clinic_id)
-
-
-def get_planos(clinic_id: str = Depends(get_clinic_id)) -> PlanoRepository:
-    return PlanoRepository(clinic_id=clinic_id)
 
 
 def _validar(fn, valor: str) -> str:
@@ -80,7 +75,6 @@ def _pagamento_vivo(item: dict, lanc: Optional[dict]) -> Optional[dict]:
     return {
         "lancamentoId": lanc["id"],
         "mes": pag["mes"],
-        "tipoAula": pag.get("tipoAula") or "avulsa",
         "valorCentavos": lanc["valorCentavos"],
         "formaPagamento": lanc.get("formaPagamento"),
         "dataPagamento": lanc["data"],
@@ -120,7 +114,7 @@ def listar_agenda(
     """Agendamentos de `de` a `ate` (inclusive), ordenados por data → hora → nome.
 
     O "Pago" é conferido contra o Caixa: 1 Query por mês de pagamento envolvido
-    (normalmente 1), não uma leitura por aula.
+    (normalmente 1), não uma leitura por agendamento.
     """
     de = _validar(valida_data, de)
     ate = _validar(valida_data, ate)
@@ -207,13 +201,6 @@ def vincular(
     return _saida(atualizado, nome, paciente.get("telefone"), _lancamento_do(atualizado, fin))
 
 
-@router.get("/precos", response_model=PrecosAgenda)
-def precos(planos: PlanoRepository = Depends(get_planos)) -> dict:
-    """Preço da aula avulsa e da reposição (da tabela do Financeiro), para pré-preencher
-    o "Receber". Liberado a qualquer papel — expõe só esses dois valores."""
-    return planos.get_config()
-
-
 @router.post("/{data}/{hora}/{agenda_id}/pagamento", response_model=AgendaOut)
 def receber(
     data: str,
@@ -224,16 +211,16 @@ def receber(
     pacientes: PacienteRepository = Depends(get_pacientes),
     fin: FinanceiroRepository = Depends(get_financeiro),
 ) -> dict:
-    """Marca a aula como paga e lança a **entrada** no Caixa.
+    """Marca o agendamento como pago e lança a **entrada** no Caixa.
 
-    O lançamento leva o `pacienteId` (quando há) mas **nunca `competencia`**: aula paga
-    não é mensalidade e não pode dar baixa nela. `409` se a aula já está paga.
+    O lançamento leva o `pacienteId` (quando há) mas **nunca `competencia`**: não é
+    mensalidade e não pode dar baixa nela. `409` se o agendamento já está pago.
     """
     data = _validar(valida_data, data)
     hora = _validar(valida_hora, hora)
     item = _buscar(repo, data, hora, agenda_id)
     if _lancamento_do(item, fin) is not None:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Esta aula já está paga")
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=JA_PAGO)
 
     nome = item.get("nome") or ""
     if item.get("pacienteId"):
@@ -245,7 +232,7 @@ def receber(
             tipo=TIPO_ENTRADA,
             data=payload.dataPagamento,
             valorCentavos=payload.valorCentavos,
-            descricao=f"{TIPOS_AULA[payload.tipoAula]} — {nome} ({d:%d/%m} às {hora})",
+            descricao=f"Agenda — {nome} ({d:%d/%m} às {hora})",
             formaPagamento=payload.formaPagamento,
             pacienteId=item.get("pacienteId"),
         )
@@ -257,14 +244,13 @@ def receber(
     pagamento = {
         "lancamentoId": lanc["id"],
         "mes": mes_da_data(lanc["data"]),
-        "tipoAula": payload.tipoAula,
     }
     antigo = (item.get("pagamento") or {}).get("lancamentoId")
     if not repo.set_pagamento(data, hora, agenda_id, pagamento, antigo):
-        # Outro clique pagou primeiro (ou a aula foi desmarcada): desfaz o lançamento
-        # recém-criado para o Caixa não ficar com dinheiro em dobro.
+        # Outro clique pagou primeiro (ou o agendamento foi desmarcado): desfaz o
+        # lançamento recém-criado para o Caixa não ficar com dinheiro em dobro.
         fin.soft_delete(pagamento["mes"], lanc["id"])
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Esta aula já está paga")
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=JA_PAGO)
 
     telefone = (pacientes.get(item["pacienteId"]) or {}).get("telefone") if item.get("pacienteId") else None
     return _saida({**item, "pagamento": pagamento}, nome, telefone, lanc)
@@ -305,8 +291,8 @@ def desmarcar(
 ) -> dict:
     """Desmarca (remoção física). `404` se não existe ou é de outra clínica.
 
-    `409` se a aula está paga: desfazer o pagamento antes é obrigatório, para o Caixa
-    nunca ficar com a entrada de uma aula que não existe mais.
+    `409` se o agendamento está pago: desfazer o pagamento antes é obrigatório, para o Caixa
+    nunca ficar com a entrada de um agendamento que não existe mais.
     """
     data = _validar(valida_data, data)
     hora = _validar(valida_hora, hora)
@@ -314,7 +300,7 @@ def desmarcar(
     if item is not None and _lancamento_do(item, fin) is not None:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="Esta aula está paga. Desfaça o pagamento antes de desmarcar.",
+            detail="Este agendamento está pago. Desfaça o pagamento antes de desmarcar.",
         )
     if not repo.delete(data, hora, agenda_id):
         raise HTTPException(
