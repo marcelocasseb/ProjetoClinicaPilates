@@ -26,6 +26,7 @@ _SK_PREFIX = "SESSION#"
 _CHAVES_INTERNAS = ("PK", "SK")
 _CAMPOS = (
     "data",
+    "profissionalId",
     "profissional",
     "observacao",
     "aparelhos",

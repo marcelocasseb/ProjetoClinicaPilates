@@ -69,6 +69,10 @@ class SessaoBase(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
     data: Optional[str] = None
+    # `profissionalId` aponta para o cadastro de profissionais (o mesmo da Agenda); o
+    # router grava em `profissional` o nome dele (snapshot). Sem id, `profissional` é o
+    # texto livre das aulas antigas — aceito só para não quebrar a edição delas.
+    profissionalId: Optional[str] = None
     profissional: Optional[str] = None
     observacao: Optional[str] = None
     aparelhos: list[AparelhoSessao]
@@ -90,7 +94,7 @@ class SessaoBase(BaseModel):
             raise ValueError("data deve estar no formato YYYY-MM-DD")
         return v
 
-    @field_validator("profissional", "observacao", mode="before")
+    @field_validator("profissionalId", "profissional", "observacao", mode="before")
     @classmethod
     def _texto_vazio_para_none(cls, v):
         return _vazio_para_none(v)

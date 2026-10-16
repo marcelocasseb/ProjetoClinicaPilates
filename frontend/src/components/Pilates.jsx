@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
-import { pacientesApi, aparelhosApi, sessoesApi } from "../api";
+import { pacientesApi, aparelhosApi, sessoesApi, profissionaisApi } from "../api";
 import { onlyDigits, maskCpf, hojeISO, formatDataBR, primeiroEUltimoNome } from "../utils/format";
 import { getClaims } from "../auth";
+
+// Valor do select para a aula antiga cujo profissional é texto livre (sem id).
+const LEGADO = "__legado";
 
 // Tipos de treino — lista fixa (hardcode no front, AD-011). O back só guarda o texto.
 const TIPOS_TREINO = [
@@ -14,19 +17,26 @@ const TIPOS_TREINO = [
   "Alongamento",
 ];
 
-// Quem está conduzindo a aula é, quase sempre, quem está logado — então o campo
-// já nasce preenchido com o "Primeiro Último" do token, e continua editável
-// (outro profissional pode ter dado a aula). Se o usuário não tem `name` no
-// Cognito, fica em branco de propósito: chutar um nome a partir do e-mail
-// escreveria coisa como "Natsousa2" num registro clínico.
-function profissionalPadrao() {
-  return primeiroEUltimoNome(getClaims()?.name);
+// O profissional vem do MESMO cadastro da Agenda (nome padronizado = relatório por
+// profissional confiável). Quem conduz a aula é, quase sempre, quem está logado: se
+// o nome do token bate com alguém do cadastro, já vem selecionado (e continua
+// trocável). Sem `name` no Cognito ou sem correspondência, fica em branco — chutar
+// pelo e-mail escreveria coisa como "Natsousa2" num registro clínico.
+const normaliza = (s) =>
+  (s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").trim().toLowerCase();
+
+function profissionalPadrao(profissionais) {
+  const nome = getClaims()?.name;
+  if (!nome) return "";
+  const alvos = new Set([normaliza(nome), normaliza(primeiroEUltimoNome(nome))]);
+  return profissionais.find((p) => alvos.has(normaliza(p.nome)))?.id || "";
 }
 
-function vazio() {
+function vazio(profissionais = []) {
   return {
     data: hojeISO(),
-    profissional: profissionalPadrao(),
+    profissionalId: profissionalPadrao(profissionais),
+    profissionalLegado: "", // texto livre de aula antiga (só exibição/preservação)
     observacao: "",
     aparelhos: [],
   };
@@ -39,6 +49,7 @@ export default function Pilates({ clinic }) {
   const [aluno, setAluno] = useState(null);
 
   const [catalogo, setCatalogo] = useState([]); // aparelhos ativos da clínica
+  const [profissionais, setProfissionais] = useState([]); // cadastro (o mesmo da Agenda)
   const [lista, setLista] = useState([]); // aulas do aluno
   const [form, setForm] = useState(vazio());
   const [editId, setEditId] = useState(null);
@@ -63,6 +74,7 @@ export default function Pilates({ clinic }) {
 
   useEffect(() => {
     carregarPacientes();
+    profissionaisApi.list(clinic.id).then(setProfissionais).catch(() => {});
     setView("lista");
     setBusca("");
     setAluno(null);
@@ -87,7 +99,7 @@ export default function Pilates({ clinic }) {
 
   function selecionarAluno(p) {
     setAluno(p);
-    setForm(vazio());
+    setForm(vazio(profissionais));
     setEditId(null);
     setReadonly(false);
     setComboSel("");
@@ -99,7 +111,7 @@ export default function Pilates({ clinic }) {
   function voltarLista() {
     setView("lista");
     setAluno(null);
-    setForm(vazio());
+    setForm(vazio(profissionais));
     setEditId(null);
     setReadonly(false);
     setErro("");
@@ -151,9 +163,13 @@ export default function Pilates({ clinic }) {
 
   function montarPayload() {
     const txt = (v) => (v && v.trim() ? v.trim() : null);
+    // Do cadastro: manda só o id (o backend grava o nome). Aula antiga mantida como
+    // estava: reenvia o texto livre dela, sem id.
+    const legado = form.profissionalId === LEGADO;
     return {
       data: form.data || null,
-      profissional: txt(form.profissional),
+      profissionalId: legado ? null : form.profissionalId || null,
+      profissional: legado ? txt(form.profissionalLegado) : null,
       observacao: txt(form.observacao),
       aparelhos: form.aparelhos.map((a) => ({
         aparelhoId: a.aparelhoId || null,
@@ -177,7 +193,7 @@ export default function Pilates({ clinic }) {
         setReadonly(true);
       } else {
         await sessoesApi.create(clinic.id, aluno.id, payload);
-        setForm(vazio());
+        setForm(vazio(profissionais));
         setEditId(null);
         setReadonly(false);
         setComboSel("");
@@ -197,7 +213,10 @@ export default function Pilates({ clinic }) {
     setComboSel("");
     setForm({
       data: s.data || hojeISO(),
-      profissional: s.profissional || "",
+      // Sem id mas com nome = aula antiga de texto livre: fica selecionada como
+      // "registro antigo" até alguém escolher alguém do cadastro.
+      profissionalId: s.profissionalId || (s.profissional ? LEGADO : ""),
+      profissionalLegado: s.profissionalId ? "" : s.profissional || "",
       observacao: s.observacao || "",
       aparelhos: (s.aparelhos || []).map((a) => ({
         aparelhoId: a.aparelhoId || null,
@@ -213,7 +232,7 @@ export default function Pilates({ clinic }) {
   }
 
   function novaAula() {
-    setForm(vazio());
+    setForm(vazio(profissionais));
     setEditId(null);
     setReadonly(false);
     setComboSel("");
@@ -337,11 +356,31 @@ export default function Pilates({ clinic }) {
                 </div>
                 <div>
                   <label>Profissional responsável</label>
-                  <input
-                    value={form.profissional}
-                    onChange={(e) => setCampo("profissional", e.target.value)}
-                    placeholder="Nome de quem conduziu a aula"
-                  />
+                  <select
+                    value={form.profissionalId}
+                    onChange={(e) => setCampo("profissionalId", e.target.value)}
+                  >
+                    <option value="">— escolha o profissional —</option>
+                    {form.profissionalId === LEGADO && (
+                      <option value={LEGADO}>{form.profissionalLegado} (registro antigo)</option>
+                    )}
+                    {profissionais.map((p) => (
+                      <option key={p.id} value={p.id}>{p.nome}</option>
+                    ))}
+                    {/* Profissional removido do cadastro: mantém o nome visível na aula. */}
+                    {form.profissionalId &&
+                      form.profissionalId !== LEGADO &&
+                      !profissionais.some((p) => p.id === form.profissionalId) && (
+                        <option value={form.profissionalId}>
+                          {lista.find((s) => s.id === editId)?.profissional || "Profissional removido"}
+                        </option>
+                      )}
+                  </select>
+                  {profissionais.length === 0 && (
+                    <small className="muted">
+                      Cadastre os profissionais na Agenda (botão “Profissionais”).
+                    </small>
+                  )}
                 </div>
               </div>
 

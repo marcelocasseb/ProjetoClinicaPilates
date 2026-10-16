@@ -149,3 +149,73 @@ def test_rotas_existentes_sem_regressao(dynamo_table):
     assert client.post("/aparelhos", json={"nome": "Reformer"}).status_code == 201
     pid = _cria_paciente()
     assert client.post(_base(pid).replace("/sessoes", "/avaliacoes"), json={"queixaPrincipal": "x"}).status_code == 201
+
+
+# --- Profissional do cadastro (o mesmo da Agenda) ---
+
+
+def _profissional(nome="Dra. Ana Lima"):
+    return client.post("/profissionais", json={"nome": nome}).json()["id"]
+
+
+def test_aula_com_profissional_do_cadastro_grava_id_e_nome(dynamo_table):
+    pid = _cria_paciente()
+    prof = _profissional()
+    body = client.post(_base(pid), json={"aparelhos": _aparelhos(), "profissionalId": prof}).json()
+    assert body["profissionalId"] == prof
+    assert body["profissional"] == "Dra. Ana Lima"
+
+
+def test_profissional_do_cadastro_ignora_texto_enviado(dynamo_table):
+    """O nome vem do cadastro, nunca do texto: é o que mantém o relatório confiável."""
+    pid = _cria_paciente()
+    prof = _profissional()
+    body = client.post(
+        _base(pid), json={"aparelhos": _aparelhos(), "profissionalId": prof, "profissional": "Ana"}
+    ).json()
+    assert body["profissional"] == "Dra. Ana Lima"
+
+
+def test_aula_com_profissional_inexistente_retorna_404(dynamo_table):
+    pid = _cria_paciente()
+    resp = client.post(_base(pid), json={"aparelhos": _aparelhos(), "profissionalId": "nao-existe"})
+    assert resp.status_code == 404
+    assert resp.json()["detail"] == "Profissional não encontrado"
+    assert client.get(_base(pid)).json() == []
+
+
+def test_editar_aula_antiga_de_texto_para_cadastro(dynamo_table):
+    pid = _cria_paciente()
+    sid = client.post(_base(pid), json={"aparelhos": _aparelhos(), "profissional": "Ana"}).json()["id"]
+    prof = _profissional()
+    body = client.put(
+        f"{_base(pid)}/{sid}", json={"aparelhos": _aparelhos(), "profissionalId": prof}
+    ).json()
+    assert body["profissionalId"] == prof
+    assert body["profissional"] == "Dra. Ana Lima"
+
+
+def test_aula_antiga_de_texto_continua_valida(dynamo_table):
+    pid = _cria_paciente()
+    body = client.post(_base(pid), json={"aparelhos": _aparelhos(), "profissional": "Ana"}).json()
+    assert body["profissionalId"] is None
+    assert body["profissional"] == "Ana"
+
+
+def test_editar_aula_de_profissional_removido_mantem_o_nome(dynamo_table):
+    pid = _cria_paciente()
+    prof = _profissional()
+    sid = client.post(_base(pid), json={"aparelhos": _aparelhos(), "profissionalId": prof}).json()["id"]
+    client.delete(f"/profissionais/{prof}")
+    resp = client.put(
+        f"{_base(pid)}/{sid}",
+        json={"aparelhos": _aparelhos(), "profissionalId": prof, "observacao": "corrigido"},
+    )
+    assert resp.status_code == 200
+    assert resp.json()["profissional"] == "Dra. Ana Lima"
+    assert resp.json()["observacao"] == "corrigido"
+    # trocar PARA um profissional removido continua barrado
+    outro = _profissional("Bia")
+    client.delete(f"/profissionais/{outro}")
+    resp = client.put(f"{_base(pid)}/{sid}", json={"aparelhos": _aparelhos(), "profissionalId": outro})
+    assert resp.status_code == 404
