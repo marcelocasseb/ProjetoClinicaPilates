@@ -134,9 +134,21 @@ def test_descricao_longa_demais_recusada():
 # --- formaPagamento -------------------------------------------------------
 
 
-@pytest.mark.parametrize("forma", ["dinheiro", "pix", "cartao", "transferencia"])
+@pytest.mark.parametrize("forma", ["dinheiro", "pix", "credito", "debito", "transferencia"])
 def test_forma_pagamento_valida(forma):
     assert _cria(formaPagamento=forma).formaPagamento == forma
+
+
+def test_forma_cartao_legada_continua_aceita():
+    """Lançamentos antigos têm "cartao": editar um deles não pode dar 400."""
+    assert _cria(formaPagamento="cartao").formaPagamento == "cartao"
+
+
+def test_mensagem_de_erro_nao_oferece_forma_legada():
+    with pytest.raises(ValidationError) as e:
+        _cria(formaPagamento="boleto")
+    assert "credito" in str(e.value)
+    assert "cartao" not in str(e.value)
 
 
 def test_forma_pagamento_ausente_vira_none():

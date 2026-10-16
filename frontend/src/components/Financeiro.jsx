@@ -11,13 +11,13 @@ import { financeiroApi } from "../api";
 import Mensalidades from "./Mensalidades";
 import TabelaPrecos from "./TabelaPrecos";
 import {
-  FORMAS_PAGAMENTO,
   brParaCentavos,
   centavosParaBR,
   formatDataBR,
   formatMesBR,
   hojeISO,
   labelForma,
+  opcoesForma,
   maskMoeda,
   mesAnterior,
   mesAtual,
@@ -254,7 +254,7 @@ export default function Financeiro({ clinic, secaoInicial = "caixa" }) {
               value={form.formaPagamento}
               onChange={(e) => setCampo("formaPagamento", e.target.value)}
             >
-              {FORMAS_PAGAMENTO.map((f) => (
+              {opcoesForma(form.formaPagamento).map((f) => (
                 <option key={f.v} value={f.v}>
                   {f.label}
                 </option>

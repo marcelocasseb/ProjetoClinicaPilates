@@ -28,7 +28,10 @@ TIPO_ENTRADA = "entrada"
 TIPO_SAIDA = "saida"
 TIPOS = (TIPO_ENTRADA, TIPO_SAIDA)
 
-FORMAS_PAGAMENTO = ("dinheiro", "pix", "cartao", "transferencia")
+FORMAS_PAGAMENTO = ("dinheiro", "pix", "credito", "debito", "transferencia")
+# "cartao" foi trocado por crédito/débito (2026-10-16), mas lançamentos antigos ainda o
+# têm: continua ACEITO (editar um deles não pode dar 400), só não é mais oferecido.
+FORMAS_LEGADAS = ("cartao",)
 
 DESCRICAO_MAX = 200
 
@@ -121,7 +124,7 @@ class LancamentoBase(BaseModel):
         v = _vazio_para_none(v)
         if v is None:
             return None
-        if v.lower() not in FORMAS_PAGAMENTO:
+        if v.lower() not in FORMAS_PAGAMENTO + FORMAS_LEGADAS:
             raise ValueError(
                 "formaPagamento deve ser " + ", ".join(FORMAS_PAGAMENTO)
             )

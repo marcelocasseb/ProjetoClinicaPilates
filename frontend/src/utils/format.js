@@ -86,12 +86,23 @@ export const FORMAS_PAGAMENTO = [
   { v: "", label: "—" },
   { v: "dinheiro", label: "Dinheiro" },
   { v: "pix", label: "Pix" },
-  { v: "cartao", label: "Cartão" },
+  { v: "credito", label: "Crédito" },
+  { v: "debito", label: "Débito" },
   { v: "transferencia", label: "Transferência" },
 ];
 
+// "Cartão" virou Crédito/Débito, mas lançamentos antigos ainda têm "cartao" (o
+// backend continua aceitando). Não é oferecido para lançamento novo; só aparece
+// no rótulo e, via `opcoesForma`, ao editar um lançamento que já o tem.
+const FORMA_LEGADA = { v: "cartao", label: "Cartão" };
+
 export const labelForma = (v) =>
-  FORMAS_PAGAMENTO.find((f) => f.v === (v || ""))?.label || "—";
+  [...FORMAS_PAGAMENTO, FORMA_LEGADA].find((f) => f.v === (v || ""))?.label || "—";
+
+// Opções do select: as atuais + a legada quando é ela que está gravada (senão o
+// select ficaria em branco e um "Salvar" trocaria a forma sem ninguém pedir).
+export const opcoesForma = (atual) =>
+  atual === FORMA_LEGADA.v ? [...FORMAS_PAGAMENTO, FORMA_LEGADA] : FORMAS_PAGAMENTO;
 
 // Navegação de mês em "AAAA-MM", com virada de ano correta.
 export function mesAnterior(mes) {
