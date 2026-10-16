@@ -1269,6 +1269,48 @@ textarea.obs {
 .agenda-dica {
   text-align: left;
 }
+/* Pagamento da aula: "R$" discreto para receber; "✓ Pago" verde quando há entrada no Caixa */
+.agenda-receber {
+  flex: none;
+  height: 24px;
+  padding: 0 8px;
+  border: 1px dashed var(--border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.agenda-receber:hover {
+  border-color: var(--ok);
+  color: var(--ok);
+}
+.agenda-pago {
+  flex: none;
+  height: 24px;
+  padding: 0 9px;
+  border: none;
+  border-radius: 999px;
+  background: rgba(31, 157, 107, 0.12);
+  color: var(--ok);
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.agenda-pago-valor {
+  margin: 4px 0 2px;
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--ok);
+}
+.btn.danger-ghost {
+  margin-right: auto;
+  border-color: transparent;
+  background: transparent;
+  color: var(--danger);
+}
 .agenda-modo {
   display: grid;
   grid-template-columns: 1fr 1fr;

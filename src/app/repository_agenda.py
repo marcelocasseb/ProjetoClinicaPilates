@@ -153,6 +153,54 @@ class AgendaRepository:
             raise
         return _para_agenda(resp["Attributes"])
 
+    def get(self, data: str, hora: str, agenda_id: str) -> Optional[dict]:
+        """O agendamento, ou `None` se não existe (ou já venceu a retenção)."""
+        item = self._table.get_item(Key=self._key(data, hora, agenda_id)).get("Item")
+        if item is None or _vencido(item, int(time.time())):
+            return None
+        return _para_agenda(item)
+
+    def set_pagamento(
+        self, data: str, hora: str, agenda_id: str, pagamento: dict, antigo: Optional[str]
+    ) -> bool:
+        """Grava o pagamento (referência ao lançamento do Caixa). `False` se a marcação
+        sumiu ou se outro pagamento entrou no meio do caminho.
+
+        `antigo` é o `lancamentoId` de um pagamento cujo lançamento foi **cancelado no
+        Caixa** — só ele pode ser sobrescrito; um pagamento ativo nunca é.
+        """
+        condicao = "attribute_exists(PK) AND (attribute_not_exists(pagamento)"
+        valores = {":p": pagamento}
+        if antigo:
+            condicao += " OR pagamento.lancamentoId = :antigo"
+            valores[":antigo"] = antigo
+        condicao += ")"
+        try:
+            self._table.update_item(
+                Key=self._key(data, hora, agenda_id),
+                UpdateExpression="SET pagamento = :p",
+                ConditionExpression=condicao,
+                ExpressionAttributeValues=valores,
+            )
+        except ClientError as e:
+            if e.response.get("Error", {}).get("Code") == _CONDICAO_FALHOU:
+                return False
+            raise
+        return True
+
+    def remove_pagamento(self, data: str, hora: str, agenda_id: str) -> None:
+        """Tira a referência ao pagamento. Sem a condição, o `update_item` num item
+        inexistente criaria um item fantasma só com a chave."""
+        try:
+            self._table.update_item(
+                Key=self._key(data, hora, agenda_id),
+                UpdateExpression="REMOVE pagamento",
+                ConditionExpression="attribute_exists(PK)",
+            )
+        except ClientError as e:
+            if e.response.get("Error", {}).get("Code") != _CONDICAO_FALHOU:
+                raise
+
     def delete(self, data: str, hora: str, agenda_id: str) -> bool:
         """Desmarca (remoção física). `False` se não existia."""
         try:

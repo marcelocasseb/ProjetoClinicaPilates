@@ -19,7 +19,7 @@ Exatamente um dos dois: `pacienteId` **ou** `nome`.
 """
 import re
 from datetime import date
-from typing import Optional
+from typing import Any, Optional
 
 from pydantic import BaseModel, ConfigDict, field_validator, model_validator
 
@@ -113,8 +113,64 @@ class AgendaVincular(BaseModel):
         return v.strip()
 
 
+TIPOS_AULA = {"avulsa": "Aula avulsa", "reposicao": "Reposição"}
+
+
+class AgendaPagamento(BaseModel):
+    """Payload de `POST /agenda/{data}/{hora}/{id}/pagamento` (botão "Receber").
+
+    Vira uma **entrada** no Caixa. Valor e forma são revalidados pelas regras do próprio
+    lançamento (`LancamentoCreate`) no router — centavos inteiros, nada de float.
+    `dataPagamento` é o dia em que o dinheiro entrou (regime de caixa), mandado pelo
+    front no fuso local; não é a data da aula.
+    """
+
+    model_config = ConfigDict(extra="ignore")
+
+    tipoAula: str
+    valorCentavos: Any  # validado como no Caixa (float recusado) — ver docstring
+    formaPagamento: Optional[str] = None
+    dataPagamento: str
+
+    @field_validator("tipoAula", mode="before")
+    @classmethod
+    def _valida_tipo_aula(cls, v):
+        if not isinstance(v, str) or v.strip().lower() not in TIPOS_AULA:
+            raise ValueError("tipoAula deve ser 'avulsa' ou 'reposicao'")
+        return v.strip().lower()
+
+    @field_validator("dataPagamento", mode="before")
+    @classmethod
+    def _valida_data_pagamento(cls, v):
+        return valida_data(v)
+
+
+class PagamentoOut(BaseModel):
+    """Pagamento da aula, espelhando o lançamento **ativo** do Caixa."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    lancamentoId: str
+    mes: str
+    tipoAula: str
+    valorCentavos: int
+    formaPagamento: Optional[str] = None
+    dataPagamento: str
+
+
+class PrecosAgenda(BaseModel):
+    """Preços de aula avulsa/reposição para pré-preencher o "Receber" (qualquer papel)."""
+
+    aulaAvulsaCentavos: int = 0
+    reposicaoCentavos: int = 0
+
+
 class AgendaOut(BaseModel):
-    """Um agendamento. `novo` = pessoa ainda sem cadastro (`pacienteId` nulo)."""
+    """Um agendamento. `novo` = pessoa ainda sem cadastro (`pacienteId` nulo).
+
+    `pagamento` só vem quando há lançamento **ativo** no Caixa: cancelar o lançamento
+    na tela de Caixa faz o "Pago" sumir da Agenda.
+    """
 
     model_config = ConfigDict(extra="ignore")
 
@@ -125,4 +181,5 @@ class AgendaOut(BaseModel):
     nome: str
     telefone: Optional[str] = None
     novo: bool
+    pagamento: Optional[PagamentoOut] = None
     criadoEm: Optional[str] = None

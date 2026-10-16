@@ -1,4 +1,5 @@
 """Testes dos endpoints da Agenda (marcações datadas, feature agenda)."""
+import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app
@@ -189,6 +190,146 @@ def test_desmarcar_de_outra_clinica_retorna_404(dynamo_table):
 
 def test_desmarcar_hora_invalida_retorna_400(dynamo_table):
     assert client.delete("/agenda/2026-10-19/7h/abc").status_code == 400
+
+
+# --- Pagamento da aula (Receber → entrada no Caixa) ---
+
+
+@pytest.fixture
+def admin():
+    """Usuário admin — os testes conferem o resultado na tela de Caixa (/financeiro),
+    que é só de admin. O "Receber" em si não exige admin (ver teste do membro)."""
+    from app.deps import get_current_role
+
+    app.dependency_overrides[get_current_role] = lambda: "admin"
+    yield
+    app.dependency_overrides.pop(get_current_role, None)
+
+
+def _url(ag):
+    return f"/agenda/{ag['data']}/07%3A00/{ag['id']}"
+
+
+def _receber(ag, headers=None, **dados):
+    corpo = {"tipoAula": "avulsa", "valorCentavos": 8000, "formaPagamento": "pix",
+             "dataPagamento": "2026-10-16", **dados}
+    return client.post(f"{_url(ag)}/pagamento", json=corpo, headers=headers or {})
+
+
+def _caixa(mes="2026-10"):
+    return client.get(f"/financeiro/lancamentos?mes={mes}").json()
+
+
+def test_receber_lanca_entrada_no_caixa(dynamo_table, admin):
+    ag = _agendar(nome="João").json()
+    resp = _receber(ag)
+    assert resp.status_code == 200
+    pag = resp.json()["pagamento"]
+    assert pag["valorCentavos"] == 8000
+    assert pag["formaPagamento"] == "pix"
+    assert pag["tipoAula"] == "avulsa"
+    assert pag["dataPagamento"] == "2026-10-16"
+
+    caixa = _caixa()
+    assert caixa["entradasCentavos"] == 8000
+    lanc = caixa["lancamentos"][0]
+    assert lanc["tipo"] == "entrada"
+    assert lanc["descricao"] == "Aula avulsa — João (19/10 às 07:00)"
+    assert _listar().json()[0]["pagamento"]["lancamentoId"] == lanc["id"]
+
+
+def test_receber_de_paciente_nao_conta_como_mensalidade(dynamo_table, admin):
+    pid = _aluno()
+    ag = _agendar(pacienteId=pid).json()
+    _receber(ag, tipoAula="reposicao", valorCentavos=5000)
+    lanc = _caixa()["lancamentos"][0]
+    assert lanc["pacienteId"] == pid
+    assert lanc["competencia"] is None
+    assert lanc["descricao"].startswith("Reposição — Rebecca")
+
+
+def test_receber_duas_vezes_retorna_409(dynamo_table, admin):
+    ag = _agendar(nome="João").json()
+    assert _receber(ag).status_code == 200
+    assert _receber(ag).status_code == 409
+    assert _caixa()["entradasCentavos"] == 8000
+
+
+def test_receber_valor_invalido_retorna_400(dynamo_table, admin):
+    ag = _agendar(nome="João").json()
+    assert _receber(ag, valorCentavos=80.5).status_code == 400
+    assert _receber(ag, valorCentavos=0).status_code == 400
+    assert _receber(ag, formaPagamento="cheque").status_code == 400
+    assert _receber(ag, tipoAula="mensal").status_code == 400
+    assert _caixa()["lancamentos"] == []
+
+
+def test_receber_marcacao_inexistente_retorna_404(dynamo_table):
+    ag = {"data": "2026-10-19", "id": "nao-existe"}
+    assert _receber(ag).status_code == 404
+
+
+def test_receber_liberado_para_membro(dynamo_table):
+    """Membro não vê o Caixa (/financeiro é só admin), mas pode receber a aula."""
+    from app.deps import get_current_role
+
+    app.dependency_overrides[get_current_role] = lambda: "membro"
+    try:
+        ag = _agendar(nome="João").json()
+        assert _receber(ag).status_code == 200
+        assert client.get("/agenda/precos").status_code == 200
+        assert client.get("/financeiro/lancamentos").status_code == 403
+    finally:
+        app.dependency_overrides.pop(get_current_role, None)
+
+
+def test_desfazer_pagamento_cancela_lancamento(dynamo_table, admin):
+    ag = _agendar(nome="João").json()
+    _receber(ag)
+    resp = client.delete(f"{_url(ag)}/pagamento")
+    assert resp.status_code == 200
+    assert resp.json()["pagamento"] is None
+    assert _caixa()["lancamentos"] == []
+    assert _listar().json()[0]["pagamento"] is None
+    # e pode receber de novo
+    assert _receber(ag).status_code == 200
+
+
+def test_cancelar_no_caixa_tira_o_pago_da_agenda(dynamo_table, admin):
+    ag = _agendar(nome="João").json()
+    lanc_id = _receber(ag).json()["pagamento"]["lancamentoId"]
+    assert client.delete(f"/financeiro/lancamentos/2026-10/{lanc_id}").status_code == 200
+    assert _listar().json()[0]["pagamento"] is None
+    assert _receber(ag).status_code == 200  # receber de novo é permitido
+    assert _caixa()["entradasCentavos"] == 8000
+
+
+def test_editar_valor_no_caixa_reflete_na_agenda(dynamo_table, admin):
+    ag = _agendar(nome="João").json()
+    lanc_id = _receber(ag).json()["pagamento"]["lancamentoId"]
+    client.put(
+        f"/financeiro/lancamentos/2026-10/{lanc_id}",
+        json={"tipo": "entrada", "data": "2026-10-16", "valorCentavos": 9000,
+              "descricao": "Aula avulsa — João", "formaPagamento": "dinheiro"},
+    )
+    pag = _listar().json()[0]["pagamento"]
+    assert pag["valorCentavos"] == 9000
+    assert pag["formaPagamento"] == "dinheiro"
+
+
+def test_desmarcar_aula_paga_retorna_409(dynamo_table):
+    ag = _agendar(nome="João").json()
+    _receber(ag)
+    resp = client.delete(_url(ag))
+    assert resp.status_code == 409
+    assert len(_listar().json()) == 1
+    client.delete(f"{_url(ag)}/pagamento")
+    assert client.delete(_url(ag)).status_code == 200
+
+
+def test_precos_vem_da_tabela_do_financeiro(dynamo_table, admin):
+    client.put("/financeiro/config", json={"aulaAvulsaCentavos": 8000, "reposicaoCentavos": 5000})
+    assert client.get("/agenda/precos").json() == {"aulaAvulsaCentavos": 8000, "reposicaoCentavos": 5000}
 
 
 # --- Retenção de 4 meses (TTL) ---
