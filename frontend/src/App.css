@@ -189,6 +189,46 @@
   border-bottom-color: var(--accent);
   border-bottom-width: 2.5px;
 }
+/* Aba com lista suspensa (Pilates → Pilates / Aparelhos / Escala) */
+.tab-menu {
+  position: relative;
+}
+.tab-seta {
+  font-size: 11px;
+  margin-left: 2px;
+}
+.tab-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 50;
+  min-width: 170px;
+  display: flex;
+  flex-direction: column;
+  padding: 6px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+.tab-opcao {
+  padding: 9px 12px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: 15px;
+  text-align: left;
+  cursor: pointer;
+}
+.tab-opcao:hover {
+  background: var(--border);
+}
+.tab-opcao.on {
+  color: var(--accent);
+  font-weight: 600;
+}
 .content {
   max-width: 1080px;
   margin: 0 auto;
@@ -746,11 +786,8 @@ textarea.obs {
   .tabs {
     padding: 10px 14px 0;
     gap: 2px;
-    overflow-x: auto; /* com o Início, as abas não cabem mais em 390px */
-    scrollbar-width: none;
-  }
-  .tabs::-webkit-scrollbar {
-    display: none;
+    /* Sem overflow-x: com Pilates/Aparelhos/Escala agrupados as abas cabem em
+       390px, e a rolagem cortaria a lista suspensa. */
   }
   .tab {
     flex: none;
@@ -1012,29 +1049,166 @@ textarea.obs {
   box-shadow: 0 0 0 3px rgba(184, 147, 94, 0.15);
 }
 
-@media (max-width: 640px) {
-  /* No celular as 7 colunas não cabem: rótulo curto (Seg/Ter/…), colunas mais
-     estreitas e o "+" sempre visível (não há hover no toque). */
-  .escala {
-    min-width: 620px;
-    font-size: 12px;
+/* Versão celular da Escala: um dia por vez (faixa de dias + lista de horários).
+   No desktop fica escondida; no celular é ela que aparece no lugar da grade. */
+.escala-cel {
+  display: none;
+}
+.escala-dias {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  margin-bottom: 14px;
+}
+.escala-dia {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 0 7px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--panel);
+  color: var(--muted);
+  font-family: var(--font-display);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+.escala-dia-curto {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.escala-dia-conta {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+}
+/* Pontinho embaixo do dia de hoje */
+.escala-dia.hoje::after {
+  content: "";
+  position: absolute;
+  bottom: -7px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+.escala-dia.on {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.escala-dia.on .escala-dia-conta {
+  color: #fff;
+}
+.escala-dia-titulo {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 4px 2px 10px;
+  font-size: 16px;
+}
+.escala-dia-titulo .muted {
+  margin-left: auto;
+  font-size: 13px;
+}
+.escala-hoje {
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: rgba(184, 147, 94, 0.14);
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.escala-horarios {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  animation: escala-entra 0.2s ease;
+}
+@keyframes escala-entra {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
   }
-  .dia-nome {
+}
+.escala-slot {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 8px 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--panel);
+}
+.escala-slot.cheio {
+  border-left: 3px solid var(--accent);
+  background: rgba(184, 147, 94, 0.05);
+}
+.escala-slot-hora {
+  flex: none;
+  width: 46px;
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--muted);
+}
+.escala-slot.cheio .escala-slot-hora {
+  color: var(--text);
+}
+.escala-slot-alunos {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+}
+.escala-slot-alunos .aluno-chip {
+  margin-bottom: 0;
+  font-size: 13px;
+  padding: 5px 5px 5px 10px;
+}
+/* No toque o ✕ precisa ser maior para acertar com o dedo */
+.escala-slot-alunos .aluno-x {
+  width: 26px;
+  height: 26px;
+  font-size: 12px;
+}
+.escala-slot-add {
+  flex: none;
+  align-self: flex-start;
+  width: 36px;
+  height: 36px;
+  border: 1px dashed var(--border);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--accent);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+.escala-slot-add:active {
+  background: rgba(184, 147, 94, 0.14);
+}
+.escala-dica-cel {
+  margin: 12px 0 0;
+  font-size: 12px;
+  text-align: center;
+}
+
+@media (max-width: 640px) {
+  /* No celular a grade de 7 colunas dá lugar à visão de um dia por vez. */
+  .escala-wrap,
+  .escala-dica {
     display: none;
   }
-  .dia-curto {
-    display: inline;
-  }
-  .escala .col-hora {
-    width: 58px;
-    padding: 8px 8px;
-  }
-  .escala .cel {
-    min-width: 78px;
-  }
-  .cel-add {
-    border-color: var(--border);
-    color: var(--accent);
+  .escala-cel {
+    display: block;
   }
 }
 

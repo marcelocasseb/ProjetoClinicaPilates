@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Login from "./components/Login";
 import Inicio from "./components/Inicio";
 import Pacientes from "./components/Pacientes";
@@ -24,6 +24,13 @@ function clinicDasClaims(claims) {
   };
 }
 
+// Telas agrupadas sob a aba "Pilates" (abrem por uma lista suspensa).
+const ABAS_PILATES = [
+  { id: "pilates", rotulo: "Pilates" },
+  { id: "aparelhos", rotulo: "Aparelhos" },
+  { id: "escala", rotulo: "Escala" },
+];
+
 export default function App() {
   const [clinic, setClinic] = useState(null);
   const [clinicNome, setClinicNome] = useState(null); // nome de exibição (do backend)
@@ -31,6 +38,23 @@ export default function App() {
   const [secaoFin, setSecaoFin] = useState("caixa"); // sub-aba ao chegar pelo Início
   const [mostrarMembro, setMostrarMembro] = useState(false);
   const [sessaoCaiu, setSessaoCaiu] = useState(false); // modal de re-login por cima da tela
+  const [menuPilates, setMenuPilates] = useState(false); // lista suspensa da aba Pilates
+  const menuRef = useRef(null);
+
+  // Fecha a lista suspensa ao clicar fora dela ou apertar Esc.
+  useEffect(() => {
+    if (!menuPilates) return;
+    const fora = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) setMenuPilates(false);
+    };
+    const esc = (e) => e.key === "Escape" && setMenuPilates(false);
+    document.addEventListener("mousedown", fora);
+    document.addEventListener("keydown", esc);
+    return () => {
+      document.removeEventListener("mousedown", fora);
+      document.removeEventListener("keydown", esc);
+    };
+  }, [menuPilates]);
 
   // Restaura a sessão do token guardado (não relogar a cada refresh).
   useEffect(() => {
@@ -130,15 +154,33 @@ export default function App() {
         <button className={aba === "pacientes" ? "tab on" : "tab"} onClick={() => setAba("pacientes")}>
           Pacientes
         </button>
-        <button className={aba === "aparelhos" ? "tab on" : "tab"} onClick={() => setAba("aparelhos")}>
-          Aparelhos
-        </button>
-        <button className={aba === "pilates" ? "tab on" : "tab"} onClick={() => setAba("pilates")}>
-          Pilates
-        </button>
-        <button className={aba === "escala" ? "tab on" : "tab"} onClick={() => setAba("escala")}>
-          Escala
-        </button>
+        <div className="tab-menu" ref={menuRef}>
+          <button
+            className={ABAS_PILATES.some((a) => a.id === aba) ? "tab on" : "tab"}
+            aria-haspopup="menu"
+            aria-expanded={menuPilates}
+            onClick={() => setMenuPilates((v) => !v)}
+          >
+            Pilates <span className="tab-seta">▾</span>
+          </button>
+          {menuPilates && (
+            <div className="tab-dropdown" role="menu">
+              {ABAS_PILATES.map((a) => (
+                <button
+                  key={a.id}
+                  role="menuitem"
+                  className={aba === a.id ? "tab-opcao on" : "tab-opcao"}
+                  onClick={() => {
+                    setAba(a.id);
+                    setMenuPilates(false);
+                  }}
+                >
+                  {a.rotulo}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
         {/* Financeiro é só de admin (FIN-06). Esconder a aba é higiene de UI — quem
             garante mesmo é o backend, que devolve 403 para quem não é admin. */}
         {isAdmin && (

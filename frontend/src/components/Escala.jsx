@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { escalaApi, financeiroApi, pacientesApi } from "../api";
 import { centavosParaBR, mesAtual } from "../utils/format";
 
@@ -24,6 +24,12 @@ const HORARIOS = [
 
 const chave = (dia, hora) => `${dia}|${hora}`;
 
+// Dia da semana de hoje no padrão ISO (1 = segunda … 7 = domingo).
+const hojeISO = () => ((new Date().getDay() + 6) % 7) + 1;
+
+// Distância mínima (px) do arraste lateral para trocar de dia na versão celular.
+const SWIPE_MIN = 60;
+
 export default function Escala({ clinic }) {
   const [matriculas, setMatriculas] = useState([]);
   const [pacientes, setPacientes] = useState([]);
@@ -35,6 +41,9 @@ export default function Escala({ clinic }) {
   const [celula, setCelula] = useState(null); // {dia, hora} — célula do modal aberto
   const [escolhido, setEscolhido] = useState("");
   const [salvando, setSalvando] = useState(false);
+  // Celular: em vez da grade 7 colunas, um dia por vez (abre no dia de hoje).
+  const [diaCel, setDiaCel] = useState(hojeISO);
+  const toqueX = useRef(null);
 
   async function carregar() {
     setErro("");
@@ -157,7 +166,48 @@ export default function Escala({ clinic }) {
     }
   }
 
+  // Arraste lateral na lista do celular: esquerda = próximo dia, direita = anterior.
+  function fimToque(e) {
+    if (toqueX.current == null) return;
+    const dx = e.changedTouches[0].clientX - toqueX.current;
+    toqueX.current = null;
+    if (Math.abs(dx) < SWIPE_MIN) return;
+    setDiaCel((d) => (dx < 0 ? (d % 7) + 1 : ((d + 5) % 7) + 1));
+  }
+
+  // Chip do aluno — o mesmo na grade (desktop) e na lista do dia (celular).
+  function chipAluno(m) {
+    return (
+      <span
+        key={m.pacienteId}
+        className={devendo[m.pacienteId] ? "aluno-chip devendo" : "aluno-chip"}
+      >
+        {devendo[m.pacienteId] ? (
+          <span
+            className="ponto-devendo"
+            title={`Mensalidade em aberto: R$ ${centavosParaBR(devendo[m.pacienteId])}`}
+          >
+            ●
+          </span>
+        ) : null}
+        <span className="aluno-nome" title={m.nome}>
+          {m.nome}
+        </span>
+        <button
+          type="button"
+          className="aluno-x"
+          title={`Tirar ${m.nome} deste horário`}
+          onClick={() => remover(m)}
+        >
+          ✕
+        </button>
+      </span>
+    );
+  }
+
   const semAlunos = pacientes.length === 0;
+  const diaCelInfo = DIAS.find((d) => d.n === diaCel);
+  const hoje = hojeISO();
 
   return (
     <div>
@@ -204,32 +254,7 @@ export default function Escala({ clinic }) {
                         const alunos = porCelula.get(chave(d.n, hora)) || [];
                         return (
                           <td key={d.n} className={alunos.length ? "cel cheia" : "cel"}>
-                            {alunos.map((m) => (
-                              <span
-                                key={m.pacienteId}
-                                className={devendo[m.pacienteId] ? "aluno-chip devendo" : "aluno-chip"}
-                              >
-                                {devendo[m.pacienteId] ? (
-                                  <span
-                                    className="ponto-devendo"
-                                    title={`Mensalidade em aberto: R$ ${centavosParaBR(devendo[m.pacienteId])}`}
-                                  >
-                                    ●
-                                  </span>
-                                ) : null}
-                                <span className="aluno-nome" title={m.nome}>
-                                  {m.nome}
-                                </span>
-                                <button
-                                  type="button"
-                                  className="aluno-x"
-                                  title={`Tirar ${m.nome} deste horário`}
-                                  onClick={() => remover(m)}
-                                >
-                                  ✕
-                                </button>
-                              </span>
-                            ))}
+                            {alunos.map(chipAluno)}
                             <button
                               type="button"
                               className="cel-add"
@@ -245,6 +270,64 @@ export default function Escala({ clinic }) {
                   ))}
                 </tbody>
               </table>
+            </div>
+
+            {/* Versão celular (só aparece ≤ 640px, ver App.css): um dia por vez. */}
+            <div className="escala-cel">
+              <div className="escala-dias" role="tablist">
+                {DIAS.map((d) => (
+                  <button
+                    key={d.n}
+                    type="button"
+                    role="tab"
+                    aria-selected={d.n === diaCel}
+                    className={
+                      "escala-dia" + (d.n === diaCel ? " on" : "") + (d.n === hoje ? " hoje" : "")
+                    }
+                    onClick={() => setDiaCel(d.n)}
+                  >
+                    <span className="escala-dia-curto">{d.curto}</span>
+                    <span className="escala-dia-conta">{totalPorDia[d.n] || 0}</span>
+                  </button>
+                ))}
+              </div>
+
+              <div className="escala-dia-titulo">
+                <strong>{diaCelInfo?.nome}</strong>
+                {diaCel === hoje && <span className="escala-hoje">hoje</span>}
+                <span className="muted">
+                  {totalPorDia[diaCel] || 0}{" "}
+                  {(totalPorDia[diaCel] || 0) === 1 ? "aluno" : "alunos"}
+                </span>
+              </div>
+
+              <div
+                key={diaCel}
+                className="escala-horarios"
+                onTouchStart={(e) => (toqueX.current = e.touches[0].clientX)}
+                onTouchEnd={fimToque}
+              >
+                {linhas.map((hora) => {
+                  const alunos = porCelula.get(chave(diaCel, hora)) || [];
+                  return (
+                    <div key={hora} className={alunos.length ? "escala-slot cheio" : "escala-slot"}>
+                      <div className="escala-slot-hora">{hora}</div>
+                      <div className="escala-slot-alunos">
+                        {alunos.length ? alunos.map(chipAluno) : <span className="muted">Livre</span>}
+                      </div>
+                      <button
+                        type="button"
+                        className="escala-slot-add"
+                        aria-label={`Adicionar aluno — ${diaCelInfo?.nome}, ${hora}`}
+                        onClick={() => abrirCelula(diaCel, hora)}
+                      >
+                        +
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+              <p className="muted escala-dica-cel">Arraste para o lado para trocar de dia.</p>
             </div>
           </>
         )}
