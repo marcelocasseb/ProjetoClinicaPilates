@@ -14,7 +14,7 @@ da API em `/clinica-pilates/api-access`, guardado por 1 ano.
 
 ## 1. Desempenho e capacidade
 
-### 1.1 Aumentar o limite de execuções simultâneas da Lambda (URGENTE, feito por você)
+### 1.1 ~~Aumentar o limite de execuções simultâneas da Lambda~~ (CONCLUÍDO)
 - **Problema:** a conta da AWS está com o limite de uma conta nova, **10 execuções simultâneas**
   (o normal é 1.000). O pico dos últimos 30 dias já foi 5. Com umas 20 a 40 pessoas clicando ao
   mesmo tempo, as chamadas passam a ser recusadas e o usuário vê erro.
@@ -22,6 +22,8 @@ da API em `/clinica-pilates/api-access`, guardado por 1 ano.
   executions* → Request increase → 1000 (região us-east-1). É gratuito e costuma sair em 1 ou 2 dias.
 - **Conferir:** `aws lambda get-account-settings --region us-east-1` (o `ConcurrentExecutions`
   deve mostrar 1000).
+- **Status:** aumento solicitado em 29/09/2026 e aprovado; conferido em 16/10/2026
+  (`ConcurrentExecutions` = 1000).
 
 ### 1.2 Subir a memória da Lambda de 256 MB para 512 ou 1024 MB
 - **Problema:** a Lambda leva de 1,1 a 1,4 s para iniciar; é por isso que 5% das chamadas levam
