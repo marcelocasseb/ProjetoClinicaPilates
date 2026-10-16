@@ -189,3 +189,48 @@ def test_desmarcar_de_outra_clinica_retorna_404(dynamo_table):
 
 def test_desmarcar_hora_invalida_retorna_400(dynamo_table):
     assert client.delete("/agenda/2026-10-19/7h/abc").status_code == 400
+
+
+# --- Retenção de 4 meses (TTL) ---
+
+
+def test_expira_em_4_meses_apos_a_data_da_aula():
+    from datetime import datetime, timezone
+
+    from app.repository_agenda import expira_em
+
+    def em(epoch):
+        return datetime.fromtimestamp(epoch, timezone.utc).date().isoformat()
+
+    assert em(expira_em("2026-10-19")) == "2027-02-19"
+    assert em(expira_em("2026-10-31")) == "2027-02-28"  # fevereiro não tem 31
+    assert em(expira_em("2026-06-30")) == "2026-10-30"
+
+
+def test_item_grava_expira_em_e_nao_o_expoe(dynamo_table):
+    import boto3
+
+    from app.repository_agenda import expira_em
+
+    body = _agendar(nome="Ana").json()
+    assert "expiraEm" not in body
+    item = boto3.resource("dynamodb").Table(dynamo_table).scan()["Items"][0]
+    assert int(item["expiraEm"]) == expira_em("2026-10-19")
+
+
+def test_listar_omite_vencidos_que_o_ttl_ainda_nao_apagou(dynamo_table):
+    """O TTL do DynamoDB apaga com atraso; a lista não pode mostrar o vencido."""
+    _agendar(nome="Antiga", data="2020-01-06")
+    _agendar(nome="Recente", data="2020-01-07")
+    import boto3
+
+    tabela = boto3.resource("dynamodb").Table(dynamo_table)
+    for i in tabela.scan()["Items"]:
+        if i["nome"] == "Recente":
+            tabela.update_item(
+                Key={"PK": i["PK"], "SK": i["SK"]},
+                UpdateExpression="SET expiraEm = :e",
+                ExpressionAttributeValues={":e": 4102444800},  # 2100-01-01
+            )
+    nomes = [a["nome"] for a in _listar(de="2020-01-06", ate="2020-01-12").json()]
+    assert nomes == ["Recente"]

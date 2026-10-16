@@ -15,11 +15,19 @@ dia+hora é conferida no `create` (Query no prefixo do horário — barata, pouc
 **Remoção é FÍSICA**, como na Escala: desmarcar é desfazer a marcação, não histórico
 (quem quer histórico de aula dada tem os itens `SESSION#`).
 
+**Retenção de 4 meses**: cada item leva `expiraEm` (epoch em segundos) = data da aula
++ `MESES_RETENCAO`, e o TTL da tabela (template.yaml) apaga sozinho. Conta da data da
+aula, não da criação — marcar com antecedência nunca faz a marcação sumir antes de
+acontecer. O TTL apaga com atraso de até ~2 dias, então o `list_periodo` também
+filtra os já vencidos.
+
 O repositório é escopado por clínica (`clinic_id`), garantindo isolamento multi-tenant.
 """
+import calendar
 import os
+import time
 import uuid
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from typing import Optional
 
 import boto3
@@ -29,6 +37,7 @@ from botocore.exceptions import ClientError
 _SK_PREFIX = "AGENDA#"
 _CHAVES_INTERNAS = ("PK", "SK")
 _CONDICAO_FALHOU = "ConditionalCheckFailedException"
+MESES_RETENCAO = 4
 
 
 def _pk(clinic_id: str) -> str:
@@ -43,8 +52,25 @@ def _agora_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+def expira_em(data: str) -> int:
+    """Epoch (s) de `data` + `MESES_RETENCAO` meses, à meia-noite UTC.
+
+    Dia que não existe no mês de destino (31/10 + 4 meses) cai no último dia dele.
+    """
+    d = date.fromisoformat(data)
+    mes = d.month - 1 + MESES_RETENCAO
+    ano, mes = d.year + mes // 12, mes % 12 + 1
+    dia = min(d.day, calendar.monthrange(ano, mes)[1])
+    return int(datetime(ano, mes, dia, tzinfo=timezone.utc).timestamp())
+
+
 def _para_agenda(item: dict) -> dict:
-    return {k: v for k, v in item.items() if k not in _CHAVES_INTERNAS}
+    return {k: v for k, v in item.items() if k not in _CHAVES_INTERNAS and k != "expiraEm"}
+
+
+def _vencido(item: dict, agora: int) -> bool:
+    exp = item.get("expiraEm")
+    return exp is not None and int(exp) <= agora
 
 
 class AgendaRepository:
@@ -58,10 +84,13 @@ class AgendaRepository:
     def _query(self, condicao) -> list[dict]:
         """Query paginada (`LastEvaluatedKey`) — um período cheio não é truncado em silêncio."""
         itens: list[dict] = []
+        agora = int(time.time())
         kwargs = {"KeyConditionExpression": Key("PK").eq(_pk(self._clinic_id)) & condicao}
         while True:
             resp = self._table.query(**kwargs)
-            itens.extend(_para_agenda(i) for i in resp.get("Items", []))
+            itens.extend(
+                _para_agenda(i) for i in resp.get("Items", []) if not _vencido(i, agora)
+            )
             ultima = resp.get("LastEvaluatedKey")
             if not ultima:
                 break
@@ -98,6 +127,7 @@ class AgendaRepository:
             "hora": hora,
             "nome": nome,
             "criadoEm": _agora_iso(),
+            "expiraEm": expira_em(data),
         }
         if paciente_id:
             item["pacienteId"] = paciente_id

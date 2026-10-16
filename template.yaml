@@ -241,6 +241,12 @@ Resources:
       # Backup contínuo: restaura a tabela para qualquer segundo dos últimos 35 dias.
       PointInTimeRecoverySpecification:
         PointInTimeRecoveryEnabled: true
+      # Expiração automática (TTL): só itens com `expiraEm` (epoch em segundos) são
+      # apagados — hoje, só as marcações da Agenda (4 meses após a data da aula).
+      # Os demais itens não têm o atributo e nunca expiram.
+      TimeToLiveSpecification:
+        AttributeName: expiraEm
+        Enabled: true
       AttributeDefinitions:
         - AttributeName: PK
           AttributeType: S
