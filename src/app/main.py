@@ -7,6 +7,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
 from app.routers import (
+    agenda,
     aparelhos,
     avaliacoes,
     clinica,
@@ -30,6 +31,7 @@ app.include_router(aparelhos.router)
 app.include_router(avaliacoes.router)
 app.include_router(sessoes.router)
 app.include_router(escala.router)
+app.include_router(agenda.router)
 app.include_router(financeiro.router)
 app.include_router(imagens.router)
 app.include_router(membros.router)

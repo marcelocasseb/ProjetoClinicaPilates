@@ -784,15 +784,17 @@ textarea.obs {
 
   /* Abas e conteúdo com menos padding lateral */
   .tabs {
-    padding: 10px 14px 0;
-    gap: 2px;
-    /* Sem overflow-x: com Pilates/Aparelhos/Escala agrupados as abas cabem em
-       390px, e a rolagem cortaria a lista suspensa. */
+    padding: 10px 10px 0;
+    gap: 0;
+    /* Sem overflow-x: a rolagem cortaria a lista suspensa do Pilates. As 5 abas
+       cabem em ~360px; abaixo disso quebram linha em vez de sumir. */
+    flex-wrap: wrap;
   }
   .tab {
     flex: none;
-    padding: 9px 12px;
-    font-size: 14px;
+    padding: 9px 7px;
+    font-size: 13.5px;
+    letter-spacing: 0;
   }
   .content {
     padding: 16px 14px 40px;
@@ -1200,6 +1202,104 @@ textarea.obs {
   margin: 12px 0 0;
   font-size: 12px;
   text-align: center;
+}
+
+/* ---- Agenda (marcações por data; reaproveita a faixa de dias e os cartões
+   de horário da Escala do celular, aqui em qualquer tamanho de tela) ---- */
+.agenda-topo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.agenda-topo h2 {
+  flex: 1;
+  margin: 0;
+  text-align: center;
+  font-size: 17px;
+}
+.agenda-nav {
+  width: 38px;
+  padding: 6px 0;
+  font-size: 20px;
+  line-height: 1;
+}
+.agenda-hoje-btn {
+  padding: 6px 12px;
+}
+.agenda-dia-qtd {
+  min-height: 14px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent);
+}
+.escala-dia.on .agenda-dia-qtd {
+  color: #fff;
+}
+/* No desktop os cartões não precisam esticar a largura toda */
+.card .escala-horarios {
+  max-width: 720px;
+}
+.aluno-chip.novo {
+  border-style: dashed;
+  border-color: var(--accent);
+}
+.agenda-nome-btn {
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+}
+.agenda-selo-novo {
+  flex: none;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: rgba(184, 147, 94, 0.16);
+  color: var(--accent);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.agenda-dica {
+  text-align: left;
+}
+.agenda-modo {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  padding: 4px;
+  margin: 4px 0 8px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg);
+}
+.agenda-modo button {
+  padding: 8px;
+  border: none;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.agenda-modo button.on {
+  background: var(--panel);
+  color: var(--text);
+  box-shadow: var(--shadow);
+}
+
+@media (max-width: 640px) {
+  .agenda-topo h2 {
+    font-size: 15px;
+  }
 }
 
 @media (max-width: 640px) {
@@ -1830,6 +1930,12 @@ textarea.obs {
 }
 .ini-paineis.com-lado {
   grid-template-columns: 1fr 320px;
+}
+/* Coluna principal: Escala de hoje + Agenda de hoje, empilhadas */
+.ini-coluna {
+  display: grid;
+  gap: 20px;
+  min-width: 0;
 }
 @media (max-width: 860px) {
   .ini-paineis.com-lado {

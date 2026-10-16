@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import Login from "./components/Login";
 import Inicio from "./components/Inicio";
 import Pacientes from "./components/Pacientes";
+import Agenda from "./components/Agenda";
 import Aparelhos from "./components/Aparelhos";
 import Pilates from "./components/Pilates";
 import Escala from "./components/Escala";
@@ -154,6 +155,9 @@ export default function App() {
         <button className={aba === "pacientes" ? "tab on" : "tab"} onClick={() => setAba("pacientes")}>
           Pacientes
         </button>
+        <button className={aba === "agenda" ? "tab on" : "tab"} onClick={() => setAba("agenda")}>
+          Agenda
+        </button>
         <div className="tab-menu" ref={menuRef}>
           <button
             className={ABAS_PILATES.some((a) => a.id === aba) ? "tab on" : "tab"}
@@ -196,6 +200,7 @@ export default function App() {
       <main className="content">
         {aba === "inicio" && <Inicio clinic={clinic} onNavegar={navegar} />}
         {aba === "pacientes" && <Pacientes clinic={clinic} />}
+        {aba === "agenda" && <Agenda clinic={clinic} />}
         {aba === "aparelhos" && <Aparelhos clinic={clinic} />}
         {aba === "pilates" && <Pilates clinic={clinic} />}
         {aba === "escala" && <Escala clinic={clinic} />}

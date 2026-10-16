@@ -4,7 +4,7 @@ import { centavosParaBR, mesAtual } from "../utils/format";
 
 // Dias na ordem da semana (1 = segunda … 7 = domingo, padrão ISO — o mesmo número
 // que vai no back). O rótulo curto é o que cabe na coluna do celular.
-const DIAS = [
+export const DIAS = [
   { n: 1, nome: "Segunda", curto: "Seg" },
   { n: 2, nome: "Terça", curto: "Ter" },
   { n: 3, nome: "Quarta", curto: "Qua" },
@@ -17,7 +17,7 @@ const DIAS = [
 // Horários da grade — lista fixa no front (mesma escolha dos tipos de treino, AD-011).
 // O back aceita qualquer HH:MM válido; por isso as linhas são esta lista UNIDA aos
 // horários que já têm aluno (mudar a lista aqui nunca esconde uma matrícula).
-const HORARIOS = [
+export const HORARIOS = [
   "06:00", "07:00", "08:00", "09:00", "10:00", "11:00", "12:00", "13:00",
   "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00",
 ];

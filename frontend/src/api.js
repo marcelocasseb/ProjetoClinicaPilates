@@ -160,6 +160,19 @@ export const escalaApi = {
     request("DELETE", `/escala/${dia}/${encodeURIComponent(hora)}/${pacienteId}`, clinic),
 };
 
+// --- Agenda (marcações datadas, independente da Escala) ---
+// Cada item é um paciente cadastrado (`pacienteId`) ou uma pessoa ainda sem cadastro
+// (`novo: true`, só nome/telefone), que o `vincular` liga a um paciente depois.
+export const agendaApi = {
+  list: (clinic, de, ate) =>
+    request("GET", `/agenda?de=${encodeURIComponent(de)}&ate=${encodeURIComponent(ate)}`, clinic),
+  agendar: (clinic, data) => request("POST", "/agenda", clinic, data),
+  vincular: (clinic, a, pacienteId) =>
+    request("PUT", `/agenda/${a.data}/${encodeURIComponent(a.hora)}/${a.id}`, clinic, { pacienteId }),
+  remover: (clinic, a) =>
+    request("DELETE", `/agenda/${a.data}/${encodeURIComponent(a.hora)}/${a.id}`, clinic),
+};
+
 // --- Financeiro / Fluxo de Caixa (nível clínica, só admin — FIN-01..11) ---
 // `valorCentavos` é sempre INTEIRO em centavos nos dois sentidos; o front só
 // formata na exibição. Rotas protegidas por role=admin no backend: um membro

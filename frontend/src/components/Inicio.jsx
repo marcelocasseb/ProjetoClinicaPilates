@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { escalaApi, financeiroApi } from "../api";
+import { agendaApi, escalaApi, financeiroApi } from "../api";
 import { getClaims } from "../auth";
-import { centavosParaBR, mesAtual } from "../utils/format";
+import { centavosParaBR, hojeISO, mesAtual } from "../utils/format";
 
-// Tela inicial: saudação + o resumo do dia. Tudo sai de APIs que já existem —
-// a grade semanal (/escala) diz quem vem hoje, e as mensalidades do mês (só
-// admin) dizem quem vence hoje. Nenhum endpoint novo.
+// Tela inicial: saudação + o resumo do dia. A grade semanal (/escala) diz quem
+// vem hoje pela turma fixa, a Agenda (/agenda) quem foi marcado para hoje, e as
+// mensalidades do mês (só admin) dizem quem vence hoje. Os KPIs são da escala.
 
 const DIAS_SEMANA = [
   "Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira",
@@ -171,6 +171,75 @@ const Icone = {
 
 // ---------------------------------------------------------------------------
 
+// Agrupa as presenças do dia por horário e marca o estado de cada aula
+// (concluída / agora / próxima / futura) em relação ao minuto atual.
+function linhaDoTempo(lista, minAgora) {
+  const porHora = new Map();
+  for (const m of lista) {
+    if (!porHora.has(m.hora)) porHora.set(m.hora, []);
+    porHora.get(m.hora).push(m);
+  }
+  let proximaMarcada = false;
+  return [...porHora.keys()].sort().map((hora) => {
+    const ini = minutos(hora);
+    let estado = "futura";
+    if (minAgora >= ini + DURACAO_AULA_MIN) estado = "concluida";
+    else if (minAgora >= ini) estado = "agora";
+    else if (!proximaMarcada) {
+      estado = "proxima";
+      proximaMarcada = true;
+    }
+    return { hora, alunos: porHora.get(hora), estado };
+  });
+}
+
+function LinhaDoTempo({ aulas, situacaoAluno }) {
+  return (
+    <ol className="ini-timeline">
+      {aulas.map((a, i) => (
+        <li key={a.hora} className={`ini-aula ${a.estado}`} style={{ "--i": i }}>
+          <span className="ini-aula-hora">{a.hora}</span>
+          <span className="ini-aula-marco" aria-hidden="true" />
+          <div className="ini-aula-corpo">
+            <div className="ini-aula-topo">
+              <strong>
+                {a.alunos.length} {a.alunos.length === 1 ? "aluno" : "alunos"}
+              </strong>
+              {a.estado === "agora" && <span className="ini-selo agora">Agora</span>}
+              {a.estado === "proxima" && <span className="ini-selo proxima">Próxima</span>}
+              {a.estado === "concluida" && <span className="ini-selo feita">Concluída</span>}
+            </div>
+            <div className="ini-chips">
+              {a.alunos.map((al) => {
+                const situacao = al.pacienteId ? situacaoAluno.get(al.pacienteId) : null;
+                return (
+                  <span
+                    key={al.id || al.pacienteId}
+                    className={`ini-chip ${situacao || ""}`}
+                    title={
+                      situacao === "atrasada"
+                        ? "Mensalidade atrasada"
+                        : situacao === "vence"
+                          ? "Mensalidade vence hoje"
+                          : al.novo
+                            ? "Ainda sem cadastro"
+                            : undefined
+                    }
+                  >
+                    <span className="ini-avatar">{(al.nome || "?").charAt(0).toUpperCase()}</span>
+                    {al.nome}
+                    {al.novo && <span className="agenda-selo-novo">novo</span>}
+                  </span>
+                );
+              })}
+            </div>
+          </div>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
 function CardKpi({ icone, valor, rotulo, detalhe, tom, carregando, onClick, indice, texto }) {
   const n = useContador(typeof valor === "number" ? valor : 0, !carregando);
   return (
@@ -223,6 +292,8 @@ export default function Inicio({ clinic, onNavegar }) {
   const nome = useMemo(primeiroNome, []);
 
   const [grade, setGrade] = useState([]);
+  const [marcados, setMarcados] = useState([]); // Agenda (marcações datadas) de hoje
+  const [erroAgenda, setErroAgenda] = useState(false);
   const [mensal, setMensal] = useState(null); // null = não carregado / sem acesso
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState("");
@@ -231,11 +302,19 @@ export default function Inicio({ clinic, onNavegar }) {
   useEffect(() => {
     montado.current = true;
     (async () => {
+      const hoje = hojeISO();
+      // A Agenda vai em paralelo e num catch próprio: falha nela não derruba a escala.
+      const agendaHoje = agendaApi.list(clinic.id, hoje, hoje).catch(() => null);
       try {
         const g = await escalaApi.list(clinic.id);
         if (montado.current) setGrade(g);
       } catch (e) {
-        if (montado.current) setErro(e.message || "Não foi possível carregar a agenda.");
+        if (montado.current) setErro(e.message || "Não foi possível carregar a escala.");
+      }
+      const a = await agendaHoje;
+      if (montado.current) {
+        setMarcados(a || []);
+        setErroAgenda(a === null);
       }
       // Mensalidades são um extra de admin: falha aqui não derruba a tela.
       if (isAdmin) {
@@ -286,28 +365,12 @@ export default function Inicio({ clinic, onNavegar }) {
   const somaAberto = (lista) =>
     `R$ ${centavosParaBR(lista.reduce((s, a) => s + a.emAbertoCentavos, 0))} em aberto`;
 
-  // Agenda de hoje agrupada por horário, com o estado de cada aula.
-  const agenda = useMemo(() => {
-    const porHora = new Map();
-    for (const m of grade) {
-      if (m.dia !== hojeIso) continue;
-      if (!porHora.has(m.hora)) porHora.set(m.hora, []);
-      porHora.get(m.hora).push(m);
-    }
-    const horas = [...porHora.keys()].sort();
-    let proximaMarcada = false;
-    return horas.map((hora) => {
-      const ini = minutos(hora);
-      let estado = "futura";
-      if (minAgora >= ini + DURACAO_AULA_MIN) estado = "concluida";
-      else if (minAgora >= ini) estado = "agora";
-      else if (!proximaMarcada) {
-        estado = "proxima";
-        proximaMarcada = true;
-      }
-      return { hora, alunos: porHora.get(hora), estado };
-    });
-  }, [grade, hojeIso, minAgora]);
+  // Escala e Agenda de hoje agrupadas por horário, com o estado de cada aula.
+  const agenda = useMemo(
+    () => linhaDoTempo(grade.filter((m) => m.dia === hojeIso), minAgora),
+    [grade, hojeIso, minAgora]
+  );
+  const agendaMarcada = useMemo(() => linhaDoTempo(marcados, minAgora), [marcados, minAgora]);
 
   const totalAulas = agenda.length;
   const alunosHoje = new Set(agenda.flatMap((a) => a.alunos.map((x) => x.pacienteId))).size;
@@ -357,7 +420,7 @@ export default function Inicio({ clinic, onNavegar }) {
           indice={0}
           icone={Icone.aulas}
           valor={totalAulas}
-          rotulo={totalAulas === 1 ? "aula agendada hoje" : "aulas agendadas hoje"}
+          rotulo={totalAulas === 1 ? "aula na escala hoje" : "aulas na escala hoje"}
           detalhe={
             totalAulas > 0 && !carregando
               ? `${agenda[0].hora} às ${agenda[agenda.length - 1].hora}`
@@ -426,8 +489,9 @@ export default function Inicio({ clinic, onNavegar }) {
       </section>
 
       <div className={`ini-paineis ${temPendencia ? "com-lado" : ""}`}>
+        <div className="ini-coluna">
         <section className="card ini-agenda">
-          <h2>Agenda de hoje</h2>
+          <h2>Escala de hoje</h2>
           {carregando ? (
             <div className="ini-agenda-skel">
               <span className="ini-skel" /><span className="ini-skel" /><span className="ini-skel" />
@@ -445,44 +509,35 @@ export default function Inicio({ clinic, onNavegar }) {
               </button>
             </div>
           ) : (
-            <ol className="ini-timeline">
-              {agenda.map((a, i) => (
-                <li key={a.hora} className={`ini-aula ${a.estado}`} style={{ "--i": i }}>
-                  <span className="ini-aula-hora">{a.hora}</span>
-                  <span className="ini-aula-marco" aria-hidden="true" />
-                  <div className="ini-aula-corpo">
-                    <div className="ini-aula-topo">
-                      <strong>
-                        {a.alunos.length} {a.alunos.length === 1 ? "aluno" : "alunos"}
-                      </strong>
-                      {a.estado === "agora" && <span className="ini-selo agora">Agora</span>}
-                      {a.estado === "proxima" && <span className="ini-selo proxima">Próxima</span>}
-                      {a.estado === "concluida" && <span className="ini-selo feita">Concluída</span>}
-                    </div>
-                    <div className="ini-chips">
-                      {a.alunos.map((al) => (
-                        <span
-                          key={al.pacienteId}
-                          className={`ini-chip ${situacaoAluno.get(al.pacienteId) || ""}`}
-                          title={
-                            situacaoAluno.get(al.pacienteId) === "atrasada"
-                              ? "Mensalidade atrasada"
-                              : situacaoAluno.get(al.pacienteId) === "vence"
-                                ? "Mensalidade vence hoje"
-                                : undefined
-                          }
-                        >
-                          <span className="ini-avatar">{(al.nome || "?").charAt(0).toUpperCase()}</span>
-                          {al.nome}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </li>
-              ))}
-            </ol>
+            <LinhaDoTempo aulas={agenda} situacaoAluno={situacaoAluno} />
           )}
         </section>
+
+        <section className="card ini-agenda">
+          <h2>Agenda de hoje</h2>
+          {carregando ? (
+            <div className="ini-agenda-skel">
+              <span className="ini-skel" /><span className="ini-skel" />
+            </div>
+          ) : erroAgenda ? (
+            <p className="muted">Não conseguimos carregar a agenda agora.</p>
+          ) : agendaMarcada.length === 0 ? (
+            <div className="ini-vazio">
+              <svg viewBox="0 0 64 64" aria-hidden="true">
+                <circle cx="32" cy="32" r="22" />
+                <circle cx="32" cy="32" r="14" />
+                <circle cx="32" cy="32" r="6" />
+              </svg>
+              <p>Ninguém marcado na agenda para hoje.</p>
+              <button className="btn ghost" onClick={() => onNavegar("agenda")}>
+                Abrir a agenda
+              </button>
+            </div>
+          ) : (
+            <LinhaDoTempo aulas={agendaMarcada} situacaoAluno={situacaoAluno} />
+          )}
+        </section>
+        </div>
 
         {temPendencia && (
           <section className="card ini-vencimentos">
