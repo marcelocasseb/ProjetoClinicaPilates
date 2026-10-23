@@ -29,10 +29,12 @@ function clinicDasClaims(claims) {
 // Telas agrupadas em abas com lista suspensa.
 const ABAS_PILATES = [
   { id: "pilates", rotulo: "Pilates" },
-  { id: "aparelhos", rotulo: "Aparelhos" },
   { id: "escala", rotulo: "Escala" },
 ];
-const ABAS_PARAMETRIZACAO = [{ id: "profissionais", rotulo: "Profissionais" }];
+const ABAS_PARAMETRIZACAO = [
+  { id: "profissionais", rotulo: "Profissionais" },
+  { id: "aparelhos", rotulo: "Aparelhos" },
+];
 
 // Aba que abre uma lista suspensa com as telas do grupo. Fica destacada quando a
 // tela aberta é de dentro dela; fecha ao escolher, clicar fora ou apertar Esc.
@@ -219,7 +221,7 @@ export default function App() {
         {aba === "agenda" && <Agenda clinic={clinic} clinicaNome={clinicNome} onNavegar={setAba} />}
         {aba === "profissionais" && <Profissionais clinic={clinic} />}
         {aba === "aparelhos" && <Aparelhos clinic={clinic} />}
-        {aba === "pilates" && <Pilates clinic={clinic} />}
+        {aba === "pilates" && <Pilates clinic={clinic} onNavegar={setAba} />}
         {aba === "escala" && <Escala clinic={clinic} />}
         {aba === "financeiro" && isAdmin && <Financeiro key={secaoFin} clinic={clinic} secaoInicial={secaoFin} />}
       </main>

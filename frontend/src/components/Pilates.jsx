@@ -42,7 +42,7 @@ function vazio(profissionais = []) {
   };
 }
 
-export default function Pilates({ clinic }) {
+export default function Pilates({ clinic, onNavegar }) {
   const [pacientes, setPacientes] = useState([]);
   const [busca, setBusca] = useState("");
   const [view, setView] = useState("lista"); // "lista" (seleção do aluno) | "aula"
@@ -394,8 +394,11 @@ export default function Pilates({ clinic }) {
                     </div>
                   ) : semCatalogo ? (
                     <div className="erro">
-                      Nenhum aparelho cadastrado nesta clínica. Cadastre aparelhos na aba
-                      Aparelhos antes de registrar a aula.
+                      Nenhum aparelho cadastrado nesta clínica. Cadastre aparelhos em{" "}
+                      <button type="button" className="link" onClick={() => onNavegar?.("aparelhos")}>
+                        Parametrização → Aparelhos
+                      </button>{" "}
+                      antes de registrar a aula.
                     </div>
                   ) : (
                     <>
