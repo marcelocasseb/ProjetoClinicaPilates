@@ -1,21 +1,10 @@
 import { useEffect, useState } from "react";
-import { pacientesApi, aparelhosApi, sessoesApi, profissionaisApi } from "../api";
+import { pacientesApi, aparelhosApi, sessoesApi, profissionaisApi, tiposTreinoApi } from "../api";
 import { onlyDigits, maskCpf, hojeISO, formatDataBR, primeiroEUltimoNome } from "../utils/format";
 import { getClaims } from "../auth";
 
 // Valor do select para a aula antiga cujo profissional é texto livre (sem id).
 const LEGADO = "__legado";
-
-// Tipos de treino — lista fixa (hardcode no front, AD-011). O back só guarda o texto.
-const TIPOS_TREINO = [
-  "Membros superiores",
-  "Membros inferiores",
-  "Abdômen",
-  "Força",
-  "Mobilidade",
-  "Postural",
-  "Alongamento",
-];
 
 // O profissional vem do MESMO cadastro da Agenda (nome padronizado = relatório por
 // profissional confiável). Quem conduz a aula é, quase sempre, quem está logado: se
@@ -49,6 +38,8 @@ export default function Pilates({ clinic, onNavegar }) {
   const [aluno, setAluno] = useState(null);
 
   const [catalogo, setCatalogo] = useState([]); // aparelhos ativos da clínica
+  // Tipos de treino (Parametrização → Tipos de treino). A aula guarda só o texto.
+  const [tiposTreino, setTiposTreino] = useState([]);
   const [profissionais, setProfissionais] = useState([]); // cadastro (o mesmo da Agenda)
   const [lista, setLista] = useState([]); // aulas do aluno
   const [form, setForm] = useState(vazio());
@@ -84,11 +75,13 @@ export default function Pilates({ clinic, onNavegar }) {
     setErro("");
     setCarregandoAula(true);
     try {
-      const [cat, aulas] = await Promise.all([
+      const [cat, tipos, aulas] = await Promise.all([
         aparelhosApi.list(clinic.id),
+        tiposTreinoApi.list(clinic.id),
         sessoesApi.list(clinic.id, p.id),
       ]);
       setCatalogo(cat);
+      setTiposTreino(tipos.map((t) => t.nome));
       setLista(aulas);
     } catch (e) {
       setErro(e.message);
@@ -322,6 +315,9 @@ export default function Pilates({ clinic, onNavegar }) {
   const semCatalogo = catalogo.length === 0;
   const nomeAtual = catalogo.find((a) => a.id === comboSel)?.nome || "";
   const treinosAtuais = form.aparelhos.find((a) => a.aparelhoId === comboSel)?.treinos || [];
+  // Treino que a aula já tem mas saiu do cadastro (removido/renomeado) continua como
+  // botão marcado, para dar para desmarcar.
+  const botoesTreino = [...tiposTreino, ...treinosAtuais.filter((t) => !tiposTreino.includes(t))];
   // lista plana de pares aparelho→treino (o "carrinho" da aula)
   const pares = form.aparelhos.flatMap((a) =>
     a.treinos.length
@@ -419,8 +415,17 @@ export default function Pilates({ clinic, onNavegar }) {
                             Treinos de {nomeAtual}{" "}
                             <span className="opt">(clique para adicionar à lista)</span>
                           </label>
+                          {botoesTreino.length === 0 && (
+                            <div className="erro">
+                              Nenhum tipo de treino cadastrado. Cadastre em{" "}
+                              <button type="button" className="link" onClick={() => onNavegar?.("tipos-treino")}>
+                                Parametrização → Tipos de treino
+                              </button>
+                              .
+                            </div>
+                          )}
                           <div className="chips">
-                            {TIPOS_TREINO.map((t) => {
+                            {botoesTreino.map((t) => {
                               const on = treinosAtuais.includes(t);
                               return (
                                 <button

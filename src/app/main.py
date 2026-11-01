@@ -18,6 +18,7 @@ from app.routers import (
     pacientes,
     profissionais,
     sessoes,
+    tipos_treino,
 )
 
 app = FastAPI(title="Clínica de Pilates API")
@@ -34,6 +35,7 @@ app.include_router(sessoes.router)
 app.include_router(escala.router)
 app.include_router(agenda.router)
 app.include_router(profissionais.router)
+app.include_router(tipos_treino.router)
 app.include_router(financeiro.router)
 app.include_router(imagens.router)
 app.include_router(membros.router)

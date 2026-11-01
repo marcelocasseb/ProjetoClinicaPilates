@@ -117,6 +117,13 @@ Registro de Sessões concluído (back + front no ar), **aprovado no UAT (2026-07
 
 ## Recent Decisions (Last 60 days)
 
+### AD-017: Tipos de treino viram cadastro da clínica (substitui a lista fixa do AD-011) (2026-11-01)
+
+**Decision:** Os botões de treino da aula saem da constante do front e passam a ser um cadastro em **Parametrização → Tipos de treino** (`/tipos-treino`), item de nível clínica `PK=CLINIC#<clinicId>`, `SK=TREINO#<id>`, só com `nome`, soft delete. A aula **continua guardando o texto** do treino (snapshot do AD-011), então renomear/remover não reescreve aulas antigas. Nome não repete na clínica (409, ignorando maiúsculas e acentos), porque o front marca o botão pelo nome. A lista é a mesma para todos os aparelhos.
+**Reason:** A clínica quer ajustar os treinos sem depender de deploy.
+**Trade-off:** Para nenhuma clínica abrir a aula sem botões após o deploy, a **1ª listagem semeia os 7 tipos que eram fixos**, uma vez só (marcador `SK=TREINO_PADRAO`, `put` condicional); se a clínica remover todos, a lista fica vazia mesmo. Sem mudança no `template.yaml` (rota cai no `{proxy+}`).
+**Impact:** `schemas_tipo_treino.py`, `repository_tipo_treino.py`, `routers/tipos_treino.py` (+`main.py`), `tests/test_tipos_treino.py`; front `TiposTreino.jsx`, `tiposTreinoApi`, menu em `App.jsx`, `Pilates.jsx` lê a lista da API (treino já na aula mas fora do cadastro continua como botão marcado, para desmarcar).
+
 ### AD-016: Nome do usuário no Cognito (`name`) e no DynamoDB (`MEMBRO#<email>`) (2026-09-28)
 
 **Decision:** O nome da pessoa é obrigatório no cadastro (`POST /membros` e `criar_clinica.py --nome`) e é gravado em **dois** lugares: no atributo padrão `name` do Cognito e num item `PK=CLINIC#<clinicId>`, `SK=MEMBRO#<email>` (email, nome, role, criadoEm) no DynamoDB. Ordem: Cognito → DynamoDB (e-mail duplicado dá 409 antes de gravar no banco).

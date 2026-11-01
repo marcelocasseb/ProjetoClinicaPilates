@@ -128,6 +128,14 @@ export const aparelhosApi = {
   remove: (clinic, id) => request("DELETE", `/aparelhos/${id}`, clinic),
 };
 
+// --- Tipos de treino (botões de treino da aula do Pilates) ---
+export const tiposTreinoApi = {
+  list: (clinic) => request("GET", "/tipos-treino", clinic),
+  create: (clinic, data) => request("POST", "/tipos-treino", clinic, data),
+  update: (clinic, id, data) => request("PUT", `/tipos-treino/${id}`, clinic, data),
+  remove: (clinic, id) => request("DELETE", `/tipos-treino/${id}`, clinic),
+};
+
 // --- Avaliações (por paciente, aninhadas — AVL-01..08) ---
 export const avaliacoesApi = {
   list: (clinic, pacienteId) => request("GET", `/pacientes/${pacienteId}/avaliacoes`, clinic),

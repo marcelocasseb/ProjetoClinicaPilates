@@ -5,6 +5,7 @@ import Pacientes from "./components/Pacientes";
 import Agenda from "./components/Agenda";
 import Aparelhos from "./components/Aparelhos";
 import Profissionais from "./components/Profissionais";
+import TiposTreino from "./components/TiposTreino";
 import Pilates from "./components/Pilates";
 import Escala from "./components/Escala";
 import Financeiro from "./components/Financeiro";
@@ -34,6 +35,7 @@ const ABAS_PILATES = [
 const ABAS_PARAMETRIZACAO = [
   { id: "profissionais", rotulo: "Profissionais" },
   { id: "aparelhos", rotulo: "Aparelhos" },
+  { id: "tipos-treino", rotulo: "Tipos de treino" },
 ];
 
 // Aba que abre uma lista suspensa com as telas do grupo. Fica destacada quando a
@@ -221,6 +223,7 @@ export default function App() {
         {aba === "agenda" && <Agenda clinic={clinic} clinicaNome={clinicNome} onNavegar={setAba} />}
         {aba === "profissionais" && <Profissionais clinic={clinic} />}
         {aba === "aparelhos" && <Aparelhos clinic={clinic} />}
+        {aba === "tipos-treino" && <TiposTreino clinic={clinic} />}
         {aba === "pilates" && <Pilates clinic={clinic} onNavegar={setAba} />}
         {aba === "escala" && <Escala clinic={clinic} />}
         {aba === "financeiro" && isAdmin && <Financeiro key={secaoFin} clinic={clinic} secaoInicial={secaoFin} />}
