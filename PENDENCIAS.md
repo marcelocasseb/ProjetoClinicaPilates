@@ -232,6 +232,41 @@ Antes de migrar o banco por causa de relatórios, avaliar nesta ordem:
 
 ---
 
+## 7. Site informativo (esboço em 02/11/2026)
+
+O esboço está em [site/](site/index.html) (HTML estático, sem build). As imagens vêm de
+[scripts/prints/](scripts/prints/README.md), com um estúdio fictício. Para ver no navegador, abra
+`site/index.html`. **Ainda não está no ar.**
+
+### 7.1 Conteúdo que falta decidir
+- **Preço mensal** e quantos usuários o plano inclui (seção Planos).
+- Confirmar os itens do card "Teste grátis": sem cartão de crédito, ajuda para cadastrar os
+  alunos, sem fidelidade. (Os **30 dias grátis** já estão decididos.)
+- **E-mail** de contato, **Instagram** e **CNPJ** (rodapé).
+- **Depoimento** de uma cliente real, com autorização.
+- **Fotos reais** de postura no lugar das ilustrações, com autorização por escrito.
+- **Política de Privacidade e Termos de Uso**: os links do rodapé ainda não levam a lugar nenhum
+  (ver seção 5, LGPD).
+- O WhatsApp `(15) 99625-2812` é provisório.
+- Antes de publicar, tirar a faixa "Esboço" do topo e todas as etiquetas "a definir".
+
+### 7.2 Parte técnica para pôr no ar
+- **Site na raiz** (`pilatesone.com.br` e `www`) e **sistema em `app.pilatesone.com.br`**.
+- Stack própria para o site (bucket S3 + CloudFront, como o [frontend-infra.yaml](frontend-infra.yaml))
+  e um `scripts/deploy-site.ps1`. Cada parte sobe sem mexer nas outras.
+- Certificado ACM com `app.pilatesone.com.br` e registro no Route 53.
+- CORS em [template.yaml](template.yaml) (hoje só libera a raiz e o `www`).
+- E-mail de convite do Cognito em [template.yaml](template.yaml) (hoje manda para `https://pilatesone.com.br`).
+- Botão **Entrar** do site apontando para `https://app.pilatesone.com.br` (hoje aponta para a raiz).
+- Avisar os clientes atuais do novo endereço. O botão Entrar no topo do site já ajuda quem
+  usa o endereço antigo salvo.
+
+### 7.3 Ajuste notado no sistema
+- **Agenda no celular corta os nomes** ("Beatriz Sa…", e um aluno novo aparece só como "C…").
+  Os botões R$, WhatsApp e ✕ ocupam a linha toda.
+
+---
+
 ## Ordem sugerida
 
 | # | Item | Quem | Esforço |

@@ -1,0 +1,13 @@
+{
+  "name": "prints-site",
+  "private": true,
+  "description": "Gera os prints do sistema usados no site informativo (site/img).",
+  "scripts": {
+    "telas": "node telas.js",
+    "posturas": "node posturas.js",
+    "aula-fotos": "node aula_fotos.js"
+  },
+  "dependencies": {
+    "playwright-core": "1.49.1"
+  }
+}
