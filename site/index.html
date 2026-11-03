@@ -3,9 +3,20 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="Pilates One: sistema de gestão para estúdios e clínicas de Pilates. Alunos, escala, agenda, registro de aulas, fotos de evolução e financeiro em um só lugar. Teste grátis por 30 dias.">
+<meta name="description" content="Pilates One: sistema de gestão para estúdios de Pilates e clínicas. Alunos, escala, agenda, registro de aulas, fotos de evolução e financeiro em um só lugar. Teste grátis por 30 dias.">
 <link rel="icon" type="image/jpeg" href="img/logo.jpg">
-<title>Pilates One · Gestão para estúdios e clínicas de Pilates</title>
+<link rel="canonical" href="https://pilatesone.com.br/">
+<script>
+  // Até 03/11/2026 o sistema morava em pilatesone.com.br. Quem ainda tem a sessão antiga
+  // salva neste endereço vai direto para o sistema, uma vez só (a chave é apagada).
+  try {
+    if (localStorage.getItem('auth')) {
+      localStorage.removeItem('auth');
+      location.replace('https://app.pilatesone.com.br/');
+    }
+  } catch (e) {}
+</script>
+<title>Pilates One · Gestão para estúdios de Pilates e clínicas</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600&family=Instrument+Sans:wght@400;500;600&display=swap">
@@ -286,7 +297,6 @@ footer .legal { grid-column: 1 / -1; border-top: 1px solid var(--line); padding-
 </head>
 <body>
 
-<div class="ribbon"><div class="wrap"><b>Esboço</b> do site informativo · prints reais do sistema com um estúdio fictício · itens <span class="tbd">a definir</span> aguardam decisão</div></div>
 
 <header class="top">
   <div class="wrap">
@@ -301,7 +311,7 @@ footer .legal { grid-column: 1 / -1; border-top: 1px solid var(--line); padding-
     </nav>
     <div class="top-cta">
       <a class="btn line wa-top" href="https://wa.me/5515996252812?text=Ol%C3%A1!%20Quero%20conhecer%20o%20Pilates%20One." target="_blank" rel="noopener">Fale conosco</a>
-      <a class="btn dark" href="https://pilatesone.com.br" target="_blank" rel="noopener">Entrar</a>
+      <a class="btn dark" href="https://app.pilatesone.com.br/">Entrar</a>
     </div>
   </div>
 </header>
@@ -310,7 +320,7 @@ footer .legal { grid-column: 1 / -1; border-top: 1px solid var(--line); padding-
   <section class="hero">
     <div class="wrap">
       <div class="hero-copy">
-        <span class="eyebrow">Gestão para estúdios e clínicas de Pilates</span>
+        <span class="eyebrow">Gestão para estúdios de Pilates e clínicas</span>
         <h1>Você cuida do movimento. <em>A gente cuida de todo o resto.</em></h1>
         <p class="lead">Alunos, escala, agenda, registro de cada aula e financeiro do seu estúdio ou clínica em um só lugar. Menos tempo na papelada, mais tempo no Reformer, ao lado de quem treina com você.</p>
         <div class="actions">
@@ -320,7 +330,7 @@ footer .legal { grid-column: 1 / -1; border-top: 1px solid var(--line); padding-
           </a>
           <a class="btn line" href="#telas">Ver as telas</a>
         </div>
-        <p class="note">Todas as funcionalidades liberadas no período de teste. Já é cliente? <a href="https://pilatesone.com.br" target="_blank" rel="noopener">Entrar no sistema →</a></p>
+        <p class="note">Todas as funcionalidades liberadas no período de teste. Já é cliente? <a href="https://app.pilatesone.com.br/">Entrar no sistema →</a></p>
       </div>
       <div class="stage">
         <div class="browser">
@@ -463,40 +473,28 @@ footer .legal { grid-column: 1 / -1; border-top: 1px solid var(--line); padding-
     </div>
   </section>
 
-  <section class="band tight">
-    <div class="wrap">
-      <div class="quote">
-        <span class="eyebrow">Quem usa <span class="tbd">a definir</span></span>
-        <blockquote>Espaço para o depoimento da primeira cliente: uma ou duas frases sobre o que mudou na rotina do estúdio.</blockquote>
-        <cite>Nome da cliente · Nome do estúdio, cidade</cite>
-      </div>
-    </div>
-  </section>
 
   <section class="band tight" id="planos" style="background: var(--panel); border-block: 1px solid var(--line);">
     <div class="wrap">
       <div class="sec-head">
-        <span class="eyebrow">Planos <span class="tbd">a definir</span></span>
+        <span class="eyebrow">Planos</span>
         <h2>Simples de contratar</h2>
-        <p class="lead">Mostrar valores ou deixar "fale conosco"? Os cards abaixo são só para ver como ficaria.</p>
+        <p class="lead">Um plano com todas as funcionalidades, para o seu estúdio ou clínica. Comece com 30 dias grátis.</p>
       </div>
       <div class="plans">
         <div class="plan main">
           <h3>Estúdio</h3>
-          <div class="price">R$ —<small>/mês</small></div>
+          <div class="price">R$ 69,90<small>/mês</small></div>
           <ul class="ticks">
             <li>Todas as funcionalidades</li>
-            <li>Até — usuários da equipe</li>
             <li>Suporte pelo WhatsApp</li>
           </ul>
-          <a class="btn dark" href="https://wa.me/5515996252812?text=Ol%C3%A1!%20Quero%20saber%20os%20valores%20do%20Pilates%20One." target="_blank" rel="noopener">Quero conhecer</a>
+          <a class="btn dark" href="https://wa.me/5515996252812?text=Ol%C3%A1!%20Quero%20assinar%20o%20Pilates%20One." target="_blank" rel="noopener">Quero conhecer</a>
         </div>
         <div class="plan">
           <h3>Teste grátis</h3>
           <div class="price">30 dias</div>
           <ul class="ticks">
-            <li>Sem cartão de crédito</li>
-            <li>Ajuda para cadastrar seus alunos</li>
             <li>Sem fidelidade</li>
           </ul>
           <a class="btn line" href="https://wa.me/5515996252812?text=Ol%C3%A1!%20Quero%20testar%20o%20Pilates%20One." target="_blank" rel="noopener">Pedir acesso</a>
@@ -517,7 +515,7 @@ footer .legal { grid-column: 1 / -1; border-top: 1px solid var(--line); padding-
         <details><summary>Meus dados ficam seguros?</summary><p>Cada estúdio só enxerga os próprios dados, o acesso é individual e protegido por HTTPS, e há backup contínuo.</p></details>
         <details><summary>Posso testar antes de contratar?</summary><p>Sim. Você tem 30 dias grátis para usar o sistema no seu estúdio ou clínica, com todas as funcionalidades liberadas.</p></details>
         <details><summary>Minha equipe pode usar também?</summary><p>Sim. O administrador cria o acesso de cada profissional. O financeiro fica restrito ao administrador.</p></details>
-        <details><summary>Como funciona o suporte?</summary><p>Pelo WhatsApp, para dúvidas do dia a dia. Quando for mais fácil mostrar, fazemos uma chamada de vídeo com compartilhamento de tela e resolvemos junto com você, passo a passo.</p></details>
+        <details><summary>Como funciona o suporte?</summary><p>Pelo WhatsApp, para dúvidas do dia a dia. Quando for mais fácil mostrar, fazemos uma chamada de vídeo com compartilhamento de tela e resolvemos junto com você, passo a passo. Pode chamar a qualquer hora: respondemos em até 1 dia útil.</p></details>
       </div>
     </div>
   </section>
@@ -529,7 +527,7 @@ footer .legal { grid-column: 1 / -1; border-top: 1px solid var(--line); padding-
       <p class="lead">Teste grátis por 30 dias. Fale com a gente pelo WhatsApp e veja o sistema funcionando. WhatsApp: <b>(15) 99625-2812</b></p>
       <div class="actions">
         <a class="btn gold" href="https://wa.me/5515996252812?text=Ol%C3%A1!%20Quero%20conhecer%20o%20Pilates%20One." target="_blank" rel="noopener">Chamar no WhatsApp</a>
-        <a class="btn line" href="https://pilatesone.com.br" target="_blank" rel="noopener">Já sou cliente · Entrar</a>
+        <a class="btn line" href="https://app.pilatesone.com.br/">Já sou cliente · Entrar</a>
       </div>
     </div>
   </section>
@@ -539,12 +537,12 @@ footer .legal { grid-column: 1 / -1; border-top: 1px solid var(--line); padding-
   <div class="wrap">
     <div>
       <a class="brand" href="#inicio"><img src="img/logo.jpg" alt=""><span>PILATES ONE</span></a>
-      <p style="margin-top: 12px; max-width: 38ch;">Sistema de gestão para estúdios e clínicas de Pilates.</p>
+      <p style="margin-top: 12px; max-width: 38ch;">Sistema de gestão para estúdios de Pilates e clínicas.</p>
     </div>
     <div>
       <h4>Sistema</h4>
       <ul>
-        <li><a href="https://pilatesone.com.br" target="_blank" rel="noopener">Entrar</a></li>
+        <li><a href="https://app.pilatesone.com.br/">Entrar</a></li>
         <li><a href="#funcionalidades">Funcionalidades</a></li>
         <li><a href="#planos">Planos</a></li>
       </ul>
@@ -553,13 +551,12 @@ footer .legal { grid-column: 1 / -1; border-top: 1px solid var(--line); padding-
       <h4>Contato</h4>
       <ul>
         <li><a href="https://wa.me/5515996252812" target="_blank" rel="noopener">WhatsApp (15) 99625-2812</a></li>
-        <li>contato@pilatesone.com.br <span class="tbd">a definir</span></li>
-        <li>Instagram @pilatesone <span class="tbd">a definir</span></li>
+        <li><a href="https://www.instagram.com/pilatesonegestao/" target="_blank" rel="noopener">Instagram @pilatesonegestao</a></li>
       </ul>
     </div>
     <div class="legal">
-      <span>© 2026 Pilates One · CNPJ <span class="tbd">a definir</span></span>
-      <span><a href="#inicio">Política de Privacidade</a> · <a href="#inicio">Termos de Uso</a> · Tratamos dados conforme a LGPD</span>
+      <span>© 2026 Pilates One</span>
+      <span><a href="privacidade.html">Política de Privacidade</a> · <a href="termos.html">Termos de Uso</a> · Tratamos dados conforme a LGPD</span>
     </div>
   </div>
 </footer>

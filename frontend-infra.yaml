@@ -1,8 +1,19 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: >
-  Hospedagem do frontend (SPA React) da Clínica de Pilates.
-  Bucket S3 privado + CloudFront (Origin Access Control), HTTPS via *.cloudfront.net.
-  Stack separado do backend (clinica-pilates) — ciclos de vida independentes.
+  Hospedagem do frontend (SPA React) da Clínica de Pilates, em app.pilatesone.com.br.
+  Bucket S3 privado + CloudFront (Origin Access Control). A raiz pilatesone.com.br é do
+  site informativo (site-infra.yaml). Stack separado do backend (clinica-pilates).
+
+# Domínio e certificado estavam configurados à mão no console até 03/11/2026; agora vêm daqui.
+# O registro DNS (Route 53) do app. é feito por scripts/dns-dominios.ps1.
+Parameters:
+  DomainName:
+    Type: String
+    Default: app.pilatesone.com.br
+  CertificateArn:
+    Type: String
+    Description: Certificado ACM (us-east-1) do DomainName
+    Default: arn:aws:acm:us-east-1:912689366270:certificate/d01a6423-485c-4881-89fb-c86cc89c9ed3
 
 Resources:
   # Bucket privado: nada de acesso público direto; só o CloudFront lê (via OAC).
@@ -33,7 +44,13 @@ Resources:
     Properties:
       DistributionConfig:
         Enabled: true
-        Comment: Clinica de Pilates - frontend demo
+        Comment: Pilates One - sistema (app.pilatesone.com.br)
+        Aliases:
+          - !Ref DomainName
+        ViewerCertificate:
+          AcmCertificateArn: !Ref CertificateArn
+          SslSupportMethod: sni-only
+          MinimumProtocolVersion: TLSv1.2_2021
         DefaultRootObject: index.html
         PriceClass: PriceClass_All # inclui borda de São Paulo (baixa latência no BR)
         Origins:
@@ -83,5 +100,8 @@ Outputs:
     Description: ID da distribuição CloudFront (para invalidação)
     Value: !Ref Distribution
   SiteUrl:
-    Description: URL pública HTTPS do site
-    Value: !Sub "https://${Distribution.DomainName}"
+    Description: URL pública HTTPS do sistema
+    Value: !Sub "https://${DomainName}"
+  CloudFrontDomain:
+    Description: Domínio *.cloudfront.net (alvo do registro DNS)
+    Value: !GetAtt Distribution.DomainName

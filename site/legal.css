@@ -1,0 +1,101 @@
+/* Páginas legais (Política de Privacidade e Termos de Uso). Mesmos tokens do index.html:
+   tema claro fixo da marca, coluna de leitura de ~720px. */
+:root {
+  color-scheme: light;
+  --bg: #faf8f4;
+  --panel: #ffffff;
+  --ink: #211d18;
+  --muted: #6f675d;
+  --line: #ece6dd;
+  --gold: #b8935e;
+  --gold-deep: #8f6d3f;
+  --charcoal: #26221d;
+  --on-dark: #f3ece1;
+  --warn-bg: #fbecd9;
+  --warn-line: #d9a777;
+  --warn-ink: #8a4f22;
+  --font-display: "Jost", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Instrument Sans", "Segoe UI", system-ui, sans-serif;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font-family: var(--font-body); font-size: 16px; line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--gold-deep); }
+:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; border-radius: 4px; }
+
+.wrap {
+  max-width: 760px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+header.top { background: var(--panel); border-bottom: 1px solid var(--line); }
+header.top .wrap { max-width: 1120px; display: flex; align-items: center; justify-content: space-between; gap: 16px; height: 68px; }
+.brand { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--ink); }
+.brand img { width: 32px; height: 32px; border-radius: 8px; display: block; }
+.brand span { font-family: var(--font-display); font-weight: 500; font-size: 16px; letter-spacing: 4px; }
+.back { font-size: 15px; text-decoration: none; }
+.back:hover { text-decoration: underline; }
+
+main { padding-block: 56px 80px; }
+.eyebrow {
+  font-family: var(--font-display); font-weight: 500; font-size: 13px;
+  letter-spacing: 3px; text-transform: uppercase; color: var(--gold-deep);
+}
+h1, h2, h3 { font-family: var(--font-display); font-weight: 400; text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(32px, 5vw, 44px); line-height: 1.1; margin-top: 10px; }
+.updated { color: var(--muted); font-size: 14px; margin-top: 12px; }
+.intro { font-size: 18px; color: var(--muted); margin-top: 22px; }
+
+.draft {
+  margin-top: 32px; padding: 20px 22px; border-radius: 14px;
+  background: var(--warn-bg); border: 1px dashed var(--warn-line); color: var(--warn-ink);
+  font-size: 15px;
+}
+.draft strong { display: block; font-family: var(--font-display); font-weight: 600; letter-spacing: .3px; margin-bottom: 6px; }
+.draft ul { margin: 8px 0 0; padding-left: 20px; }
+.draft li { margin-top: 4px; }
+
+nav.toc { margin-top: 36px; padding: 22px 24px; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; }
+nav.toc h2 { font-size: 15px; font-weight: 500; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+nav.toc ol { margin: 0; padding-left: 22px; columns: 2; column-gap: 32px; }
+nav.toc li { break-inside: avoid; font-size: 15px; }
+nav.toc a { text-decoration: none; color: var(--ink); }
+nav.toc a:hover { color: var(--gold-deep); }
+@media (max-width: 600px) { nav.toc ol { columns: 1; } }
+
+section { margin-top: 48px; scroll-margin-top: 24px; }
+section h2 { font-size: 26px; line-height: 1.25; padding-bottom: 10px; border-bottom: 1px solid var(--line); }
+section h3 { font-size: 19px; font-weight: 500; margin-top: 26px; }
+section p, section ul, section ol { margin: 14px 0 0; }
+section ul, section ol { padding-left: 22px; }
+section li { margin-top: 6px; }
+.note {
+  margin-top: 16px; padding: 14px 18px; border-left: 3px solid var(--gold);
+  background: var(--panel); border-radius: 0 10px 10px 0; color: var(--muted); font-size: 15px;
+}
+.table-wrap { overflow-x: auto; margin-top: 16px; }
+table { border-collapse: collapse; width: 100%; min-width: 520px; font-size: 15px; background: var(--panel); }
+th, td { text-align: left; vertical-align: top; padding: 10px 12px; border: 1px solid var(--line); }
+th { font-family: var(--font-display); font-weight: 500; background: #f3eee6; }
+
+/* Lacunas que dependem de decisão (somem antes de publicar) */
+.tbd {
+  font-family: var(--font-display); font-size: .92em; font-weight: 500; color: var(--warn-ink);
+  background: var(--warn-bg); border: 1px dashed var(--warn-line); border-radius: 6px; padding: 0 6px;
+  white-space: nowrap;
+}
+.rev { /* trecho para o advogado olhar com atenção */
+  font-size: 12px; font-family: var(--font-display); font-weight: 600; letter-spacing: 1px;
+  text-transform: uppercase; color: var(--warn-ink); background: var(--warn-bg);
+  border-radius: 999px; padding: 1px 8px; margin-left: 6px; vertical-align: middle; white-space: nowrap;
+}
+
+footer { border-top: 1px solid var(--line); background: var(--panel); padding-block: 28px; font-size: 14px; color: var(--muted); }
+footer .wrap { max-width: 1120px; display: flex; flex-wrap: wrap; gap: 8px 24px; justify-content: space-between; }
+footer a { color: var(--muted); text-decoration: none; }
+footer a:hover { color: var(--ink); }

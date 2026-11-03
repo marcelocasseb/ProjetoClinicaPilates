@@ -232,34 +232,41 @@ Antes de migrar o banco por causa de relatórios, avaliar nesta ordem:
 
 ---
 
-## 7. Site informativo (esboço em 02/11/2026)
+## 7. Site informativo (no ar desde 03/11/2026)
 
 O esboço está em [site/](site/index.html) (HTML estático, sem build). As imagens vêm de
 [scripts/prints/](scripts/prints/README.md), com um estúdio fictício. Para ver no navegador, abra
-`site/index.html`. **Ainda não está no ar.**
+`site/index.html`. **No ar em https://pilatesone.com.br** (publicar: `scripts/deploy-site.ps1`).
 
 ### 7.1 Conteúdo que falta decidir
-- **Preço mensal** e quantos usuários o plano inclui (seção Planos).
-- Confirmar os itens do card "Teste grátis": sem cartão de crédito, ajuda para cadastrar os
-  alunos, sem fidelidade. (Os **30 dias grátis** já estão decididos.)
-- **E-mail** de contato, **Instagram** e **CNPJ** (rodapé).
-- **Depoimento** de uma cliente real, com autorização.
+Já decidido: **R$ 69,90/mês**, sem limite de usuários anunciado, e **30 dias grátis**, sem
+fidelidade.
+
+- O site fica, por enquanto, **sem e-mail, CNPJ e endereço**. O contato é pelo WhatsApp e pelo
+  Instagram `@pilatesonegestao`. **Antes de publicar a Política e os Termos**, incluir a
+  identificação do responsável, Marcelo Casseb (já no texto), com o CPF ou CNPJ: a LGPD exige isso
+  (art. 9º, III), e um contrato precisa identificar as partes. O foro ficou o do domicílio do cliente.
+- **Depoimento**: seção retirada por enquanto. Volta quando houver o depoimento de uma cliente
+  real, com autorização (o estilo `.quote` continua no `site/index.html`).
 - **Fotos reais** de postura no lugar das ilustrações, com autorização por escrito.
-- **Política de Privacidade e Termos de Uso**: os links do rodapé ainda não levam a lugar nenhum
-  (ver seção 5, LGPD).
+- **Política de Privacidade e Termos de Uso**: rascunhos em [site/privacidade.html](site/privacidade.html)
+  e [site/termos.html](site/termos.html), escritos a partir do que o sistema faz de verdade.
+  Já decidido: encarregado de dados Marcelo Casseb; pagamento por transferência ou Pix; suporte a
+  qualquer hora, com resposta em até 1 dia útil; os prazos sugeridos (reajuste avisado com 30 dias,
+  suspensão após 10 dias de atraso, dados guardados 30 dias após o fim); responsável Marcelo Casseb. Falta o CPF ou CNPJ do
+  responsável e a data, e passar por um advogado, com atenção à transferência internacional (dados na AWS, nos EUA) e à limitação de
+  responsabilidade. Ver também a seção 5 (LGPD).
+- **Exclusão definitiva e cópia dos dados** hoje são manuais: o sistema faz remoção lógica
+  (o registro some da tela, mas fica guardado) e não tem exportação. Os documentos prometem
+  as duas coisas a pedido, pelo suporte.
 - O WhatsApp `(15) 99625-2812` é provisório.
 - Antes de publicar, tirar a faixa "Esboço" do topo e todas as etiquetas "a definir".
 
-### 7.2 Parte técnica para pôr no ar
-- **Site na raiz** (`pilatesone.com.br` e `www`) e **sistema em `app.pilatesone.com.br`**.
-- Stack própria para o site (bucket S3 + CloudFront, como o [frontend-infra.yaml](frontend-infra.yaml))
-  e um `scripts/deploy-site.ps1`. Cada parte sobe sem mexer nas outras.
-- Certificado ACM com `app.pilatesone.com.br` e registro no Route 53.
-- CORS em [template.yaml](template.yaml) (hoje só libera a raiz e o `www`).
-- E-mail de convite do Cognito em [template.yaml](template.yaml) (hoje manda para `https://pilatesone.com.br`).
-- Botão **Entrar** do site apontando para `https://app.pilatesone.com.br` (hoje aponta para a raiz).
-- Avisar os clientes atuais do novo endereço. O botão Entrar no topo do site já ajuda quem
-  usa o endereço antigo salvo.
+### 7.2 ~~Parte técnica para pôr no ar~~ (CONCLUÍDO em 03/11/2026)
+- Site na raiz (`www` redireciona) pela stack [site-infra.yaml](site-infra.yaml); sistema em
+  `app.pilatesone.com.br` pela [frontend-infra.yaml](frontend-infra.yaml); DNS por
+  `scripts/dns-dominios.ps1`; CORS das fotos e convite do Cognito apontando para o `app.`.
+- **Falta:** avisar os clientes do novo endereço (todos precisam entrar com a senha uma vez).
 
 ### 7.3 Ajuste notado no sistema
 - **Agenda no celular corta os nomes** ("Beatriz Sa…", e um aluno novo aparece só como "C…").

@@ -1,7 +1,8 @@
 # Frontend — Pilates One
 
 SPA em **React + Vite** do sistema de gestão da clínica. No ar em
-**https://pilatesone.com.br** (S3 privado + CloudFront, stack `clinica-pilates-frontend`).
+**https://app.pilatesone.com.br** (S3 privado + CloudFront, stack `clinica-pilates-frontend`).
+A raiz `pilatesone.com.br` é o site informativo (pasta [site/](../site/), stack `clinica-pilates-site`).
 
 ## Rodar local
 

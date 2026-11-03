@@ -30,7 +30,7 @@ flowchart TB
         lambda -- "só ASSINA URLs<br/>(presigned)" --> imgs
     end
 
-    user -- "1. Carrega o site<br/>https://pilatesone.com.br" --> cf
+    user -- "1. Carrega o sistema<br/>https://app.pilatesone.com.br" --> cf
     user -- "2. Login (e-mail/senha) → idToken" --> cog
     user -- "3. Chamadas de API (header Authorization: Bearer)<br/>https://…execute-api…amazonaws.com" --> apigw
     user -- "4. Sobe/baixa imagem DIRETO no S3<br/>(URL pré-assinada, 5 min)" --> imgs
@@ -128,9 +128,11 @@ aws cloudformation execute-change-set --change-set-name <arn>
 
 | Recurso | Identificador | Stack |
 | --- | --- | --- |
-| Site (domínio) | https://pilatesone.com.br | clinica-pilates-frontend |
-| Site (URL CloudFront) | https://d1th2j57vyxahs.cloudfront.net | clinica-pilates-frontend |
-| Bucket S3 do site (privado) | `clinica-pilates-frontend-sitebucket-n6oomystbesc` | clinica-pilates-frontend |
+| Sistema (domínio) | https://app.pilatesone.com.br | clinica-pilates-frontend |
+| Sistema (URL CloudFront) | https://d1th2j57vyxahs.cloudfront.net | clinica-pilates-frontend |
+| Site informativo (domínio, e `www` → raiz) | https://pilatesone.com.br | clinica-pilates-site |
+| Site informativo (CloudFront) | `E3VHZPPE61PPJJ` / https://dqp5l424ar4a9.cloudfront.net | clinica-pilates-site |
+| Bucket S3 do sistema (privado) | `clinica-pilates-frontend-sitebucket-n6oomystbesc` | clinica-pilates-frontend |
 | CloudFront Distribution | `EGYNGZONKGVLT` | clinica-pilates-frontend |
 | API (URL) | https://8f1ffym997.execute-api.us-east-1.amazonaws.com | clinica-pilates |
 | Lambda | `clinica-pilates-ClinicaApiFunction-3huxBJXkP1qi` | clinica-pilates |

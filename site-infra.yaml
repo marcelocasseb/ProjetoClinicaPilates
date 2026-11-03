@@ -1,0 +1,135 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  Hospedagem do site informativo do Pilates One (pasta site/), em pilatesone.com.br e www.
+  Bucket S3 privado + CloudFront (Origin Access Control). O sistema fica em
+  app.pilatesone.com.br (frontend-infra.yaml). Stack: clinica-pilates-site.
+
+# O registro DNS (Route 53) da raiz e do www é feito por scripts/dns-dominios.ps1.
+Parameters:
+  DomainName:
+    Type: String
+    Default: pilatesone.com.br
+  WwwDomainName:
+    Type: String
+    Default: www.pilatesone.com.br
+  CertificateArn:
+    Type: String
+    Description: Certificado ACM (us-east-1) com a raiz e o www
+    Default: arn:aws:acm:us-east-1:912689366270:certificate/0b52f3cc-9c3a-4284-94fc-56f08f8d52c0
+
+Resources:
+  # Bucket privado: nada de acesso público direto; só o CloudFront lê (via OAC).
+  SiteBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+
+  OAC:
+    Type: AWS::CloudFront::OriginAccessControl
+    Properties:
+      OriginAccessControlConfig:
+        Name: !Sub "${AWS::StackName}-oac"
+        OriginAccessControlOriginType: s3
+        SigningBehavior: always
+        SigningProtocol: sigv4
+
+  # www.pilatesone.com.br -> pilatesone.com.br (301), para o Google ver um endereço só.
+  WwwRedirect:
+    Type: AWS::CloudFront::Function
+    Properties:
+      Name: !Sub "${AWS::StackName}-www-redirect"
+      AutoPublish: true
+      FunctionConfig:
+        Comment: Redireciona o www para a raiz
+        Runtime: cloudfront-js-2.0
+      FunctionCode: !Sub |
+        function handler(event) {
+          var req = event.request;
+          if (req.headers.host && req.headers.host.value === '${WwwDomainName}') {
+            return {
+              statusCode: 301,
+              statusDescription: 'Moved Permanently',
+              headers: { location: { value: 'https://${DomainName}' + req.uri } }
+            };
+          }
+          return req;
+        }
+
+  Distribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        Comment: Pilates One - site informativo (pilatesone.com.br)
+        Aliases:
+          - !Ref DomainName
+          - !Ref WwwDomainName
+        ViewerCertificate:
+          AcmCertificateArn: !Ref CertificateArn
+          SslSupportMethod: sni-only
+          MinimumProtocolVersion: TLSv1.2_2021
+        DefaultRootObject: index.html
+        PriceClass: PriceClass_All # inclui borda de São Paulo (baixa latência no BR)
+        Origins:
+          - Id: S3Origin
+            DomainName: !GetAtt SiteBucket.RegionalDomainName
+            OriginAccessControlId: !GetAtt OAC.Id
+            S3OriginConfig:
+              OriginAccessIdentity: ""
+        DefaultCacheBehavior:
+          TargetOriginId: S3Origin
+          ViewerProtocolPolicy: redirect-to-https
+          Compress: true
+          # Managed "CachingOptimized" (respeita o Cache-Control que o deploy-site.ps1 grava)
+          CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
+          FunctionAssociations:
+            - EventType: viewer-request
+              FunctionARN: !GetAtt WwwRedirect.FunctionMetadata.FunctionARN
+        # Página inexistente: volta para o início (o S3 privado responde 403 no lugar de 404).
+        CustomErrorResponses:
+          - ErrorCode: 403
+            ResponseCode: 404
+            ResponsePagePath: /index.html
+          - ErrorCode: 404
+            ResponseCode: 404
+            ResponsePagePath: /index.html
+
+  # Permite ao CloudFront (desta distribuição) ler os objetos do bucket.
+  BucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref SiteBucket
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: AllowCloudFrontRead
+            Effect: Allow
+            Principal:
+              Service: cloudfront.amazonaws.com
+            Action: s3:GetObject
+            Resource: !Sub "${SiteBucket.Arn}/*"
+            Condition:
+              StringEquals:
+                AWS:SourceArn: !Sub "arn:aws:cloudfront::${AWS::AccountId}:distribution/${Distribution.Id}"
+
+Outputs:
+  BucketName:
+    Description: Nome do bucket S3 do site
+    Value: !Ref SiteBucket
+  DistributionId:
+    Description: ID da distribuição CloudFront (para invalidação)
+    Value: !Ref Distribution
+  SiteUrl:
+    Description: URL pública HTTPS do site
+    Value: !Sub "https://${DomainName}"
+  CloudFrontDomain:
+    Description: Domínio *.cloudfront.net (alvo do registro DNS)
+    Value: !GetAtt Distribution.DomainName
