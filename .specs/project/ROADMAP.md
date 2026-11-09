@@ -169,11 +169,15 @@ pelo livro-caixa mensal e terminando na mensalidade por aluno com inadimplência
 - GSI1 reindexado por **competência** (AD-015) — sem migração, a F1 não tinha sido deployada
 - FIN-13..20; **106 testes** novos (suíte 434 → **540**); `template.yaml` **não muda**
 
-**F3 — Relatório** - PLANNED
+**F3 — Relatórios** - IMPLEMENTADO ✅ (2026-11-09; back aguardando o `execute-change-set`)
 
-- Categorias de despesa, comparativo mês a mês, gráfico
-- Export CSV para o contador
-- Custo real por aula (despesas ÷ aulas registradas)
+- Aba **Relatórios** (só admin) com 6 relatórios: Financeiro (+ extrato do mês), Alunos
+  (indicadores + relação de alunos), Ocupação da escala, Atendimento (aulas registradas e Agenda,
+  separadas) e Quem passou na semana. Seletor de mês com evolução de 12 meses
+- PDF pela impressão do navegador, por relatório e como **fechamento do mês** (capa + 4 seções)
+- Agregação no back em funções puras (`app/relatorios.py`); `template.yaml` **não muda**
+- REL-01..22; **162 testes** novos (suíte 543 → **705**). Spec em `.specs/features/relatorios/`
+- Fica para depois: categorias de despesa, export CSV, faltas/presença, custo real por aula
 
 ---
 

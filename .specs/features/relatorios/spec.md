@@ -236,28 +236,28 @@ grupos, para ter um relatório mensal completo para sócio ou contador.
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| REL-01 | P1: Aba — visível só para admin, 403 para membro | Design | Pending |
-| REL-02 | P1: Aba — seletor de mês (padrão mês corrente, sem futuro) | Design | Pending |
-| REL-03 | P1: Financeiro — entradas/saídas/saldo do mês (bate com Caixa) | Design | Pending |
-| REL-04 | P1: Financeiro — evolução 12 meses | Design | Pending |
-| REL-05 | P1: Financeiro — receita por forma de pagamento | Design | Pending |
-| REL-06 | P1: Financeiro — resumo de mensalidades (bate com Mensalidades) | Design | Pending |
-| REL-07 | P1: Alunos — ativos, novos e saídas no mês | Design | Pending |
-| REL-08 | P1: Alunos — evolução 12 meses | Design | Pending |
-| REL-09 | P1: Alunos — carteira de planos (total, ticket médio, sem plano, frequência) | Design | Pending |
-| REL-10 | P1: Alunos — lista de novos do mês | Design | Pending |
-| REL-11 | P1: Ocupação — mapa de calor dia × horário | Design | Pending |
-| REL-12 | P1: Ocupação — totais, top 5, alunos fora da escala | Design | Pending |
-| REL-13 | P1: Atendimento — totais do mês + evolução 12 meses (aulas registradas e Agenda separadas; Agenda expirada = "sem dados") | Design | Pending |
-| REL-14 | P1: Atendimento — por profissional e por aluno (duas colunas) | Design | Pending |
-| REL-15 | P1: Atendimento — ranking de aparelhos e tipos de treino | Design | Pending |
-| REL-16 | P1: Imprimir/PDF por relatório (cabeçalho, sem menus, A4, P&B) | Design | Pending |
-| REL-17 | P2: Fechamento do mês (4 grupos, página nova por grupo, números idênticos) | Design | Pending |
-| REL-18 | Edge: clínica vazia / mês sem dados → zeros sem erro | Design | Pending |
-| REL-19 | Edge: Atendimento < 5 s com 300 alunos, sem mudar a tabela | Design | Pending |
-| REL-20 | P1: Financeiro — extrato do mês linha a linha (tela + PDF) | Design | Pending |
-| REL-21 | P1: Relação de alunos (ativos, contato, plano, horários; completa/paginada; A4) | Design | Pending |
-| REL-22 | P1: Quem passou na semana (seletor de semana, dias × fonte, resumo, A4) | Design | Pending |
+| REL-01 | P1: Aba — visível só para admin, 403 para membro | Verified | Verified |
+| REL-02 | P1: Aba — seletor de mês (padrão mês corrente, sem futuro) | Verified | Verified |
+| REL-03 | P1: Financeiro — entradas/saídas/saldo do mês (bate com Caixa) | Verified | Verified |
+| REL-04 | P1: Financeiro — evolução 12 meses | Verified | Verified |
+| REL-05 | P1: Financeiro — receita por forma de pagamento | Verified | Verified |
+| REL-06 | P1: Financeiro — resumo de mensalidades (bate com Mensalidades) | Verified | Verified |
+| REL-07 | P1: Alunos — ativos, novos e saídas no mês | Verified | Verified |
+| REL-08 | P1: Alunos — evolução 12 meses | Verified | Verified |
+| REL-09 | P1: Alunos — carteira de planos (total, ticket médio, sem plano, frequência) | Verified | Verified |
+| REL-10 | P1: Alunos — lista de novos do mês | Verified | Verified |
+| REL-11 | P1: Ocupação — mapa de calor dia × horário | Verified | Verified |
+| REL-12 | P1: Ocupação — totais, top 5, alunos fora da escala | Verified | Verified |
+| REL-13 | P1: Atendimento — totais do mês + evolução 12 meses (aulas registradas e Agenda separadas; Agenda expirada = "sem dados") | Verified | Verified |
+| REL-14 | P1: Atendimento — por profissional e por aluno (duas colunas) | Verified | Verified |
+| REL-15 | P1: Atendimento — ranking de aparelhos e tipos de treino | Verified | Verified |
+| REL-16 | P1: Imprimir/PDF por relatório (cabeçalho, sem menus, A4, P&B) | Verified | Verified |
+| REL-17 | P2: Fechamento do mês (4 grupos, página nova por grupo, números idênticos) | Verified | Verified |
+| REL-18 | Edge: clínica vazia / mês sem dados → zeros sem erro | Verified | Verified |
+| REL-19 | Edge: Atendimento < 5 s com 300 alunos, sem mudar a tabela | Deploy | Pending (medir em produção) |
+| REL-20 | P1: Financeiro — extrato do mês linha a linha (tela + PDF) | Verified | Verified |
+| REL-21 | P1: Relação de alunos (ativos, contato, plano, horários; completa/paginada; A4) | Verified | Verified |
+| REL-22 | P1: Quem passou na semana (seletor de semana, dias × fonte, resumo, A4) | Verified | Verified |
 
 **Coverage:** 22 total, 22 mapeados em `tasks.md`
 

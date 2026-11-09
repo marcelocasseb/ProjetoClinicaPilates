@@ -36,7 +36,7 @@ da API em `/clinica-pilates/api-access`, guardado por 1 ano.
 - **Problema:** o DynamoDB entrega no máximo 1 MB por busca. As listas abaixo leem só a primeira
   página, e o que passa disso **some sem aviso** (por exemplo, a clínica deixa de ver parte dos pacientes).
 - **Precisa paginar** (repetir a busca usando `LastEvaluatedKey` até acabar):
-  - [src/app/repository.py](src/app/repository.py): `list_ativos` (lista de pacientes)
+  - ~~[src/app/repository.py](src/app/repository.py): `list_ativos` (lista de pacientes)~~ paginado em 09/11/2026 (feature relatórios)
   - [src/app/repository_sessao.py](src/app/repository_sessao.py): `list_ativos` (aulas do paciente)
   - [src/app/repository_avaliacao.py](src/app/repository_avaliacao.py)
   - [src/app/repository_imagem.py](src/app/repository_imagem.py)

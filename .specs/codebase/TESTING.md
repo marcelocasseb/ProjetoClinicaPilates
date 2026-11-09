@@ -3,7 +3,7 @@
 **Stack:** Python 3.13 (runtime Lambda) / 3.14 (local dev)
 **Framework:** pytest
 **AWS mocking:** moto — `moto[dynamodb,cognitoidp,s3]` (tudo em memória, sem tocar AWS real, sem Docker)
-**Suíte atual:** **219 testes verdes** (`pytest -q`, ~3min)
+**Suíte atual:** **705 testes verdes** (`pytest -q`, ~3min; 2026-11-09)
 **Coverage philosophy:** Pragmática — testar lógica de negócio, validações e acesso a dados (via mock). NÃO testar boilerplate de infraestrutura (template SAM, fiação de handler).
 
 ---

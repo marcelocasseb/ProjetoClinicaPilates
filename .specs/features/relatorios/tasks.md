@@ -1,7 +1,7 @@
 # Relatórios Tasks
 
 **Design**: `.specs/features/relatorios/design.md`
-**Status**: Draft (rev. 2026-11-09: + Agenda no Atendimento, extrato, relação de alunos, semana)
+**Status**: T1–T22 Done (2026-11-09) · T23 em andamento (back aguarda execute-change-set; front depois)
 
 ---
 
