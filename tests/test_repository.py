@@ -133,3 +133,65 @@ def test_clinica_b_nao_acessa_paciente_da_a_por_id(dynamo_table):
     assert _repo(CLINICA_B).update(criado_a["id"], {"nome": "Hack"}) is None
     # a clínica dona continua acessando
     assert _repo(CLINICA_A).get(criado_a["id"]) is not None
+
+
+# --- list_todos + paginação (relatorios T2 / REL-07, REL-21; PENDENCIAS 1.3) ---------
+
+
+def _forca_paginas_de_um(repo, monkeypatch):
+    """Faz cada Query devolver 1 item por vez (Limit=1), como uma clínica grande que passa
+    do corte de 1 MB do DynamoDB. Devolve o contador de chamadas."""
+    original = repo._table.query
+    chamadas = {"n": 0}
+
+    def query_limitada(**kwargs):
+        chamadas["n"] += 1
+        return original(**{**kwargs, "Limit": 1})
+
+    monkeypatch.setattr(repo._table, "query", query_limitada)
+    return chamadas
+
+
+def test_list_ativos_pagina_ate_o_fim(dynamo_table, monkeypatch):
+    repo = _repo()
+    for nome in ("Ana", "Bia", "Caio", "Davi"):
+        repo.create({"nome": nome})
+    chamadas = _forca_paginas_de_um(repo, monkeypatch)
+
+    nomes = sorted(p["nome"] for p in repo.list_ativos())
+
+    assert nomes == ["Ana", "Bia", "Caio", "Davi"]
+    assert chamadas["n"] > 1
+
+
+def test_list_todos_inclui_removidos(dynamo_table):
+    repo = _repo()
+    ana = repo.create({"nome": "Ana"})
+    bia = repo.create({"nome": "Bia"})
+    repo.soft_delete(bia["id"])
+
+    por_id = {p["id"]: p for p in repo.list_todos()}
+
+    assert set(por_id) == {ana["id"], bia["id"]}
+    assert por_id[ana["id"]]["ativo"] is True
+    assert por_id[bia["id"]]["ativo"] is False
+    assert por_id[bia["id"]]["atualizadoEm"] >= por_id[bia["id"]]["criadoEm"]
+    assert not any(k in por_id[ana["id"]] for k in ("PK", "SK", "GSI1PK", "GSI1SK"))
+
+
+def test_list_todos_pagina_ate_o_fim(dynamo_table, monkeypatch):
+    repo = _repo()
+    for nome in ("Ana", "Bia", "Caio"):
+        repo.create({"nome": nome})
+    chamadas = _forca_paginas_de_um(repo, monkeypatch)
+
+    assert len(repo.list_todos()) == 3
+    assert chamadas["n"] > 1
+
+
+def test_list_todos_nao_ve_outra_clinica(dynamo_table):
+    _repo(CLINICA_A).create({"nome": "Da A"})
+    _repo(CLINICA_B).create({"nome": "Da B"})
+
+    assert [p["nome"] for p in _repo(CLINICA_A).list_todos()] == ["Da A"]
+    assert [p["nome"] for p in _repo(CLINICA_B).list_todos()] == ["Da B"]

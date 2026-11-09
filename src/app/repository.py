@@ -82,14 +82,37 @@ class PacienteRepository:
             return None
         return _para_paciente(item)
 
+    def _query_perfis(self, **extra) -> list[dict]:
+        """Query no GSI1 da clínica, paginada até o fim (`LastEvaluatedKey`).
+
+        Sem paginar, uma clínica que passe do corte de 1 MB da Query perderia pacientes
+        da lista sem aviso (PENDENCIAS 1.3).
+        """
+        kwargs = {
+            "IndexName": _GSI_NAME,
+            "KeyConditionExpression": Key("GSI1PK").eq(_gsi_pk(self._clinic_id)),
+            **extra,
+        }
+        itens: list[dict] = []
+        while True:
+            resp = self._table.query(**kwargs)
+            itens.extend(_para_paciente(i) for i in resp.get("Items", []))
+            ultima = resp.get("LastEvaluatedKey")
+            if not ultima:
+                return itens
+            kwargs["ExclusiveStartKey"] = ultima
+
     def list_ativos(self) -> list[dict]:
         """Lista os perfis ativos da clínica (Query no GSI1, filtrando `ativo=True`)."""
-        resp = self._table.query(
-            IndexName=_GSI_NAME,
-            KeyConditionExpression=Key("GSI1PK").eq(_gsi_pk(self._clinic_id)),
-            FilterExpression=Attr("ativo").eq(True),
-        )
-        return [_para_paciente(i) for i in resp.get("Items", [])]
+        return self._query_perfis(FilterExpression=Attr("ativo").eq(True))
+
+    def list_todos(self) -> list[dict]:
+        """Lista os perfis da clínica **incluindo os removidos** (`ativo=False`).
+
+        Usado pelos relatórios: as saídas do mês são os perfis removidos, e o
+        `atualizadoEm` de um perfil removido é a data da remoção (removido não é editado).
+        """
+        return self._query_perfis()
 
     def update(self, paciente_id: str, data: dict) -> Optional[dict]:
         """Atualiza os campos de perfil; retorna o item ou `None` se inexistente/removido."""
