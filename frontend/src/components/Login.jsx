@@ -66,11 +66,13 @@ export default function Login({ onLogin }) {
   return (
     <div className="login-wrap">
       <div className="login-card">
-        <img
-          src={logoUrl}
-          alt="Pilates One — Sistema completo para gestão do Pilates"
-          className="login-logo"
-        />
+        {/* A imagem traz a frase antiga embaixo; o CSS corta e a frase vai como texto. */}
+        <img src={logoUrl} alt="Pilates One" className="login-logo" />
+        <p className="login-tagline">
+          Sistema completo para
+          <br />
+          gestão de Pilates e Fisioterapia
+        </p>
 
         {!challenge ? (
           <>

@@ -25,7 +25,22 @@
   width: 280px;
   max-width: 82%;
   height: auto;
-  margin: 8px auto 4px;
+  /* Mostra só "PILATES ONE": corta a frase antiga que vem na imagem (528x291). */
+  aspect-ratio: 528 / 218;
+  object-fit: cover;
+  object-position: top;
+  margin: 8px auto 0;
+}
+.login-tagline {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 0.78rem;
+  line-height: 1.6;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  text-align: center;
+  color: #6f6a64;
+  margin: 2px 0 14px;
 }
 .login-sub {
   text-align: center;
