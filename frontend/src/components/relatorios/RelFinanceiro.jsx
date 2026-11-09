@@ -105,7 +105,7 @@ export default function RelFinanceiro({ dados }) {
         </section>
       </div>
 
-      <section className="rel-bloco rel-quebra-antes">
+      <section className="rel-bloco">
         <h3>Extrato do mês</h3>
         {dados.extrato.length === 0 ? (
           <p className="muted rel-vazio">Nenhum lançamento neste mês.</p>

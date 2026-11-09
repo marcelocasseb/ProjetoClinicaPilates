@@ -155,6 +155,53 @@ def popular(app):
         "valorCentavos": 5000, "formaPagamento": "dinheiro",
         "dataPagamento": hoje.isoformat()}))
 
+    popular_historico(c, ok, ids, profs, hoje)
+
+
+def popular_historico(c, ok, ids, profs, hoje):
+    """Aulas registradas e Caixa dos últimos meses, para os Relatórios terem o que mostrar."""
+    aparelhos = [
+        ok(c.post("/aparelhos", json={"nome": n}))
+        for n in ("Reformer", "Cadillac", "Chair", "Barrel")
+    ]
+    treinos = ["Membros superiores", "Membros inferiores", "Abdômen", "Força", "Mobilidade"]
+    alunos = list(ids.values())
+    ana, paulo, carla = profs["Dra. Ana Lima"], profs["Dr. Paulo Reis"], profs["Carla Nunes"]
+
+    for atras in range(5, -1, -1):  # 5 meses atrás até o mês corrente
+        ano, mes = hoje.year, hoje.month - atras
+        while mes < 1:
+            ano, mes = ano - 1, mes + 12
+        ultimo = hoje.day if atras == 0 else 28
+        # Aulas: cresce um pouco a cada mês; alterna profissional, aparelhos e treinos.
+        for k in range(8 + (5 - atras) * 3):
+            dia = date(ano, mes, 1 + (k * 3) % ultimo)
+            prof = (ana, paulo, carla)[k % 3]
+            ap1, ap2 = aparelhos[k % 4], aparelhos[(k + 1) % 4]
+            ok(c.post(f"/pacientes/{alunos[k % len(alunos)]}/sessoes", json={
+                "data": dia.isoformat(),
+                "profissionalId": prof,
+                "aparelhos": [
+                    {"aparelhoId": ap1["id"], "nome": ap1["nome"], "treinos": [treinos[k % 5]]},
+                    {"aparelhoId": ap2["id"], "nome": ap2["nome"], "treinos": [treinos[(k + 2) % 5]]},
+                ],
+            }))
+        if atras == 0:
+            continue  # o Caixa do mês corrente já foi lançado acima
+        # Caixa dos meses anteriores: mensalidades, uma avulsa e as contas fixas.
+        dia10 = date(ano, mes, 10).isoformat()
+        for i, forma in enumerate(("pix", "pix", "credito", "dinheiro")):
+            ok(c.post("/financeiro/lancamentos", json={
+                "tipo": "entrada", "data": dia10, "valorCentavos": 32000,
+                "descricao": f"Mensalidade {i + 1}", "formaPagamento": forma}))
+        ok(c.post("/financeiro/lancamentos", json={
+            "tipo": "entrada", "data": dia10, "valorCentavos": 8000 * (6 - atras),
+            "descricao": "Aulas avulsas", "formaPagamento": "debito"}))
+        for desc, valor in (("Aluguel", 90000), ("Conta de luz", 14000 + atras * 700)):
+            ok(c.post("/financeiro/lancamentos", json={
+                "tipo": "saida", "data": dia10, "valorCentavos": valor,
+                "descricao": desc, "formaPagamento": "transferencia"}))
+
 
 def main():
     papel = "membro" if "--membro" in sys.argv else "admin"

@@ -1,5 +1,20 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { mesCurto, mesLongo } from "./formato";
+
+// Largura real do elemento, para o SVG desenhar 1 unidade = 1px (o texto do eixo fica
+// sempre com o mesmo tamanho, em vez de crescer junto com a tela).
+function useLargura(minimo) {
+  const ref = useRef(null);
+  const [largura, setLargura] = useState(minimo);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || typeof ResizeObserver === "undefined") return undefined;
+    const obs = new ResizeObserver(([e]) => setLargura(Math.max(minimo, Math.round(e.contentRect.width))));
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [minimo]);
+  return [ref, largura];
+}
 
 // Peças de gráfico dos Relatórios — SVG/CSS próprios, sem biblioteca (o front só
 // depende de React e o PDF sai pela impressão do navegador).
@@ -51,8 +66,14 @@ export function Legenda({ series }) {
  */
 export function BarrasMensais({ dados, series, formato = String, formatoEixo = formato, rotulo }) {
   const [foco, setFoco] = useState(null);
-  const W = 640;
-  const H = 220;
+  const [ref, W] = useLargura(540);
+  // No celular o gráfico rola na horizontal: abre já no fim (os meses mais recentes).
+  const rolagem = useRef(null);
+  useEffect(() => {
+    const el = rolagem.current;
+    if (el) el.scrollLeft = el.scrollWidth;
+  }, [dados]);
+  const H = 240;
   const M = { t: 12, r: 8, b: 34, l: 64 };
   const plotW = W - M.l - M.r;
   const plotH = H - M.t - M.b;
@@ -71,8 +92,8 @@ export function BarrasMensais({ dados, series, formato = String, formatoEixo = f
   return (
     <div className="rel-grafico">
       <Legenda series={series} />
-      <div className="rel-grafico-rolagem">
-        <div className="rel-grafico-area">
+      <div className="rel-grafico-rolagem" ref={rolagem}>
+        <div className="rel-grafico-area" ref={ref}>
           <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={rotulo} className="rel-svg">
             {ticks.map((t) => (
               <g key={t}>
@@ -168,9 +189,10 @@ export function Ranking({ itens, formato = String, cor = "var(--serie-1)", vazio
   );
 }
 
-// Rampa sequencial em um só tom (bronze da marca), do claro ao escuro.
-// Nos 3 primeiros degraus o número vai em tinta escura; nos 2 últimos, em branco.
-const RAMPA = ["#f5ead7", "#e8cfa3", "#d4ac6c", "#b07a2a", "#7d5418"];
+// Rampa sequencial em um só tom (bronze da marca), do claro ao escuro. O degrau mais
+// claro ainda se distingue da célula vazia. Nos 3 primeiros degraus o número vai em
+// tinta escura; nos 2 últimos, em branco.
+const RAMPA = ["#ecd9b9", "#ddbd8a", "#c99d5c", "#b07a2a", "#7d5418"];
 
 /**
  * Mapa de calor dia × horário. celulas: [{ dia, hora, alunos }].
@@ -180,11 +202,15 @@ export function MapaCalor({ celulas, dias, horarios }) {
   const valor = new Map(celulas.map((c) => [`${c.dia}|${c.hora}`, c.alunos]));
   const max = Math.max(1, ...celulas.map((c) => c.alunos));
   const linhas = [...new Set([...horarios, ...celulas.map((c) => c.hora)])].sort();
-  const degrau = (v) => Math.min(RAMPA.length - 1, Math.ceil((v / max) * RAMPA.length) - 1);
-  const faixas = RAMPA.map((_, k) => {
-    const de = Math.floor((k * max) / RAMPA.length) + 1;
-    const ate = Math.ceil(((k + 1) * max) / RAMPA.length);
-    return de > ate ? null : de === ate ? `${de}` : `${de}–${ate}`;
+  // Poucos alunos por horário (máximo < 5) usam um degrau por valor; o mais cheio é
+  // sempre o tom mais escuro. Cada degrau cobre uma faixa sem repetição na legenda.
+  const passos = Math.min(RAMPA.length, max);
+  const cor = (k) => RAMPA[passos === 1 ? RAMPA.length - 1 : Math.round((k * (RAMPA.length - 1)) / (passos - 1))];
+  const passo = (v) => Math.min(passos - 1, Math.ceil((v * passos) / max) - 1);
+  const faixas = Array.from({ length: passos }, (_, k) => {
+    const de = Math.floor((k * max) / passos) + 1;
+    const ate = Math.floor(((k + 1) * max) / passos);
+    return { k, texto: de === ate ? `${de}` : `${de}–${ate}` };
   });
   return (
     <div className="rel-calor">
@@ -204,12 +230,13 @@ export function MapaCalor({ celulas, dias, horarios }) {
                 <th scope="row">{h}</th>
                 {dias.map((d) => {
                   const v = valor.get(`${d.n}|${h}`) || 0;
-                  const k = v ? degrau(v) : -1;
+                  const fundo = v ? cor(passo(v)) : null;
+                  const escura = fundo && RAMPA.indexOf(fundo) >= 3;
                   return (
                     <td
                       key={d.n}
-                      className={k >= 3 ? "rel-calor-cel escura" : "rel-calor-cel"}
-                      style={k >= 0 ? { background: RAMPA[k] } : undefined}
+                      className={escura ? "rel-calor-cel escura" : "rel-calor-cel"}
+                      style={fundo ? { background: fundo } : undefined}
                       title={`${d.nome} ${h}: ${v} ${v === 1 ? "aluno" : "alunos"}`}
                     >
                       {v || ""}
@@ -223,14 +250,12 @@ export function MapaCalor({ celulas, dias, horarios }) {
       </div>
       <div className="rel-calor-legenda" aria-label="Legenda: quanto mais escuro, mais alunos">
         <span className="muted">Alunos por horário:</span>
-        {RAMPA.map((c, k) =>
-          faixas[k] ? (
-            <span key={c} className="rel-calor-faixa">
-              <span className="rel-legenda-cor" style={{ background: c }} aria-hidden="true" />
-              {faixas[k]}
-            </span>
-          ) : null,
-        )}
+        {faixas.map((f) => (
+          <span key={f.k} className="rel-calor-faixa">
+            <span className="rel-legenda-cor" style={{ background: cor(f.k) }} aria-hidden="true" />
+            {f.texto}
+          </span>
+        ))}
       </div>
     </div>
   );

@@ -2517,7 +2517,7 @@ textarea.obs {
   gap: 8px;
   flex-wrap: wrap;
 }
-.rel-dica {
+.card > p.muted.rel-dica {
   margin: 8px 0 0;
   font-size: 13px;
 }
@@ -2836,6 +2836,7 @@ textarea.obs {
 
 /* Mapa de calor */
 .rel-calor-tabela {
+  table-layout: fixed;
   border-collapse: separate;
   border-spacing: 2px;
   width: 100%;
@@ -2989,6 +2990,15 @@ textarea.obs {
   .rel-nav strong {
     min-width: 0;
   }
+  /* Tabela larga rola dentro do cartão em vez de vazar pela borda. */
+  .rel-tabela:not(.so-impressao) {
+    display: block;
+    overflow-x: auto;
+  }
+  .rel-tabela td,
+  .rel-tabela th {
+    white-space: nowrap;
+  }
   .rel-nomes {
     columns: 1;
   }
@@ -3071,8 +3081,16 @@ textarea.obs {
   .rel-tabela td {
     padding: 4px 6px;
   }
-  .rel-quebra-antes {
-    break-before: page;
+  html,
+  body {
+    background: #fff !important;
+  }
+  .rel-colunas > .rel-bloco,
+  .rel-kpis {
+    break-inside: avoid;
+  }
+  .rel-marca.on {
+    filter: none;
   }
   /* Fechamento: some a tela, aparece o documento montado. */
   .imprimindo-fechamento .rel-tela {
@@ -3111,4 +3129,10 @@ textarea.obs {
     font-size: 12px;
     color: #8c857b;
   }
+}
+.card > p.muted.rel-dica {
+  text-align: left;
+}
+.rel-bloco .rel-nota {
+  margin-top: 10px;
 }
