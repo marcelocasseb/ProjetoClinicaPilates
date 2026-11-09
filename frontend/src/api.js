@@ -223,6 +223,18 @@ export const financeiroApi = {
   salvarConfig: (clinic, data) => request("PUT", "/financeiro/config", clinic, data),
 };
 
+// --- Relatórios (aba Relatórios, só admin — REL-01..22) ---
+// Os números já vêm somados do back; o front só desenha. Membro recebe 403.
+const _q = (nome, valor) => (valor ? `?${nome}=${encodeURIComponent(valor)}` : "");
+export const relatoriosApi = {
+  financeiro: (mes) => request("GET", `/relatorios/financeiro${_q("mes", mes)}`, null),
+  alunos: (mes) => request("GET", `/relatorios/alunos${_q("mes", mes)}`, null),
+  relacaoAlunos: () => request("GET", "/relatorios/relacao-alunos", null),
+  ocupacao: () => request("GET", "/relatorios/ocupacao", null),
+  atendimento: (mes) => request("GET", `/relatorios/atendimento${_q("mes", mes)}`, null),
+  semana: (inicio) => request("GET", `/relatorios/semana${_q("inicio", inicio)}`, null),
+};
+
 // --- Imagens do paciente (por paciente, até 5 — IMG-01..04) ---
 // Upload em 2 fases: (1) solicitarUpload pega a URL pré-assinada; (2) uploadParaS3
 // envia o arquivo direto ao S3; (3) confirmar grava o metadado. O binário nunca

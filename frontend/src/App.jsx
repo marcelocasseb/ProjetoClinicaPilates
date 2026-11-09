@@ -9,6 +9,7 @@ import TiposTreino from "./components/TiposTreino";
 import Pilates from "./components/Pilates";
 import Escala from "./components/Escala";
 import Financeiro from "./components/Financeiro";
+import Relatorios from "./components/Relatorios";
 import AdicionarMembro from "./components/AdicionarMembro";
 import SessaoExpirada from "./components/SessaoExpirada";
 import { getClaims, sair } from "./auth";
@@ -209,6 +210,12 @@ export default function App() {
             Financeiro
           </button>
         )}
+        {/* Relatórios: só admin (REL-01); o backend devolve 403 para membro. */}
+        {isAdmin && (
+          <button className={aba === "relatorios" ? "tab on" : "tab"} onClick={() => setAba("relatorios")}>
+            Relatórios
+          </button>
+        )}
         <MenuSuspenso
           rotulo="Parametrização"
           abas={ABAS_PARAMETRIZACAO}
@@ -227,6 +234,7 @@ export default function App() {
         {aba === "pilates" && <Pilates clinic={clinic} onNavegar={setAba} />}
         {aba === "escala" && <Escala clinic={clinic} />}
         {aba === "financeiro" && isAdmin && <Financeiro key={secaoFin} clinic={clinic} secaoInicial={secaoFin} />}
+        {aba === "relatorios" && isAdmin && <Relatorios clinicaNome={clinicNome} />}
       </main>
 
       {mostrarMembro && <AdicionarMembro onFechar={() => setMostrarMembro(false)} />}
