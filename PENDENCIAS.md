@@ -203,6 +203,13 @@ Antes de migrar o banco por causa de relatórios, avaliar nesta ordem:
    muitos meses, muitas clínicas).
 
 ### Relatórios pedidos (16/10/2026) e o que falta decidir
+
+> **Em andamento (09/11/2026):** os 4 pedidos abaixo entraram na feature
+> [relatorios](.specs/features/relatorios/spec.md) (aba Relatórios, só admin, tela + PDF), junto com
+> os resumos de Financeiro, Alunos, Ocupação e Atendimento. Atendimento = Agenda + Pilates, mostrados
+> **separados**. Os itens 1 (retenção da Agenda) e 2 (comparecimento) continuam em aberto: nesta
+> fase, os meses expirados da Agenda aparecem como "sem dados". O item 4 (GSI das sessões) ficou
+> para depois: a leitura aluno a aluno em paralelo dá conta do volume atual.
 | Relatório | Situação |
 |---|---|
 | Fluxo de caixa em PDF (um ou vários meses) | Viável já: o caixa é particionado por mês; PDF gerado no navegador |

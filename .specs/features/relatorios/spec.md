@@ -15,6 +15,10 @@ Com a segunda cliente (High Performance Fisio, 2026-11-09), o sistema passa a se
 mais de uma clínica, e relatórios de gestão estão entre as primeiras coisas que um dono de
 clínica pede.
 
+Também entram os relatórios pedidos em 16/10/2026 (`PENDENCIAS.md`, seção 6): **extrato do Caixa
+em PDF**, **relação de pacientes**, **atendimentos por profissional** (Agenda + Pilates) e **quem
+passou na semana**.
+
 ## Goals
 
 - [ ] A admin responde as perguntas de gestão do mês **sem fazer conta na mão**: resultado do Caixa, mensalidades, alunos, ocupação e aulas, todos em uma única aba.
@@ -28,10 +32,12 @@ clínica pede.
 | Feature | Reason |
 | ------- | ------ |
 | Despesas por categoria (aluguel, salário, material) | A saída do Caixa só tem `descricao` livre, sem categoria. Exige um dado novo, então fica para uma fase 2 |
-| Faltas e presença | A escala é fixa e não registra quem veio em cada dia. Precisa de feature própria (check-in) |
+| Faltas e presença | A escala é fixa e a Agenda sabe quem foi **marcado**, não quem **compareceu**. Precisa de um status por marcação (Compareceu/Faltou/Desmarcou), que é uma feature própria (PENDENCIAS 6, item 2) |
+| Aumentar a retenção da Agenda (hoje 4 meses) ou gravar resumo mensal permanente | Muda a gravação da Agenda. Nesta fase o relatório só mostra o que ainda existe e marca os meses expirados como "sem dados" |
+| Extrato de **vários meses** num PDF só | D4: a unidade é o mês. Para vários meses, gera-se um PDF por mês |
+| Relação de pacientes em **planilha** | D2: formato tela + PDF. Excel/CSV fica para depois |
 | Inadimplência acumulada de meses anteriores | O plano não tem data de início, então o sistema acusaria dívida de quem ainda não era aluno (mesma limitação da Tela Inicial). Cada mês é visto isolado |
 | Intervalo de datas livre (ex.: 15/03 a 10/05) | Decisão do usuário: **mês + evolução de 12 meses** |
-| Contar agendamentos da Agenda como aula dada | Decisão do usuário: só as **aulas registradas** (aba Pilates) contam. Agendar não garante que a aula aconteceu |
 | Relatórios para membros não-admin | Decisão do usuário: a aba inteira é **só admin** |
 | Exportar para Excel/CSV | Não foi escolhido (formato = tela + PDF). Pode entrar depois sem retrabalho |
 | Envio automático do fechamento por e-mail | Sem pedido. O PDF é gerado sob demanda |
@@ -75,8 +81,9 @@ saudável.
 3. WHEN o mês tem entradas THEN o sistema SHALL mostrar a **receita por forma de pagamento** (dinheiro, pix, crédito, débito, transferência), com valor e % do total. Lançamentos antigos com `cartao` aparecem como **"Cartão (antigo)"**, e entradas sem forma aparecem como **"Não informado"**.
 4. WHEN o mês é escolhido THEN o sistema SHALL mostrar o **resumo das mensalidades** (previsto, recebido, em aberto, nº de alunos pagos/parciais/em aberto/sem plano) com os mesmos números da tela Mensalidades daquele mês.
 5. WHEN o mês não tem nenhum lançamento THEN o sistema SHALL mostrar o relatório zerado com o aviso "Nenhum lançamento neste mês", sem erro.
+6. WHEN o relatório abre THEN o sistema SHALL mostrar o **extrato do mês**: todos os lançamentos, linha a linha (data, descrição, forma, entrada/saída, valor), na mesma ordem da tela Caixa. O total no rodapé SHALL bater com o saldo. O extrato entra no PDF (pedido de 16/10).
 
-**Independent Test**: Comparar entradas, saídas e saldo com a tela Caixa e o resumo de mensalidades com a tela Mensalidades no mesmo mês. Os números têm de bater.
+**Independent Test**: Comparar entradas, saídas e saldo com a tela Caixa e o resumo de mensalidades com a tela Mensalidades no mesmo mês. Os números têm de bater. O PDF traz o extrato inteiro.
 
 ---
 
@@ -96,6 +103,24 @@ no mês, e quanto a carteira de planos rende por mês, para acompanhar o crescim
 5. WHEN um aluno foi removido THEN a data de saída SHALL ser a da remoção (o `atualizadoEm` do perfil inativo, já que um perfil removido não é mais editado).
 
 **Independent Test**: Cadastrar um aluno e remover outro no mês corrente. O relatório mostra +1 novo, +1 saída e o número de ativos certo.
+
+---
+
+### P1: Relação de alunos ⭐ MVP
+
+**User Story**: Como admin, quero imprimir a lista de todos os alunos ativos com contato, plano e
+horários, para ter a relação da clínica em papel ou PDF (pedido de 16/10).
+
+**Why P1**: Pedido explícito, e os dados já existem.
+
+**Acceptance Criteria**:
+
+1. WHEN a admin abre "Relação de alunos" (dentro do grupo Alunos) THEN o sistema SHALL listar **todos os alunos ativos**, em ordem alfabética, com nome, telefone, e-mail, data de nascimento, plano (valor/mês, frequência, dia de vencimento, ou "Sem plano"/"Isento") e horários na escala (ex.: "Seg 07:00, Qua 07:00").
+2. WHEN a clínica tem mais alunos do que cabe em uma página do DynamoDB (1 MB) THEN a relação SHALL vir **completa** (paginação, PENDENCIAS 1.3).
+3. WHEN imprime THEN a relação SHALL sair como tabela em A4, com o total de alunos no fim e o cabeçalho da tabela repetido em cada página.
+4. WHEN a relação abre THEN ela SHALL **não** depender do mês escolhido (é o retrato de hoje), e a tela SHALL dizer isso.
+
+**Independent Test**: Com 3 alunos (um sem plano, um isento e um com 2 horários na escala), a relação mostra os 3 com plano e horários corretos e total 3.
 
 ---
 
@@ -121,21 +146,41 @@ funcionamento.
 
 ### P1: Relatório de Atendimento ⭐ MVP
 
-**User Story**: Como admin, quero saber quantas aulas foram dadas no mês, por profissional e por
-aluno, e quais aparelhos e treinos mais aparecem, para acompanhar a equipe e o uso do estúdio.
+**User Story**: Como admin, quero saber quantas aulas foram registradas e quantas marcações a
+Agenda teve no mês, por profissional e por aluno, e quais aparelhos e treinos mais aparecem, para
+acompanhar a equipe e o uso do estúdio.
 
 **Why P1**: Serve para acompanhar a produtividade da equipe, e é a base para pagar os profissionais.
 
 **Acceptance Criteria**:
 
-1. WHEN o mês é escolhido THEN o sistema SHALL contar **só as aulas registradas** (aba Pilates, ativas) com data no mês. Agendamentos da Agenda **não** contam.
-2. WHEN o relatório abre THEN o sistema SHALL mostrar o **total de aulas no mês** e um gráfico da **evolução nos 12 meses**.
-3. WHEN o relatório abre THEN o sistema SHALL mostrar **aulas por profissional** (nome e nº de aulas). Aulas sem profissional aparecem como **"Sem profissional"**.
-4. WHEN o relatório abre THEN o sistema SHALL mostrar **aulas por aluno** no mês, ordenadas da maior para a menor quantidade.
-5. WHEN o relatório abre THEN o sistema SHALL mostrar o **ranking de aparelhos** (em quantas aulas cada um aparece) e o **ranking de tipos de treino**.
-6. WHEN um aparelho ou tipo de treino foi renomeado ou removido depois da aula THEN o relatório SHALL usar o **nome gravado na aula** (snapshot), sem quebrar.
+1. WHEN o mês é escolhido THEN o sistema SHALL mostrar **duas fontes lado a lado, nunca somadas**: **Aulas registradas** (aba Pilates, ativas, com data no mês) e **Marcações na Agenda** (agendamentos com data no mês). Decisão de 16/10, confirmada em 09/11. A tela SHALL avisar que marcação não garante comparecimento.
+2. WHEN o relatório abre THEN o sistema SHALL mostrar os totais do mês das duas fontes e um gráfico da **evolução nos 12 meses**. Na série da Agenda, os meses além da retenção (4 meses) SHALL aparecer como **"sem dados"**, não como zero.
+3. WHEN o relatório abre THEN o sistema SHALL mostrar **por profissional** uma tabela com aulas registradas e marcações na Agenda em colunas separadas. Sem profissional aparece como **"Sem profissional"**.
+4. WHEN o relatório abre THEN o sistema SHALL mostrar **por aluno** (aulas registradas e marcações), ordenado pelo total desc. Marcações de pessoa ainda sem cadastro (aluno novo da Agenda) aparecem pelo nome digitado, com a etiqueta "novo".
+5. WHEN o relatório abre THEN o sistema SHALL mostrar o **ranking de aparelhos** (em quantas aulas registradas cada um aparece) e o **ranking de tipos de treino**. Esses dois só existem nas aulas registradas.
+6. WHEN um aparelho, tipo de treino ou profissional foi renomeado ou removido depois THEN o relatório SHALL usar o **nome gravado** na aula ou marcação (snapshot), sem quebrar.
 
-**Independent Test**: Registrar 2 aulas de um aluno com a profissional A e 1 aula de outro aluno sem profissional. O relatório mostra total 3, A=2, "Sem profissional"=1, e os aparelhos daquelas aulas no ranking.
+**Independent Test**: Registrar 2 aulas de um aluno com a profissional A, 1 aula sem profissional e 3 marcações na Agenda com A. O relatório mostra Aulas 3 (A=2, "Sem profissional"=1), Agenda 3 (A=3) em colunas separadas, e os aparelhos daquelas aulas no ranking.
+
+---
+
+### P1: Quem passou na semana ⭐ MVP
+
+**User Story**: Como admin, quero escolher uma semana e ver quais alunos tiveram aula registrada ou
+marcação na Agenda, e em que dias, para conferir a frequência da semana (pedido de 16/10).
+
+**Why P1**: Pedido explícito, e os dados já existem.
+
+**Acceptance Criteria**:
+
+1. WHEN a admin abre "Semana" THEN o sistema SHALL selecionar a **semana atual** (segunda a domingo), com navegação "‹ semana ›" e sem semanas futuras.
+2. WHEN a semana é escolhida THEN o sistema SHALL listar cada aluno que teve **aula registrada** ou **marcação na Agenda** na semana, em ordem alfabética, com os dias marcados em colunas Seg…Dom. Cada marca SHALL indicar a fonte (aula registrada / Agenda), e a linha SHALL trazer o total.
+3. WHEN a semana é escolhida THEN o sistema SHALL mostrar o resumo: alunos distintos, aulas registradas e marcações.
+4. WHEN a semana está além da retenção da Agenda THEN o sistema SHALL avisar que as marcações daquela semana já expiraram (só as aulas registradas aparecem).
+5. WHEN imprime THEN a tabela SHALL caber em A4 com o cabeçalho "Semana de dd/mm a dd/mm/aaaa".
+
+**Independent Test**: Registrar aula de A na segunda e marcar B na Agenda na quarta. A semana mostra A (Seg, aula) e B (Qua, Agenda), 2 alunos distintos.
 
 ---
 
@@ -166,7 +211,7 @@ grupos, para ter um relatório mensal completo para sócio ou contador.
 
 **Acceptance Criteria**:
 
-1. WHEN a admin clica em "Fechamento do mês" THEN o sistema SHALL montar um documento com **Financeiro, Alunos, Ocupação e Atendimento** do mês escolhido, nessa ordem, e abrir a impressão.
+1. WHEN a admin clica em "Fechamento do mês" THEN o sistema SHALL montar um documento com **Financeiro (com o extrato), Alunos (indicadores), Ocupação e Atendimento** do mês escolhido, nessa ordem, e abrir a impressão. A Relação de alunos e a Semana **não** entram, porque não são do mês e têm impressão própria.
 2. WHEN imprime THEN cada grupo SHALL começar em **página nova**, AND a primeira página SHALL ter capa/cabeçalho com nome da clínica, mês e data de emissão.
 3. WHEN o fechamento é gerado THEN os números SHALL ser **idênticos** aos dos relatórios em tela do mesmo mês.
 4. WHEN um dos grupos falha ao carregar THEN o sistema SHALL avisar qual falhou e **não** gerar um fechamento incompleto em silêncio.
@@ -180,6 +225,7 @@ grupos, para ter um relatório mensal completo para sócio ou contador.
 - WHEN a clínica é nova e vazia (ex.: High Performance Fisio no 1º dia) THEN todos os relatórios SHALL abrir zerados, com mensagens de "sem dados", sem erro.
 - WHEN o mês escolhido é anterior ao cadastro da clínica THEN o sistema SHALL mostrar zeros (não erro).
 - WHEN a admin vê as mensalidades de um mês passado THEN o resumo SHALL usar os **planos e alunos ativos de hoje** (mesmo comportamento da tela Mensalidades). O relatório SHALL dizer isso numa nota, porque o plano não guarda histórico.
+- WHEN o mês ou a semana escolhidos estão além da retenção da Agenda (4 meses, TTL) THEN a parte da Agenda SHALL aparecer como "sem dados (a Agenda guarda 4 meses)", nunca como zero.
 - WHEN existem muitos alunos (ex.: 300) THEN o relatório de Atendimento SHALL abrir em **menos de 5 s**. Hoje as aulas ficam sob cada aluno, então contar a clínica inteira exige ler aluno por aluno. O Design SHALL resolver isso sem mudar a tabela de produção.
 - WHEN valores são exibidos THEN o sistema SHALL formatar em R$ com centavos (vêm em centavos inteiros do back) e datas em dd/mm/aaaa.
 - WHEN a tela é de celular THEN os relatórios SHALL ser legíveis (gráfico e tabelas com rolagem horizontal se preciso). O PDF continua A4.
@@ -202,21 +248,24 @@ grupos, para ter um relatório mensal completo para sócio ou contador.
 | REL-10 | P1: Alunos — lista de novos do mês | Design | Pending |
 | REL-11 | P1: Ocupação — mapa de calor dia × horário | Design | Pending |
 | REL-12 | P1: Ocupação — totais, top 5, alunos fora da escala | Design | Pending |
-| REL-13 | P1: Atendimento — total do mês + evolução 12 meses (só aulas registradas) | Design | Pending |
-| REL-14 | P1: Atendimento — por profissional e por aluno | Design | Pending |
+| REL-13 | P1: Atendimento — totais do mês + evolução 12 meses (aulas registradas e Agenda separadas; Agenda expirada = "sem dados") | Design | Pending |
+| REL-14 | P1: Atendimento — por profissional e por aluno (duas colunas) | Design | Pending |
 | REL-15 | P1: Atendimento — ranking de aparelhos e tipos de treino | Design | Pending |
 | REL-16 | P1: Imprimir/PDF por relatório (cabeçalho, sem menus, A4, P&B) | Design | Pending |
 | REL-17 | P2: Fechamento do mês (4 grupos, página nova por grupo, números idênticos) | Design | Pending |
 | REL-18 | Edge: clínica vazia / mês sem dados → zeros sem erro | Design | Pending |
 | REL-19 | Edge: Atendimento < 5 s com 300 alunos, sem mudar a tabela | Design | Pending |
+| REL-20 | P1: Financeiro — extrato do mês linha a linha (tela + PDF) | Design | Pending |
+| REL-21 | P1: Relação de alunos (ativos, contato, plano, horários; completa/paginada; A4) | Design | Pending |
+| REL-22 | P1: Quem passou na semana (seletor de semana, dias × fonte, resumo, A4) | Design | Pending |
 
-**Coverage:** 19 total, 0 mapped to tasks, 19 unmapped ⚠️ (Design e Tasks a seguir)
+**Coverage:** 22 total, 22 mapeados em `tasks.md`
 
 ---
 
 ## Success Criteria
 
-- [ ] A admin responde "o mês fechou no azul?", "quantos alunos entraram e saíram?", "qual horário está vazio?" e "quantas aulas cada profissional deu?" em **menos de 1 minuto**, sem calculadora.
+- [ ] A admin responde "o mês fechou no azul?", "quantos alunos entraram e saíram?", "qual horário está vazio?", "quantas aulas cada profissional deu?" e "quem veio esta semana?" em **menos de 1 minuto**, sem calculadora.
 - [ ] Os números do Financeiro **batem 100%** com as telas Caixa e Mensalidades do mesmo mês.
 - [ ] O PDF de fechamento sai **pronto para mandar** (sem menu, sem coluna cortada) na primeira tentativa.
 - [ ] O deploy **não toca** `ClinicaTable` nem o Cognito (changeset só com Lambda e API).
