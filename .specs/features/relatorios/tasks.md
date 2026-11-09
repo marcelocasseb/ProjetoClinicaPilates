@@ -1,7 +1,7 @@
 # Relatórios Tasks
 
 **Design**: `.specs/features/relatorios/design.md`
-**Status**: T1–T22 Done (2026-11-09) · T23 em andamento (back aguarda execute-change-set; front depois)
+**Status**: Done — no ar em 2026-11-09 (falta só medir o REL-19 com uso real)
 
 ---
 
