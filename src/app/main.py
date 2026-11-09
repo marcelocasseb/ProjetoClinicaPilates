@@ -17,6 +17,7 @@ from app.routers import (
     membros,
     pacientes,
     profissionais,
+    relatorios,
     sessoes,
     tipos_treino,
 )
@@ -40,6 +41,7 @@ app.include_router(financeiro.router)
 app.include_router(imagens.router)
 app.include_router(membros.router)
 app.include_router(clinica.router)
+app.include_router(relatorios.router)
 
 
 @app.exception_handler(RequestValidationError)
