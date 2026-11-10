@@ -212,3 +212,40 @@ def test_semana_invalida_400(dynamo_table, as_user):
     assert client.get(f"/relatorios/semana?inicio={terca}").status_code == 400
     assert client.get(f"/relatorios/semana?inicio={proxima}").status_code == 400
     assert client.get("/relatorios/semana?inicio=2026-02-30").status_code == 400
+
+
+# --- REL-23: período personalizado -------------------------------------------
+
+
+def test_periodo_personalizado_filtra_por_data(dynamo_table, as_user):
+    _povoar("clinica-a")  # caixa, aula e marcação no dia 1º do mês corrente
+    as_user(ADMIN)
+    hoje = HOJE.isoformat()
+    if HOJE.day >= 2:  # período que começa no dia 2: nada do dia 1º entra
+        dia2 = f"{MES}-02"
+        fin = client.get(f"/relatorios/financeiro?de={dia2}&ate={hoje}").json()
+        assert fin["de"] == dia2 and fin["ate"] == hoje
+        assert fin["caixa"]["entradasCentavos"] == 0 and fin["extrato"] == []
+        at = client.get(f"/relatorios/atendimento?de={dia2}&ate={hoje}").json()
+        assert at["totalAulas"] == 0
+    fin = client.get(f"/relatorios/financeiro?de={DIA}&ate={hoje}").json()
+    assert fin["caixa"]["entradasCentavos"] == 20000
+    assert fin["mes"] == MES  # mensalidades do mês em que o período termina
+    at = client.get(f"/relatorios/atendimento?de={DIA}&ate={hoje}").json()
+    assert at["totalAulas"] == 1 and at["totalAgenda"] == 1
+    al = client.get(f"/relatorios/alunos?de={DIA}&ate={hoje}").json()
+    assert al["novos"] == 2 and al["de"] == DIA
+
+
+@pytest.mark.parametrize("rota", ["/relatorios/financeiro", "/relatorios/alunos", "/relatorios/atendimento"])
+def test_periodo_invalido_400(dynamo_table, as_user, rota):
+    as_user(ADMIN)
+    hoje = HOJE.isoformat()
+    amanha = (HOJE + timedelta(days=1)).isoformat()
+    ontem = (HOJE - timedelta(days=1)).isoformat()
+    longe = (HOJE - timedelta(days=800)).isoformat()
+    assert client.get(f"{rota}?de={hoje}").status_code == 400  # falta ate
+    assert client.get(f"{rota}?de={hoje}&ate={amanha}").status_code == 400  # futuro
+    assert client.get(f"{rota}?de={hoje}&ate={ontem}").status_code == 400  # invertido
+    assert client.get(f"{rota}?de={longe}&ate={hoje}").status_code == 400  # mais de 2 anos
+    assert client.get(f"{rota}?de=2026-02-30&ate={hoje}").status_code == 400

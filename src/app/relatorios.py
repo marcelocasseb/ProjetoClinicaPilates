@@ -41,8 +41,35 @@ def mes_local(ts: str) -> str:
     return dt.astimezone(FUSO_BRASILIA).strftime("%Y-%m")
 
 
+def data_local(ts: str) -> str:
+    """Data (`AAAA-MM-DD`) de um timestamp ISO, no horário de Brasília."""
+    dt = datetime.fromisoformat(ts.replace("Z", "+00:00"))
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(FUSO_BRASILIA).date().isoformat()
+
+
 def hoje_local() -> date:
     return datetime.now(FUSO_BRASILIA).date()
+
+
+def meses_entre(de: str, ate: str) -> list[str]:
+    """Meses (`AAAA-MM`) tocados pelo período `de`..`ate`, em ordem."""
+    a = int(de[:4]) * 12 + int(de[5:7]) - 1
+    b = int(ate[:4]) * 12 + int(ate[5:7]) - 1
+    return [f"{(t // 12):04d}-{(t % 12) + 1:02d}" for t in range(a, b + 1)]
+
+
+def meses_evolucao(de: str, ate: str) -> list[str]:
+    """Meses do gráfico de evolução: os do período; se ele cabe num mês só, os 12 meses
+    que terminam nele (para dar contexto)."""
+    meses = meses_entre(de, ate)
+    return meses if len(meses) >= 2 else meses_ate(ate[:7])
+
+
+def no_periodo(itens: list[dict], de: str, ate: str) -> list[dict]:
+    """Itens com `data` (`AAAA-MM-DD`) dentro de `de`..`ate`, inclusive."""
+    return [i for i in itens if de <= (i.get("data") or "") <= ate]
 
 
 def meses_ate(mes: str, n: int = 12) -> list[str]:
@@ -158,17 +185,30 @@ def _contagens_mes(perfis: list[dict], mes: str) -> dict:
     }
 
 
-def indicadores_alunos(perfis: list[dict], mes: str) -> dict:
-    c = _contagens_mes(perfis, mes)
+def indicadores_periodo(perfis: list[dict], de: str, ate: str) -> dict:
+    """Novos e saídas dentro de `de`..`ate` e ativos no fim do período (datas em Brasília)."""
+
+    def saida(p):
+        if p.get("ativo", True):
+            return None
+        return data_local(p.get("atualizadoEm") or p["criadoEm"])
+
     novos = sorted(
-        (p for p in perfis if mes_local(p["criadoEm"]) == mes), key=lambda p: p["criadoEm"]
+        (p for p in perfis if de <= data_local(p["criadoEm"]) <= ate), key=lambda p: p["criadoEm"]
+    )
+    ativos_fim = sum(
+        1 for p in perfis if data_local(p["criadoEm"]) <= ate and (saida(p) is None or saida(p) > ate)
     )
     return {
-        "ativosFimMes": c["ativos"],
-        "novos": c["novos"],
-        "saidas": c["saidas"],
+        "ativosFimMes": ativos_fim,
+        "novos": len(novos),
+        "saidas": sum(1 for p in perfis if (s := saida(p)) and de <= s <= ate),
         "novosLista": [{"id": p["id"], "nome": p.get("nome") or "", "criadoEm": p["criadoEm"]} for p in novos],
     }
+
+
+def indicadores_alunos(perfis: list[dict], mes: str) -> dict:
+    return indicadores_periodo(perfis, f"{mes}-01", ultimo_dia(mes))
 
 
 def evolucao_alunos(perfis: list[dict], meses: list[str]) -> list[dict]:
@@ -309,19 +349,21 @@ def atendimento(
     agenda: list[dict],
     perfis: list[dict],
     profissionais: dict,
-    mes: str,
+    periodo: tuple[str, str],
     meses: list[str],
     disponiveis: set,
+    agenda_ok: bool,
 ) -> dict:
     """Aulas registradas (Pilates) e marcações da Agenda, **separadas, nunca somadas**.
 
-    `profissionais`: {id: nome} do cadastro (inclui removidos). `disponiveis`: meses em
-    que a Agenda ainda está inteira (`meses_agenda_disponiveis`).
+    `periodo`: (de, ate) em `AAAA-MM-DD`. `profissionais`: {id: nome} do cadastro
+    (inclui removidos). `meses`/`disponiveis`: eixo da evolução e meses em que a Agenda
+    ainda está inteira. `agenda_ok`: a Agenda cobre o período inteiro (senão "s/d").
     """
+    de, ate = periodo
     nomes = {p["id"]: p.get("nome") or "" for p in perfis}
-    agenda_ok = mes in disponiveis
-    sessoes_mes = [s for s in sessoes if (s.get("data") or "")[:7] == mes]
-    agenda_mes = [a for a in agenda if (a.get("data") or "")[:7] == mes] if agenda_ok else []
+    sessoes_mes = no_periodo(sessoes, de, ate)
+    agenda_mes = no_periodo(agenda, de, ate) if agenda_ok else []
 
     profs: dict = {}
     alunos: dict = {}
@@ -355,7 +397,8 @@ def atendimento(
         return sum(1 for i in itens if (i.get("data") or "")[:7] == m)
 
     return {
-        "mes": mes,
+        "de": de,
+        "ate": ate,
         "totalAulas": len(sessoes_mes),
         "totalAgenda": len(agenda_mes) if agenda_ok else None,
         "evolucao": [

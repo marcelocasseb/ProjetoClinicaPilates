@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { BarrasMensais, Kpi, Ranking } from "./graficos";
-import { dataLocal, inteiro, mesLongo, plural, reais, SERIE_1 } from "./formato";
+import { dataLocal, inteiro, mesLongo, NOTA_MESES_INTEIROS, periodoParcial, plural, reais, SERIE_1 } from "./formato";
 
 const SERIES = [{ chave: "ativos", nome: "Alunos ativos", cor: SERIE_1 }];
 
@@ -12,15 +12,15 @@ export default function RelAlunos({ dados }) {
   return (
     <div className="rel-relatorio">
       <div className="rel-kpis">
-        <Kpi rotulo="Ativos no fim do mês" valor={inteiro(dados.ativosFimMes)} tom="destaque" />
-        <Kpi rotulo="Novos no mês" valor={inteiro(dados.novos)} />
-        <Kpi rotulo="Saídas no mês" valor={inteiro(dados.saidas)} />
+        <Kpi rotulo="Ativos no fim do período" valor={inteiro(dados.ativosFimMes)} tom="destaque" />
+        <Kpi rotulo="Novos no período" valor={inteiro(dados.novos)} />
+        <Kpi rotulo="Saídas no período" valor={inteiro(dados.saidas)} />
         <Kpi rotulo="Planos por mês" valor={reais(c.totalMensalCentavos)} detalhe="soma dos planos ativos hoje" />
       </div>
 
       <section className="rel-bloco">
         <div className="rel-bloco-topo">
-          <h3>Alunos ativos nos últimos 12 meses</h3>
+          <h3>Alunos ativos no fim de cada mês</h3>
           <button className="btn ghost rel-mini no-print" onClick={() => setVerTabela((v) => !v)}>
             {verTabela ? "Ocultar tabela" : "Ver tabela"}
           </button>
@@ -32,6 +32,7 @@ export default function RelAlunos({ dados }) {
           formatoEixo={inteiro}
           rotulo="Alunos ativos no fim de cada mês"
         />
+        {periodoParcial(dados.de, dados.ate) && <p className="rel-nota">{NOTA_MESES_INTEIROS}</p>}
         <table className={verTabela ? "rel-tabela" : "rel-tabela so-impressao"}>
           <thead>
             <tr>
@@ -76,9 +77,9 @@ export default function RelAlunos({ dados }) {
         </section>
 
         <section className="rel-bloco">
-          <h3>Alunos novos no mês</h3>
+          <h3>Alunos novos no período</h3>
           {dados.novosLista.length === 0 ? (
-            <p className="muted rel-vazio">Nenhum aluno cadastrado neste mês.</p>
+            <p className="muted rel-vazio">Nenhum aluno cadastrado no período.</p>
           ) : (
             <table className="rel-tabela">
               <thead>

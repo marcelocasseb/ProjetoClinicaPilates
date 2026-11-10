@@ -1,7 +1,19 @@
 import { useState } from "react";
 import { formatDataBR } from "../../utils/format";
 import { BarrasMensais, Kpi, Ranking } from "./graficos";
-import { mesLongo, nomeForma, plural, reais, reaisCurto, SERIE_1, SERIE_2 } from "./formato";
+import {
+  mesLongo,
+  nomeForma,
+  NOTA_MESES_INTEIROS,
+  periodoParcial,
+  plural,
+  reais,
+  reaisCurto,
+  SERIE_1,
+  SERIE_2,
+} from "./formato";
+
+// As mensalidades existem por mês: no período, mostra as do mês em que ele termina.
 
 const SERIES = [
   { chave: "entradasCentavos", nome: "Entradas", cor: SERIE_1 },
@@ -29,20 +41,20 @@ export default function RelFinanceiro({ dados }) {
         <Kpi rotulo="Entradas" valor={reais(caixa.entradasCentavos)} />
         <Kpi rotulo="Saídas" valor={reais(caixa.saidasCentavos)} />
         <Kpi
-          rotulo="Saldo do mês"
+          rotulo="Saldo do período"
           valor={reais(caixa.saldoCentavos)}
           tom={caixa.saldoCentavos < 0 ? "negativo" : "destaque"}
         />
         <Kpi
           rotulo="Mensalidades em aberto"
           valor={reais(men.emAbertoCentavos)}
-          detalhe={`de ${reais(men.previstoCentavos)} previstos`}
+          detalhe={`${mesLongo(dados.mes)} · de ${reais(men.previstoCentavos)} previstos`}
         />
       </div>
 
       <section className="rel-bloco">
         <div className="rel-bloco-topo">
-          <h3>Entradas e saídas nos últimos 12 meses</h3>
+          <h3>Entradas e saídas por mês</h3>
           <button className="btn ghost rel-mini no-print" onClick={() => setVerTabela((v) => !v)}>
             {verTabela ? "Ocultar tabela" : "Ver tabela"}
           </button>
@@ -54,6 +66,7 @@ export default function RelFinanceiro({ dados }) {
           formatoEixo={reaisCurto}
           rotulo="Entradas e saídas por mês"
         />
+        {periodoParcial(dados.de, dados.ate) && <p className="rel-nota">{NOTA_MESES_INTEIROS}</p>}
         <table className={verTabela ? "rel-tabela" : "rel-tabela so-impressao"}>
           <thead>
             <tr>
@@ -82,12 +95,12 @@ export default function RelFinanceiro({ dados }) {
           <Ranking
             itens={dados.porForma.map((f) => ({ nome: nomeForma(f.forma), valor: f.valorCentavos, pct: f.pct }))}
             formato={(v, i) => `${reais(v)} · ${String(i.pct).replace(".", ",")}%`}
-            vazio="Nenhuma entrada neste mês."
+            vazio="Nenhuma entrada no período."
           />
         </section>
 
         <section className="rel-bloco">
-          <h3>Mensalidades do mês</h3>
+          <h3>Mensalidades de {mesLongo(dados.mes)}</h3>
           <dl className="rel-lista-valores">
             <div><dt>Previsto</dt><dd>{reais(men.previstoCentavos)}</dd></div>
             <div><dt>Recebido</dt><dd>{reais(men.recebidoCentavos)}</dd></div>
@@ -101,14 +114,14 @@ export default function RelFinanceiro({ dados }) {
               </li>
             ))}
           </ul>
-          <p className="rel-nota">Usa os planos e os alunos ativos de hoje, como a tela Mensalidades.</p>
+          <p className="rel-nota">Mensalidade existe por mês: aqui vale o mês em que o período termina, com os planos e alunos ativos de hoje (como a tela Mensalidades).</p>
         </section>
       </div>
 
       <section className="rel-bloco">
-        <h3>Extrato do mês</h3>
+        <h3>Extrato do período</h3>
         {dados.extrato.length === 0 ? (
-          <p className="muted rel-vazio">Nenhum lançamento neste mês.</p>
+          <p className="muted rel-vazio">Nenhum lançamento no período.</p>
         ) : (
           <table className="rel-tabela">
             <thead>

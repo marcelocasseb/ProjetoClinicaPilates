@@ -306,7 +306,7 @@ def test_atendimento_fontes_separadas_e_rankings():
         _ag("2026-09-20", "a", "Ana"),
     ]
     meses = ["2026-09", "2026-10"]
-    at = r.atendimento(sessoes, agenda, PERFIS_AT, PROFS, "2026-10", meses, {"2026-09", "2026-10"})
+    at = r.atendimento(sessoes, agenda, PERFIS_AT, PROFS, ("2026-10-01", "2026-10-31"), meses, {"2026-09", "2026-10"}, True)
 
     assert at["totalAulas"] == 4
     assert at["totalAgenda"] == 3
@@ -336,7 +336,7 @@ def test_atendimento_fontes_separadas_e_rankings():
 def test_atendimento_agenda_expirada_vira_none_nao_zero():
     sessoes = [_sessao("a", "2026-05-10", "p1", "Paula", [])]
     agenda = []
-    at = r.atendimento(sessoes, agenda, PERFIS_AT, PROFS, "2026-05", ["2026-04", "2026-05"], set())
+    at = r.atendimento(sessoes, agenda, PERFIS_AT, PROFS, ("2026-05-01", "2026-05-31"), ["2026-04", "2026-05"], set(), False)
     assert at["totalAulas"] == 1
     assert at["totalAgenda"] is None
     assert at["evolucao"] == [
@@ -348,7 +348,7 @@ def test_atendimento_agenda_expirada_vira_none_nao_zero():
 
 
 def test_atendimento_vazio():
-    at = r.atendimento([], [], [], {}, "2026-10", ["2026-10"], {"2026-10"})
+    at = r.atendimento([], [], [], {}, ("2026-10-01", "2026-10-31"), ["2026-10"], {"2026-10"}, True)
     assert at["totalAulas"] == 0 and at["totalAgenda"] == 0
     assert at["porProfissional"] == [] and at["porAluno"] == []
     assert at["aparelhos"] == [] and at["treinos"] == []
@@ -392,3 +392,41 @@ def test_semana_com_agenda_expirada_ignora_agenda():
     assert s["agendaDisponivel"] is False
     assert s["totalAgenda"] == 0
     assert [a["nome"] for a in s["alunos"]] == ["Ana"]
+
+
+# ---------------------------------------------------------------------------
+# REL-23 — período personalizado
+# ---------------------------------------------------------------------------
+
+
+def test_data_local_e_meses_do_periodo():
+    assert r.data_local("2026-10-01T01:30:00+00:00") == "2026-09-30"
+    assert r.meses_entre("2025-11-15", "2026-02-03") == ["2025-11", "2025-12", "2026-01", "2026-02"]
+    assert r.meses_evolucao("2026-09-01", "2026-11-09") == ["2026-09", "2026-10", "2026-11"]
+    # período dentro de um mês só: 12 meses de contexto até ele
+    assert r.meses_evolucao("2026-11-02", "2026-11-08") == r.meses_ate("2026-11")
+
+
+def test_no_periodo_inclui_as_pontas():
+    itens = [{"data": d} for d in ("2026-10-31", "2026-11-01", "2026-11-15", "2026-11-16")]
+    assert [i["data"] for i in r.no_periodo(itens, "2026-11-01", "2026-11-15")] == ["2026-11-01", "2026-11-15"]
+
+
+def test_indicadores_periodo_de_poucos_dias():
+    perfis = [
+        _perfil("a", "Ana", "2026-10-03T12:00:00+00:00"),
+        _perfil("b", "Bia", "2026-10-10T12:00:00+00:00", "2026-10-12T12:00:00+00:00"),
+        _perfil("c", "Caio", "2026-10-20T12:00:00+00:00"),
+    ]
+    ind = r.indicadores_periodo(perfis, "2026-10-05", "2026-10-15")
+    assert ind["novos"] == 1 and ind["novosLista"][0]["nome"] == "Bia"
+    assert ind["saidas"] == 1
+    assert ind["ativosFimMes"] == 1  # só Ana (Bia saiu, Caio ainda não tinha entrado)
+
+
+def test_atendimento_em_periodo_parcial_do_mes():
+    sessoes = [_sessao("a", "2026-10-01", "p1"), _sessao("a", "2026-10-10", "p1"), _sessao("a", "2026-10-20", "p1")]
+    at = r.atendimento(sessoes, [], PERFIS_AT, PROFS, ("2026-10-05", "2026-10-15"), ["2026-10"], {"2026-10"}, True)
+    assert at["totalAulas"] == 1
+    assert at["de"] == "2026-10-05" and at["ate"] == "2026-10-15"
+    assert at["evolucao"] == [{"mes": "2026-10", "aulas": 3, "agenda": 0}]

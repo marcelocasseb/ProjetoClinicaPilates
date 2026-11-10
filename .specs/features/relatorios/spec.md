@@ -37,7 +37,6 @@ passou na semana**.
 | Extrato de **vários meses** num PDF só | D4: a unidade é o mês. Para vários meses, gera-se um PDF por mês |
 | Relação de pacientes em **planilha** | D2: formato tela + PDF. Excel/CSV fica para depois |
 | Inadimplência acumulada de meses anteriores | O plano não tem data de início, então o sistema acusaria dívida de quem ainda não era aluno (mesma limitação da Tela Inicial). Cada mês é visto isolado |
-| Intervalo de datas livre (ex.: 15/03 a 10/05) | Decisão do usuário: **mês + evolução de 12 meses** |
 | Relatórios para membros não-admin | Decisão do usuário: a aba inteira é **só admin** |
 | Exportar para Excel/CSV | Não foi escolhido (formato = tela + PDF). Pode entrar depois sem retrabalho |
 | Envio automático do fechamento por e-mail | Sem pedido. O PDF é gerado sob demanda |
@@ -258,6 +257,7 @@ grupos, para ter um relatório mensal completo para sócio ou contador.
 | REL-20 | P1: Financeiro — extrato do mês linha a linha (tela + PDF) | Verified | Verified |
 | REL-21 | P1: Relação de alunos (ativos, contato, plano, horários; completa/paginada; A4) | Verified | Verified |
 | REL-22 | P1: Quem passou na semana (seletor de semana, dias × fonte, resumo, A4) | Verified | Verified |
+| REL-23 | P1: Período personalizado (atalhos + de/até) em Financeiro, Alunos e Atendimento; fechamento do período; até 2 anos, sem futuro | Implementing | Pending |
 
 **Coverage:** 22 total, 22 mapeados em `tasks.md`
 

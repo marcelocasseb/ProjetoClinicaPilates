@@ -42,7 +42,9 @@ class LinhaExtrato(BaseModel):
 
 
 class RelFinanceiroOut(BaseModel):
-    mes: str
+    mes: str  # mês em que o período termina (o das mensalidades)
+    de: str
+    ate: str
     caixa: CaixaResumo
     evolucao: list[CaixaMes]
     porForma: list[ReceitaForma]
@@ -82,6 +84,8 @@ class Carteira(BaseModel):
 
 class RelAlunosOut(BaseModel):
     mes: str
+    de: str
+    ate: str
     ativosFimMes: int
     novos: int
     saidas: int
@@ -165,7 +169,8 @@ class ItemRanking(BaseModel):
 
 
 class RelAtendimentoOut(BaseModel):
-    mes: str
+    de: str
+    ate: str
     totalAulas: int
     totalAgenda: Optional[int] = None
     agendaRetencaoMeses: int

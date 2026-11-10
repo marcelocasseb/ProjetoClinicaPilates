@@ -32,7 +32,21 @@ const MESES_CURTOS = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "s
 export const mesCurto = (mes) => MESES_CURTOS[Number(mes.slice(5, 7)) - 1];
 export { formatMesBR as mesLongo } from "../../utils/format";
 
-export const plural =(n, um, varios) => `${inteiro(n)} ${n === 1 ? um : varios}`;
+// "AAAA-MM-DD" → "dd/mm/aaaa".
+export const dataBR = (iso) => (iso ? `${iso.slice(8, 10)}/${iso.slice(5, 7)}/${iso.slice(0, 4)}` : "");
+
+// O período não fecha em meses inteiros? (aí o gráfico mensal mostra mais que o período)
+export function periodoParcial(de, ate) {
+  if (!de || !ate) return false;
+  const [a, m] = ate.split("-").map(Number);
+  const ultimo = new Date(Date.UTC(a, m, 0)).getUTCDate();
+  return de.slice(8) !== "01" || Number(ate.slice(8)) !== ultimo;
+}
+
+export const NOTA_MESES_INTEIROS =
+  "O gráfico mostra os meses inteiros; os números acima contam só o período escolhido.";
+
+export const plural = (n, um, varios) => `${inteiro(n)} ${n === 1 ? um : varios}`;
 
 // Cores das séries (ordem fixa; validadas para daltonismo contra o fundo branco).
 export const SERIE_1 = "var(--serie-1)";

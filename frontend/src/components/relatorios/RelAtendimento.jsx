@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { BarrasMensais, Kpi, Ranking } from "./graficos";
-import { inteiro, mesLongo, plural, SERIE_1, SERIE_2 } from "./formato";
+import { inteiro, mesLongo, NOTA_MESES_INTEIROS, periodoParcial, plural, SERIE_1, SERIE_2 } from "./formato";
 
 const SERIES = [
   { chave: "aulas", nome: "Aulas registradas", cor: SERIE_1 },
@@ -53,13 +53,13 @@ export default function RelAtendimento({ dados }) {
         <Kpi
           rotulo="Marcações na Agenda"
           valor={agendaSd ? "s/d" : inteiro(dados.totalAgenda)}
-          detalhe={agendaSd ? "fora da retenção da Agenda" : "agendamentos do mês"}
+          detalhe={agendaSd ? "parte do período já saiu da Agenda" : "agendamentos do período"}
         />
       </div>
 
       <section className="rel-bloco">
         <div className="rel-bloco-topo">
-          <h3>Aulas e marcações nos últimos 12 meses</h3>
+          <h3>Aulas e marcações por mês</h3>
           <button className="btn ghost rel-mini no-print" onClick={() => setVerTabela((v) => !v)}>
             {verTabela ? "Ocultar tabela" : "Ver tabela"}
           </button>
@@ -71,6 +71,7 @@ export default function RelAtendimento({ dados }) {
           formatoEixo={inteiro}
           rotulo="Aulas registradas e marcações na Agenda por mês"
         />
+        {periodoParcial(dados.de, dados.ate) && <p className="rel-nota">{NOTA_MESES_INTEIROS}</p>}
         <table className={verTabela ? "rel-tabela" : "rel-tabela so-impressao"}>
           <thead>
             <tr>
@@ -93,12 +94,12 @@ export default function RelAtendimento({ dados }) {
 
       <section className="rel-bloco">
         <h3>Por profissional</h3>
-        <TabelaFontes linhas={dados.porProfissional} rotulo="Profissional" vazio="Nenhuma aula ou marcação no mês." />
+        <TabelaFontes linhas={dados.porProfissional} rotulo="Profissional" vazio="Nenhuma aula ou marcação no período." />
       </section>
 
       <section className="rel-bloco">
         <h3>Por aluno</h3>
-        <TabelaFontes linhas={dados.porAluno} rotulo="Aluno" vazio="Nenhuma aula ou marcação no mês." />
+        <TabelaFontes linhas={dados.porAluno} rotulo="Aluno" vazio="Nenhuma aula ou marcação no período." />
       </section>
 
       <div className="rel-colunas">
@@ -107,7 +108,7 @@ export default function RelAtendimento({ dados }) {
           <Ranking
             itens={dados.aparelhos.map((a) => ({ nome: a.nome, valor: a.aulas }))}
             formato={(v) => plural(v, "aula", "aulas")}
-            vazio="Nenhuma aula registrada no mês."
+            vazio="Nenhuma aula registrada no período."
           />
         </section>
         <section className="rel-bloco">
@@ -115,7 +116,7 @@ export default function RelAtendimento({ dados }) {
           <Ranking
             itens={dados.treinos.map((t) => ({ nome: t.nome, valor: t.aulas }))}
             formato={(v) => plural(v, "aula", "aulas")}
-            vazio="Nenhuma aula registrada no mês."
+            vazio="Nenhuma aula registrada no período."
           />
         </section>
       </div>

@@ -2713,7 +2713,7 @@ textarea.obs {
   stroke-width: 1;
 }
 .rel-eixo {
-  font-size: 11px;
+  font-size: 12px;
   fill: var(--muted);
   font-variant-numeric: tabular-nums;
 }
@@ -3135,4 +3135,48 @@ textarea.obs {
 }
 .rel-bloco .rel-nota {
   margin-top: 10px;
+}
+
+/* Seletor de período (REL-23) */
+.rel-periodo {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.rel-atalhos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.rel-chip {
+  border: 1px solid var(--border);
+  background: var(--panel);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font: inherit;
+  font-size: 13px;
+  color: var(--text);
+  cursor: pointer;
+}
+.rel-chip.on {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+.rel-periodo-texto {
+  font-family: var(--font-display);
+  font-weight: 500;
+}
+.rel-personalizado {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px;
+}
+.rel-personalizado label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--muted);
 }

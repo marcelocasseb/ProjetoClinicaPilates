@@ -13,3 +13,6 @@ venv/
 .env
 .env.local
 .env.*.local
+
+# Manifestos dos dados de demonstração (scripts/semear_demo_relatorios.py)
+scripts/demo/

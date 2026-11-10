@@ -43,18 +43,41 @@ def _400(msg: str):
     return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=msg)
 
 
-def _mes(mes) -> str:
-    """Mês do relatório: ausente = mês corrente (Brasília); inválido ou futuro = 400."""
-    atual = rel.hoje_local().strftime("%Y-%m")
-    if not mes:
-        return atual
-    try:
-        mes = valida_mes(mes)
-    except ValueError as e:
-        raise _400(str(e))
-    if mes > atual:
-        raise _400("Não há relatório de mês futuro.")
-    return mes
+MAX_DIAS_PERIODO = 731  # 2 anos
+
+
+def _periodo(mes, de, ate) -> tuple[str, str]:
+    """Período do relatório (`AAAA-MM-DD`, inclusive), REL-23.
+
+    `de` + `ate` = período personalizado (até 2 anos, sem passar de hoje). Sem eles, vale
+    `mes` (o mês inteiro); sem nada, o mês corrente (Brasília). Inválido ou futuro = 400.
+    """
+    hoje = rel.hoje_local()
+    if de or ate:
+        if not (de and ate):
+            raise _400("Informe de e ate juntos (AAAA-MM-DD).")
+        try:
+            d0, d1 = date.fromisoformat(de), date.fromisoformat(ate)
+        except ValueError:
+            raise _400("de e ate devem ser datas AAAA-MM-DD.")
+        if d0 > d1:
+            raise _400("A data inicial é depois da final.")
+        if d1 > hoje:
+            raise _400("O período não pode passar de hoje.")
+        if (d1 - d0).days > MAX_DIAS_PERIODO:
+            raise _400("O período pode ter no máximo 2 anos.")
+        return d0.isoformat(), d1.isoformat()
+    atual = hoje.strftime("%Y-%m")
+    if mes:
+        try:
+            mes = valida_mes(mes)
+        except ValueError as e:
+            raise _400(str(e))
+        if mes > atual:
+            raise _400("Não há relatório de mês futuro.")
+    else:
+        mes = atual
+    return f"{mes}-01", rel.ultimo_dia(mes)
 
 
 def _segunda(inicio) -> str:
@@ -73,19 +96,31 @@ def _segunda(inicio) -> str:
     return d.isoformat()
 
 
+_Q_MES = Query(default=None, description="AAAA-MM; ausente = mês corrente")
+_Q_DE = Query(default=None, description="Início do período (AAAA-MM-DD); usar com ate")
+_Q_ATE = Query(default=None, description="Fim do período (AAAA-MM-DD); usar com de")
+
+
 @router.get("/financeiro", response_model=RelFinanceiroOut)
 def relatorio_financeiro(
-    mes: str = Query(default=None, description="AAAA-MM; ausente = mês corrente"),
+    mes: str = _Q_MES,
+    de: str = _Q_DE,
+    ate: str = _Q_ATE,
     clinic_id: str = Depends(get_clinic_id),
 ) -> dict:
-    """Caixa do mês e dos 12 meses, receita por forma, mensalidades e extrato.
+    """Caixa do período, evolução mensal, receita por forma, mensalidades e extrato.
 
-    Custo: 12 Queries do Caixa (uma por mês) + 4 das mensalidades.
+    Custo: uma Query do Caixa por mês tocado (período + evolução) + 4 das mensalidades.
+    As mensalidades são do mês em que o período termina (elas existem por mês).
     """
-    mes = _mes(mes)
+    de, ate = _periodo(mes, de, ate)
+    mes = ate[:7]
     fin = FinanceiroRepository(clinic_id)
-    por_mes = {m: fin.list_mes(m) for m in rel.meses_ate(mes)}
-    lancs = por_mes[mes]
+    evolucao = rel.meses_evolucao(de, ate)
+    no_periodo = rel.meses_entre(de, ate)
+    por_mes = {m: fin.list_mes(m) for m in sorted(set(evolucao) | set(no_periodo))}
+    lancs = rel.no_periodo([l for m in no_periodo for l in por_mes[m]], de, ate)
+    lancs.sort(key=lambda l: (l.get("data") or "", l.get("criadoEm") or ""))
     mensalidades = calcular_mensalidades(
         mes,
         PacienteRepository(clinic_id).list_ativos(),
@@ -95,8 +130,10 @@ def relatorio_financeiro(
     )
     return {
         "mes": mes,
+        "de": de,
+        "ate": ate,
         "caixa": rel.resumo_caixa(lancs),
-        "evolucao": [{"mes": m, **rel.resumo_caixa(l)} for m, l in por_mes.items()],
+        "evolucao": [{"mes": m, **rel.resumo_caixa(por_mes[m])} for m in evolucao],
         "porForma": rel.receita_por_forma(lancs),
         "mensalidades": rel.resumo_mensalidades(mensalidades),
         "extrato": rel.extrato(lancs),
@@ -105,16 +142,20 @@ def relatorio_financeiro(
 
 @router.get("/alunos", response_model=RelAlunosOut)
 def relatorio_alunos(
-    mes: str = Query(default=None, description="AAAA-MM; ausente = mês corrente"),
+    mes: str = _Q_MES,
+    de: str = _Q_DE,
+    ate: str = _Q_ATE,
     clinic_id: str = Depends(get_clinic_id),
 ) -> dict:
-    mes = _mes(mes)
+    de, ate = _periodo(mes, de, ate)
     perfis = PacienteRepository(clinic_id).list_todos()
     ativos = [p for p in perfis if p.get("ativo", True)]
     return {
-        "mes": mes,
-        **rel.indicadores_alunos(perfis, mes),
-        "evolucao": rel.evolucao_alunos(perfis, rel.meses_ate(mes)),
+        "mes": ate[:7],
+        "de": de,
+        "ate": ate,
+        **rel.indicadores_periodo(perfis, de, ate),
+        "evolucao": rel.evolucao_alunos(perfis, rel.meses_evolucao(de, ate)),
         "carteira": rel.carteira_planos(PlanoRepository(clinic_id).list_all(), ativos),
     }
 
@@ -141,7 +182,9 @@ def relatorio_ocupacao(clinic_id: str = Depends(get_clinic_id)) -> dict:
 
 @router.get("/atendimento", response_model=RelAtendimentoOut)
 def relatorio_atendimento(
-    mes: str = Query(default=None, description="AAAA-MM; ausente = mês corrente"),
+    mes: str = _Q_MES,
+    de: str = _Q_DE,
+    ate: str = _Q_ATE,
     clinic_id: str = Depends(get_clinic_id),
 ) -> dict:
     """Aulas registradas (Pilates) e marcações da Agenda, separadas, no mês e em 12 meses.
@@ -149,16 +192,19 @@ def relatorio_atendimento(
     As aulas são lidas aluno a aluno, em paralelo (`repository_atendimento`); a Agenda sai
     de 1 Query paginada. Inclui alunos removidos: a aula deles aconteceu.
     """
-    mes = _mes(mes)
-    meses = rel.meses_ate(mes)
-    de, ate = f"{meses[0]}-01", rel.ultimo_dia(mes)
+    de, ate = _periodo(mes, de, ate)
+    meses = rel.meses_evolucao(de, ate)
+    # Uma leitura cobre o período e o eixo da evolução.
+    ler_de, ler_ate = min(de, f"{meses[0]}-01"), max(ate, rel.ultimo_dia(meses[-1]))
     perfis = PacienteRepository(clinic_id).list_todos()
-    sessoes = list_sessoes_periodo(clinic_id, [p["id"] for p in perfis], de, ate)
-    agenda = AgendaRepository(clinic_id).list_periodo(de, ate)
+    sessoes = list_sessoes_periodo(clinic_id, [p["id"] for p in perfis], ler_de, ler_ate)
+    agenda = AgendaRepository(clinic_id).list_periodo(ler_de, ler_ate)
     profissionais = {p["id"]: p.get("nome") or "" for p in ProfissionalRepository(clinic_id).list_todos()}
-    disponiveis = rel.meses_agenda_disponiveis(meses, int(time.time()))
+    agora = int(time.time())
+    disponiveis = rel.meses_agenda_disponiveis(meses, agora)
+    agenda_ok = rel.agenda_disponivel_desde(de, agora)
     return {
-        **rel.atendimento(sessoes, agenda, perfis, profissionais, mes, meses, disponiveis),
+        **rel.atendimento(sessoes, agenda, perfis, profissionais, (de, ate), meses, disponiveis, agenda_ok),
         "agendaRetencaoMeses": MESES_RETENCAO,
     }
 

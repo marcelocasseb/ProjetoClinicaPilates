@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { relatoriosApi } from "../api";
 import { formatMesBR, hojeISO, mesAnterior, mesAtual, mesSeguinte } from "../utils/format";
+import { dataBR } from "./relatorios/formato";
 import RelAlunos from "./relatorios/RelAlunos";
 import RelAtendimento from "./relatorios/RelAtendimento";
 import RelFinanceiro from "./relatorios/RelFinanceiro";
@@ -10,8 +11,8 @@ import RelSemana from "./relatorios/RelSemana";
 
 // Aba Relatórios (só admin — REL-01). Container: escolhe o relatório e o período,
 // busca os dados (já somados no back) e entrega a componentes de apresentação puros.
-// Os mesmos componentes montam o PDF de um relatório e o fechamento do mês, então os
-// números da tela, do PDF e do fechamento são sempre os mesmos.
+// Os mesmos componentes montam o PDF de um relatório e o fechamento, então os números
+// da tela, do PDF e do fechamento são sempre os mesmos.
 //
 // PDF = impressão do navegador (`window.print()` + `@media print` no App.css): sem
 // biblioteca nova; o usuário escolhe "Salvar como PDF" no destino.
@@ -33,7 +34,7 @@ const TITULOS = {
   semana: "Quem passou na semana",
 };
 
-// Datas da semana em "AAAA-MM-DD", contadas no calendário (sem fuso no meio).
+// Datas em "AAAA-MM-DD", contadas no calendário (sem fuso no meio).
 function somaDias(iso, n) {
   const [a, m, d] = iso.split("-").map(Number);
   return new Date(Date.UTC(a, m - 1, d + n)).toISOString().slice(0, 10);
@@ -43,8 +44,18 @@ function segundaDe(iso) {
   const dow = (new Date(Date.UTC(a, m - 1, d)).getUTCDay() + 6) % 7; // 0 = segunda
   return somaDias(iso, -dow);
 }
-const br = (iso) => `${iso.slice(8, 10)}/${iso.slice(5, 7)}/${iso.slice(0, 4)}`;
-const textoSemana = (seg) => `Semana de ${br(seg).slice(0, 5)} a ${br(somaDias(seg, 6))}`;
+const textoSemana = (seg) => `Semana de ${dataBR(seg).slice(0, 5)} a ${dataBR(somaDias(seg, 6))}`;
+
+// Período (REL-23): { mes } = mês inteiro (navegável com ‹ ›) ou { de, ate } = intervalo.
+const textoPeriodo = (p) => (p.mes ? formatMesBR(p.mes) : `${dataBR(p.de)} a ${dataBR(p.ate)}`);
+
+const ATALHOS = [
+  { id: "este-mes", nome: "Este mês", periodo: () => ({ mes: mesAtual() }) },
+  { id: "mes-passado", nome: "Mês passado", periodo: () => ({ mes: mesAnterior(mesAtual()) }) },
+  { id: "7d", nome: "Últimos 7 dias", periodo: () => ({ de: somaDias(hojeISO(), -6), ate: hojeISO() }) },
+  { id: "30d", nome: "Últimos 30 dias", periodo: () => ({ de: somaDias(hojeISO(), -29), ate: hojeISO() }) },
+  { id: "ano", nome: "Este ano", periodo: () => ({ de: `${hojeISO().slice(0, 4)}-01-01`, ate: hojeISO() }) },
+];
 
 export function CabecalhoImpressao({ clinicaNome, titulo, referencia }) {
   return (
@@ -61,18 +72,18 @@ export function CabecalhoImpressao({ clinicaNome, titulo, referencia }) {
   );
 }
 
-function buscar(vista, mes, semana) {
+function buscar(vista, periodo, semana) {
   switch (vista) {
     case "financeiro":
-      return relatoriosApi.financeiro(mes);
+      return relatoriosApi.financeiro(periodo);
     case "alunos":
-      return relatoriosApi.alunos(mes);
+      return relatoriosApi.alunos(periodo);
     case "relacao":
       return relatoriosApi.relacaoAlunos();
     case "ocupacao":
       return relatoriosApi.ocupacao();
     case "atendimento":
-      return relatoriosApi.atendimento(mes);
+      return relatoriosApi.atendimento(periodo);
     default:
       return relatoriosApi.semana(semana);
   }
@@ -95,7 +106,7 @@ function Conteudo({ vista, dados }) {
   }
 }
 
-// Fechamento do mês (REL-17): os 4 grupos do mês, cada um numa página.
+// Fechamento (REL-17): os 4 grupos do período, cada um numa página.
 const PARTES_FECHAMENTO = [
   { vista: "financeiro", nome: "Financeiro" },
   { vista: "alunos", nome: "Alunos" },
@@ -103,10 +114,90 @@ const PARTES_FECHAMENTO = [
   { vista: "atendimento", nome: "Atendimento" },
 ];
 
+function SeletorPeriodo({ periodo, atalho, onEscolher }) {
+  const [aberto, setAberto] = useState(atalho === "personalizado");
+  const [de, setDe] = useState(periodo.de || `${periodo.mes}-01`);
+  const [ate, setAte] = useState(periodo.ate || hojeISO());
+  const hoje = hojeISO();
+  const invalido = !de || !ate || de > ate || ate > hoje;
+
+  return (
+    <div className="rel-periodo">
+      <div className="rel-atalhos" role="group" aria-label="Período">
+        {ATALHOS.map((a) => (
+          <button
+            key={a.id}
+            className={atalho === a.id ? "rel-chip on" : "rel-chip"}
+            onClick={() => {
+              setAberto(false);
+              onEscolher(a.periodo(), a.id);
+            }}
+          >
+            {a.nome}
+          </button>
+        ))}
+        <button
+          className={atalho === "personalizado" || aberto ? "rel-chip on" : "rel-chip"}
+          onClick={() => setAberto((v) => !v)}
+          aria-expanded={aberto}
+        >
+          Personalizado
+        </button>
+      </div>
+
+      {periodo.mes && !aberto && (
+        <div className="fin-mes rel-nav">
+          <button
+            className="btn ghost"
+            onClick={() => onEscolher({ mes: mesAnterior(periodo.mes) }, "mes")}
+            aria-label="Mês anterior"
+          >
+            ‹
+          </button>
+          <strong>{formatMesBR(periodo.mes)}</strong>
+          <button
+            className="btn ghost"
+            onClick={() => onEscolher({ mes: mesSeguinte(periodo.mes) }, "mes")}
+            disabled={periodo.mes >= mesAtual()}
+            aria-label="Próximo mês"
+          >
+            ›
+          </button>
+        </div>
+      )}
+      {!periodo.mes && !aberto && <strong className="rel-periodo-texto">{textoPeriodo(periodo)}</strong>}
+
+      {aberto && (
+        <form
+          className="rel-personalizado"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (!invalido) onEscolher({ de, ate }, "personalizado");
+          }}
+        >
+          <label>
+            De
+            <input type="date" value={de} max={hoje} onChange={(e) => setDe(e.target.value)} required />
+          </label>
+          <label>
+            Até
+            <input type="date" value={ate} max={hoje} onChange={(e) => setAte(e.target.value)} required />
+          </label>
+          <button type="submit" className="btn primary" disabled={invalido}>
+            Aplicar
+          </button>
+          {de > ate && <span className="erro">A data inicial é depois da final.</span>}
+        </form>
+      )}
+    </div>
+  );
+}
+
 export default function Relatorios({ clinicaNome }) {
   const [grupo, setGrupo] = useState("financeiro");
   const [subAlunos, setSubAlunos] = useState("indicadores");
-  const [mes, setMes] = useState(mesAtual());
+  const [periodo, setPeriodo] = useState(() => ({ mes: mesAtual() }));
+  const [atalho, setAtalho] = useState("este-mes");
   const [semana, setSemana] = useState(() => segundaDe(hojeISO()));
   const [dados, setDados] = useState(null);
   const [dadosVista, setDadosVista] = useState(null); // de qual vista são os `dados`
@@ -118,16 +209,16 @@ export default function Relatorios({ clinicaNome }) {
   const pedido = useRef(0);
 
   const vista = grupo === "alunos" && subAlunos === "relacao" ? "relacao" : grupo;
-  const usaMes = ["financeiro", "alunos", "atendimento"].includes(vista);
+  const usaPeriodo = ["financeiro", "alunos", "atendimento"].includes(vista);
   const usaSemana = vista === "semana";
-  const mesHoje = mesAtual();
   const semanaHoje = segundaDe(hojeISO());
+  const chavePeriodo = JSON.stringify(periodo);
 
   useEffect(() => {
     const id = ++pedido.current;
     setCarregando(true);
     setErro("");
-    buscar(vista, mes, semana)
+    buscar(vista, JSON.parse(chavePeriodo), semana)
       .then((r) => {
         if (id !== pedido.current) return; // resposta antiga: ignora
         setDados(r);
@@ -135,14 +226,21 @@ export default function Relatorios({ clinicaNome }) {
       })
       .catch((e) => id === pedido.current && setErro(e.message || "Não foi possível carregar o relatório."))
       .finally(() => id === pedido.current && setCarregando(false));
-  }, [vista, mes, semana, recarga]);
+  }, [vista, chavePeriodo, semana, recarga]);
 
   const imprimir = useCallback(() => window.print(), []);
+
+  function escolherPeriodo(p, id) {
+    setPeriodo(p);
+    // ‹ › num mês volta a ser "mês" (deixa de ser "Este mês"/"Mês passado").
+    if (id === "mes") setAtalho(p.mes === mesAtual() ? "este-mes" : p.mes === mesAnterior(mesAtual()) ? "mes-passado" : "mes");
+    else setAtalho(id);
+  }
 
   async function gerarFechamento() {
     setErroFechamento("");
     setFechamento({ carregando: true });
-    const resultados = await Promise.allSettled(PARTES_FECHAMENTO.map((p) => buscar(p.vista, mes, semana)));
+    const resultados = await Promise.allSettled(PARTES_FECHAMENTO.map((p) => buscar(p.vista, periodo, semana)));
     const falhas = PARTES_FECHAMENTO.filter((_, i) => resultados[i].status === "rejected").map((p) => p.nome);
     if (falhas.length) {
       // REL-17 AC4: nunca imprimir um fechamento incompleto em silêncio.
@@ -165,11 +263,8 @@ export default function Relatorios({ clinicaNome }) {
     };
   }, [fechamento]);
 
-  const referencia = usaMes
-    ? formatMesBR(mes)
-    : usaSemana
-      ? textoSemana(semana)
-      : `Posição em ${br(hojeISO())}`;
+  const posicaoHoje = `Posição em ${dataBR(hojeISO())}`;
+  const referencia = usaPeriodo ? textoPeriodo(periodo) : usaSemana ? textoSemana(semana) : posicaoHoje;
   const prontos = dados && dadosVista === vista;
 
   return (
@@ -183,7 +278,7 @@ export default function Relatorios({ clinicaNome }) {
                 Imprimir / PDF
               </button>
               <button className="btn primary" onClick={gerarFechamento} disabled={fechamento?.carregando}>
-                {fechamento?.carregando ? "Preparando…" : `Fechamento de ${formatMesBR(mes)}`}
+                {fechamento?.carregando ? "Preparando…" : `Fechamento · ${textoPeriodo(periodo)}`}
               </button>
             </div>
           </div>
@@ -217,21 +312,8 @@ export default function Relatorios({ clinicaNome }) {
                 </button>
               </div>
             )}
-            {usaMes && (
-              <div className="fin-mes rel-nav">
-                <button className="btn ghost" onClick={() => setMes(mesAnterior(mes))} aria-label="Mês anterior">
-                  ‹
-                </button>
-                <strong>{formatMesBR(mes)}</strong>
-                <button
-                  className="btn ghost"
-                  onClick={() => setMes(mesSeguinte(mes))}
-                  disabled={mes >= mesHoje}
-                  aria-label="Próximo mês"
-                >
-                  ›
-                </button>
-              </div>
+            {usaPeriodo && (
+              <SeletorPeriodo key={chavePeriodo} periodo={periodo} atalho={atalho} onEscolher={escolherPeriodo} />
             )}
             {usaSemana && (
               <div className="fin-mes rel-nav">
@@ -276,8 +358,8 @@ export default function Relatorios({ clinicaNome }) {
         <div className="rel-fechamento" aria-hidden="true">
           <section className="rel-capa">
             <span className="rel-capa-marca">{clinicaNome || "Pilates One"}</span>
-            <h1>Fechamento do mês</h1>
-            <p>{formatMesBR(mes)}</p>
+            <h1>Fechamento</h1>
+            <p>{textoPeriodo(periodo)}</p>
             <p className="rel-capa-emissao">
               Emitido em {new Date().toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })}
             </p>
@@ -292,7 +374,7 @@ export default function Relatorios({ clinicaNome }) {
               <CabecalhoImpressao
                 clinicaNome={clinicaNome}
                 titulo={TITULOS[p.vista]}
-                referencia={p.vista === "ocupacao" ? `Posição em ${br(hojeISO())}` : formatMesBR(mes)}
+                referencia={p.vista === "ocupacao" ? posicaoHoje : textoPeriodo(periodo)}
               />
               <h2 className="rel-titulo">{TITULOS[p.vista]}</h2>
               <Conteudo vista={p.vista} dados={fechamento.dados[i]} />

@@ -225,13 +225,16 @@ export const financeiroApi = {
 
 // --- Relatórios (aba Relatórios, só admin — REL-01..22) ---
 // Os números já vêm somados do back; o front só desenha. Membro recebe 403.
+// `periodo`: { mes: "AAAA-MM" } (mês inteiro) ou { de, ate } em "AAAA-MM-DD" (REL-23).
 const _q = (nome, valor) => (valor ? `?${nome}=${encodeURIComponent(valor)}` : "");
+const _qPeriodo = (p) =>
+  p?.de ? `?de=${encodeURIComponent(p.de)}&ate=${encodeURIComponent(p.ate)}` : _q("mes", p?.mes);
 export const relatoriosApi = {
-  financeiro: (mes) => request("GET", `/relatorios/financeiro${_q("mes", mes)}`, null),
-  alunos: (mes) => request("GET", `/relatorios/alunos${_q("mes", mes)}`, null),
+  financeiro: (periodo) => request("GET", `/relatorios/financeiro${_qPeriodo(periodo)}`, null),
+  alunos: (periodo) => request("GET", `/relatorios/alunos${_qPeriodo(periodo)}`, null),
   relacaoAlunos: () => request("GET", "/relatorios/relacao-alunos", null),
   ocupacao: () => request("GET", "/relatorios/ocupacao", null),
-  atendimento: (mes) => request("GET", `/relatorios/atendimento${_q("mes", mes)}`, null),
+  atendimento: (periodo) => request("GET", `/relatorios/atendimento${_qPeriodo(periodo)}`, null),
   semana: (inicio) => request("GET", `/relatorios/semana${_q("inicio", inicio)}`, null),
 };
 
