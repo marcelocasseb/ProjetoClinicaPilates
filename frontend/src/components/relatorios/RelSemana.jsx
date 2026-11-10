@@ -1,6 +1,6 @@
 import { DIAS } from "../Escala";
 import { Kpi } from "./graficos";
-import { diaMes, inteiro } from "./formato";
+import { dataBR, diaMes, inteiro } from "./formato";
 
 // Data (AAAA-MM-DD) do dia n (1 = segunda) da semana que começa em `inicio`.
 function dataDoDia(inicio, n) {
@@ -16,6 +16,11 @@ const marcas = ({ aula, agenda }) => "●".repeat(aula) + "○".repeat(agenda);
 export default function RelSemana({ dados }) {
   return (
     <div className="rel-relatorio">
+      {dados.agendaDesde && (
+        <p className="rel-nota aviso">
+          A Agenda guarda 4 meses: as marcações desta semana contam a partir de {dataBR(dados.agendaDesde)}.
+        </p>
+      )}
       {!dados.agendaDisponivel && (
         <p className="rel-nota aviso">
           As marcações da Agenda desta semana já expiraram (a Agenda guarda 4 meses). Só as aulas registradas aparecem.

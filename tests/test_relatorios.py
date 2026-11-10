@@ -306,7 +306,7 @@ def test_atendimento_fontes_separadas_e_rankings():
         _ag("2026-09-20", "a", "Ana"),
     ]
     meses = ["2026-09", "2026-10"]
-    at = r.atendimento(sessoes, agenda, PERFIS_AT, PROFS, ("2026-10-01", "2026-10-31"), meses, {"2026-09", "2026-10"}, True)
+    at = r.atendimento(sessoes, agenda, PERFIS_AT, PROFS, ("2026-10-01", "2026-10-31"), meses, {"2026-09", "2026-10"}, "2000-01-01")
 
     assert at["totalAulas"] == 4
     assert at["totalAgenda"] == 3
@@ -336,7 +336,7 @@ def test_atendimento_fontes_separadas_e_rankings():
 def test_atendimento_agenda_expirada_vira_none_nao_zero():
     sessoes = [_sessao("a", "2026-05-10", "p1", "Paula", [])]
     agenda = []
-    at = r.atendimento(sessoes, agenda, PERFIS_AT, PROFS, ("2026-05-01", "2026-05-31"), ["2026-04", "2026-05"], set(), False)
+    at = r.atendimento(sessoes, agenda, PERFIS_AT, PROFS, ("2026-05-01", "2026-05-31"), ["2026-04", "2026-05"], set(), "2099-01-01")
     assert at["totalAulas"] == 1
     assert at["totalAgenda"] is None
     assert at["evolucao"] == [
@@ -348,7 +348,7 @@ def test_atendimento_agenda_expirada_vira_none_nao_zero():
 
 
 def test_atendimento_vazio():
-    at = r.atendimento([], [], [], {}, ("2026-10-01", "2026-10-31"), ["2026-10"], {"2026-10"}, True)
+    at = r.atendimento([], [], [], {}, ("2026-10-01", "2026-10-31"), ["2026-10"], {"2026-10"}, "2000-01-01")
     assert at["totalAulas"] == 0 and at["totalAgenda"] == 0
     assert at["porProfissional"] == [] and at["porAluno"] == []
     assert at["aparelhos"] == [] and at["treinos"] == []
@@ -372,7 +372,7 @@ def test_semana():
         _sessao("b", "2027-01-01"),
     ]
     agenda = [_ag("2026-12-30", "a", "Ana"), _ag("2027-01-03", None, "Novo Fulano")]
-    s = r.semana(sessoes, agenda, PERFIS_AT, "2026-12-28", True)
+    s = r.semana(sessoes, agenda, PERFIS_AT, "2026-12-28", "2000-01-01")
     assert s["inicio"] == "2026-12-28" and s["fim"] == "2027-01-03"
     assert s["agendaDisponivel"] is True
     assert s["distintos"] == 3 and s["totalAulas"] == 3 and s["totalAgenda"] == 2
@@ -388,7 +388,7 @@ def test_semana():
 def test_semana_com_agenda_expirada_ignora_agenda():
     sessoes = [_sessao("a", "2026-05-04")]
     agenda = [_ag("2026-05-05", "b", "Bia")]  # não deveria nem vir, mas se vier, não conta
-    s = r.semana(sessoes, agenda, PERFIS_AT, "2026-05-04", False)
+    s = r.semana(sessoes, agenda, PERFIS_AT, "2026-05-04", "2099-01-01")
     assert s["agendaDisponivel"] is False
     assert s["totalAgenda"] == 0
     assert [a["nome"] for a in s["alunos"]] == ["Ana"]
@@ -426,7 +426,37 @@ def test_indicadores_periodo_de_poucos_dias():
 
 def test_atendimento_em_periodo_parcial_do_mes():
     sessoes = [_sessao("a", "2026-10-01", "p1"), _sessao("a", "2026-10-10", "p1"), _sessao("a", "2026-10-20", "p1")]
-    at = r.atendimento(sessoes, [], PERFIS_AT, PROFS, ("2026-10-05", "2026-10-15"), ["2026-10"], {"2026-10"}, True)
+    at = r.atendimento(sessoes, [], PERFIS_AT, PROFS, ("2026-10-05", "2026-10-15"), ["2026-10"], {"2026-10"}, "2000-01-01")
     assert at["totalAulas"] == 1
     assert at["de"] == "2026-10-05" and at["ate"] == "2026-10-15"
     assert at["evolucao"] == [{"mes": "2026-10", "aulas": 3, "agenda": 0}]
+
+
+# --- Agenda parcial: conta a partir do que a retenção ainda guarda -------------
+
+
+def test_primeiro_dia_na_agenda():
+    agora = int(datetime(2026, 11, 9, tzinfo=timezone.utc).timestamp())
+    # 09/07 + 4 meses = 09/11 00:00 (já expirou); 10/07 ainda está guardado
+    assert r.primeiro_dia_na_agenda(agora) == "2026-07-10"
+
+
+def test_atendimento_conta_agenda_so_da_parte_guardada():
+    agenda = [_ag("2026-07-05", "a", "Ana", "p1"), _ag("2026-07-20", "a", "Ana", "p1"), _ag("2026-10-01", "a", "Ana")]
+    at = r.atendimento([], agenda, PERFIS_AT, PROFS, ("2026-01-01", "2026-11-09"), ["2026-07"], set(), "2026-07-10")
+    assert at["totalAgenda"] == 2  # 20/07 e 01/10; 05/07 já saiu da Agenda
+    assert at["agendaDesde"] == "2026-07-10"
+    assert {p["nome"]: p["agenda"] for p in at["porProfissional"]} == {"Paula (atual)": 1, "Sem profissional": 1}
+
+
+def test_atendimento_periodo_todo_guardado_nao_marca_parcial():
+    at = r.atendimento([], [_ag("2026-10-02", "a", "Ana")], PERFIS_AT, PROFS, ("2026-10-01", "2026-10-31"),
+                       ["2026-10"], {"2026-10"}, "2026-07-10")
+    assert at["totalAgenda"] == 1 and at["agendaDesde"] is None
+
+
+def test_semana_parcialmente_fora_da_agenda():
+    agenda = [_ag("2026-07-06", "a", "Ana"), _ag("2026-07-11", "b", "Bia")]
+    s = r.semana([], agenda, PERFIS_AT, "2026-07-06", "2026-07-10")
+    assert s["agendaDisponivel"] is True and s["agendaDesde"] == "2026-07-10"
+    assert s["totalAgenda"] == 1 and [a["nome"] for a in s["alunos"]] == ["Bia"]

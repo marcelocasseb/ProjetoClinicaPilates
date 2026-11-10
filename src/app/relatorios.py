@@ -99,8 +99,16 @@ def meses_agenda_disponiveis(meses: list[str], agora: int) -> set[str]:
     return {m for m in meses if expira_em(f"{m}-01") > agora}
 
 
-def agenda_disponivel_desde(data: str, agora: int) -> bool:
-    return expira_em(data) > agora
+def primeiro_dia_na_agenda(agora: int) -> str:
+    """Primeira data cujas marcações a Agenda ainda guarda (retenção de 4 meses, TTL).
+
+    O período de um relatório pode começar antes disso: aí a Agenda é contada a partir
+    deste dia (e o relatório diz "a partir de dd/mm"), em vez de virar "sem dados".
+    """
+    d = datetime.fromtimestamp(agora, timezone.utc).date() - timedelta(days=130)
+    while expira_em(d.isoformat()) <= agora:
+        d += timedelta(days=1)
+    return d.isoformat()
 
 
 # ---------------------------------------------------------------------------
@@ -352,18 +360,21 @@ def atendimento(
     periodo: tuple[str, str],
     meses: list[str],
     disponiveis: set,
-    agenda_ok: bool,
+    agenda_desde: str,
 ) -> dict:
     """Aulas registradas (Pilates) e marcações da Agenda, **separadas, nunca somadas**.
 
     `periodo`: (de, ate) em `AAAA-MM-DD`. `profissionais`: {id: nome} do cadastro
     (inclui removidos). `meses`/`disponiveis`: eixo da evolução e meses em que a Agenda
-    ainda está inteira. `agenda_ok`: a Agenda cobre o período inteiro (senão "s/d").
+    ainda está inteira. `agenda_desde`: primeiro dia que a Agenda ainda guarda — a Agenda é
+    contada de `max(de, agenda_desde)` até `ate`; se nada do período sobrou, "s/d".
     """
     de, ate = periodo
     nomes = {p["id"]: p.get("nome") or "" for p in perfis}
     sessoes_mes = no_periodo(sessoes, de, ate)
-    agenda_mes = no_periodo(agenda, de, ate) if agenda_ok else []
+    inicio_agenda = max(de, agenda_desde)
+    agenda_ok = inicio_agenda <= ate
+    agenda_mes = no_periodo(agenda, inicio_agenda, ate) if agenda_ok else []
 
     profs: dict = {}
     alunos: dict = {}
@@ -401,6 +412,8 @@ def atendimento(
         "ate": ate,
         "totalAulas": len(sessoes_mes),
         "totalAgenda": len(agenda_mes) if agenda_ok else None,
+        # Período começa antes do que a Agenda guarda: a contagem vale a partir daqui.
+        "agendaDesde": inicio_agenda if agenda_ok and inicio_agenda > de else None,
         "evolucao": [
             {"mes": m, "aulas": _conta(sessoes, m), "agenda": _conta(agenda, m) if m in disponiveis else None}
             for m in meses
@@ -417,11 +430,16 @@ def semana(
     agenda: list[dict],
     perfis: list[dict],
     inicio: str,
-    agenda_disponivel: bool,
+    agenda_desde: str,
 ) -> dict:
-    """Quem passou na semana (segunda `inicio` a domingo): dias × fonte por aluno."""
+    """Quem passou na semana (segunda `inicio` a domingo): dias × fonte por aluno.
+
+    A Agenda conta a partir de `max(inicio, agenda_desde)` (retenção de 4 meses).
+    """
     d0 = date.fromisoformat(inicio)
     fim = (d0 + timedelta(days=6)).isoformat()
+    inicio_agenda = max(inicio, agenda_desde)
+    agenda_disponivel = inicio_agenda <= fim
     nomes = {p["id"]: p.get("nome") or "" for p in perfis}
     linhas: dict = {}
 
@@ -446,7 +464,7 @@ def semana(
     for s in sessoes:
         _somar(s, "aula")
     if agenda_disponivel:
-        for a in agenda:
+        for a in no_periodo(agenda, inicio_agenda, fim):
             _somar(a, "agenda")
 
     alunos = sorted(linhas.values(), key=lambda l: l["nome"].lower())
@@ -454,6 +472,7 @@ def semana(
         "inicio": inicio,
         "fim": fim,
         "agendaDisponivel": agenda_disponivel,
+        "agendaDesde": inicio_agenda if agenda_disponivel and inicio_agenda > inicio else None,
         "distintos": len(alunos),
         "totalAulas": sum(d["aula"] for l in alunos for d in l["dias"].values()),
         "totalAgenda": sum(d["agenda"] for l in alunos for d in l["dias"].values()),

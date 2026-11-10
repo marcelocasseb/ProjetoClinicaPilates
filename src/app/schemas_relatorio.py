@@ -173,6 +173,7 @@ class RelAtendimentoOut(BaseModel):
     ate: str
     totalAulas: int
     totalAgenda: Optional[int] = None
+    agendaDesde: Optional[str] = None
     agendaRetencaoMeses: int
     evolucao: list[AtendimentoMes]
     porProfissional: list[PorProfissional]
@@ -198,6 +199,7 @@ class RelSemanaOut(BaseModel):
     inicio: str
     fim: str
     agendaDisponivel: bool
+    agendaDesde: Optional[str] = None
     distintos: int
     totalAulas: int
     totalAgenda: int

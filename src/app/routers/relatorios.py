@@ -202,9 +202,9 @@ def relatorio_atendimento(
     profissionais = {p["id"]: p.get("nome") or "" for p in ProfissionalRepository(clinic_id).list_todos()}
     agora = int(time.time())
     disponiveis = rel.meses_agenda_disponiveis(meses, agora)
-    agenda_ok = rel.agenda_disponivel_desde(de, agora)
+    agenda_desde = rel.primeiro_dia_na_agenda(agora)
     return {
-        **rel.atendimento(sessoes, agenda, perfis, profissionais, (de, ate), meses, disponiveis, agenda_ok),
+        **rel.atendimento(sessoes, agenda, perfis, profissionais, (de, ate), meses, disponiveis, agenda_desde),
         "agendaRetencaoMeses": MESES_RETENCAO,
     }
 
@@ -219,6 +219,7 @@ def relatorio_semana(
     fim = (date.fromisoformat(inicio) + timedelta(days=6)).isoformat()
     perfis = PacienteRepository(clinic_id).list_todos()
     sessoes = list_sessoes_periodo(clinic_id, [p["id"] for p in perfis], inicio, fim)
-    disponivel = rel.agenda_disponivel_desde(inicio, int(time.time()))
-    agenda = AgendaRepository(clinic_id).list_periodo(inicio, fim) if disponivel else []
-    return rel.semana(sessoes, agenda, perfis, inicio, disponivel)
+    agenda_desde = rel.primeiro_dia_na_agenda(int(time.time()))
+    inicio_agenda = max(inicio, agenda_desde)
+    agenda = AgendaRepository(clinic_id).list_periodo(inicio_agenda, fim) if inicio_agenda <= fim else []
+    return rel.semana(sessoes, agenda, perfis, inicio, agenda_desde)

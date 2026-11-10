@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { BarrasMensais, Kpi, Ranking } from "./graficos";
-import { inteiro, mesLongo, NOTA_MESES_INTEIROS, periodoParcial, plural, SERIE_1, SERIE_2 } from "./formato";
+import { dataBR, inteiro, mesLongo, NOTA_MESES_INTEIROS, periodoParcial, plural, SERIE_1, SERIE_2 } from "./formato";
 
 const SERIES = [
   { chave: "aulas", nome: "Aulas registradas", cor: SERIE_1 },
@@ -46,14 +46,21 @@ export default function RelAtendimento({ dados }) {
     <div className="rel-relatorio">
       <p className="rel-nota">
         Marcação na Agenda não garante que o aluno veio: as duas fontes aparecem separadas e não são somadas. A Agenda guarda{" "}
-        {dados.agendaRetencaoMeses} meses; antes disso aparece <strong>s/d</strong> (sem dados).
+        {dados.agendaRetencaoMeses} meses: num período mais antigo, ela conta só a parte guardada, e no gráfico os
+        meses incompletos aparecem como <strong>s/d</strong> (sem dados).
       </p>
       <div className="rel-kpis">
         <Kpi rotulo="Aulas registradas" valor={inteiro(dados.totalAulas)} tom="destaque" detalhe="aba Pilates" />
         <Kpi
           rotulo="Marcações na Agenda"
           valor={agendaSd ? "s/d" : inteiro(dados.totalAgenda)}
-          detalhe={agendaSd ? "parte do período já saiu da Agenda" : "agendamentos do período"}
+          detalhe={
+            agendaSd
+              ? "o período inteiro já saiu da Agenda"
+              : dados.agendaDesde
+                ? `contadas a partir de ${dataBR(dados.agendaDesde)} (a Agenda guarda ${dados.agendaRetencaoMeses} meses)`
+                : "agendamentos do período"
+          }
         />
       </div>
 
